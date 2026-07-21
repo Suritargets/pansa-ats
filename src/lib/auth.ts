@@ -10,6 +10,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { SignJWT, jwtVerify } from 'jose'
 import bcrypt from 'bcryptjs'
+import { createHmac, timingSafeEqual } from 'crypto'
 import { eq } from 'drizzle-orm'
 import { db } from './db'
 import { profiles, type UserRole } from '../../drizzle/schema'
@@ -91,6 +92,30 @@ export async function requireSession(allowedRoles?: UserRole[]): Promise<Session
   if (!session) redirect('/admin')
   if (allowedRoles && !allowedRoles.includes(session.role)) redirect('/admin')
   return session
+}
+
+/**
+ * Bindt een document-upload aan de application die zojuist door `submitApplication`
+ * is aangemaakt — voorkomt dat iemand die een application-id kent/raadt (bv. uit een
+ * gedeelde admin-URL) via de publieke Server Action documenten kan uploaden naar
+ * andermans sollicitatie. Staff omzeilt dit via een geldige sessie (zie
+ * `uploadApplicationDocument`).
+ */
+export function createUploadToken(applicationId: string): string {
+  const secret = process.env.SESSION_SECRET
+  if (!secret) throw new Error('SESSION_SECRET ontbreekt.')
+  return createHmac('sha256', secret).update(applicationId).digest('hex')
+}
+
+export function verifyUploadToken(applicationId: string, token: string | undefined): boolean {
+  if (!token) return false
+  try {
+    const expected = Buffer.from(createUploadToken(applicationId))
+    const provided = Buffer.from(token)
+    return expected.length === provided.length && timingSafeEqual(expected, provided)
+  } catch {
+    return false
+  }
 }
 
 /**

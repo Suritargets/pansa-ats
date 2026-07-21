@@ -43,3 +43,6 @@ next-env.d.ts
 # Kento dev conventie — nooit pushen
 docs/process/
 *.local.md
+
+.vercel
+.env*

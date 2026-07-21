@@ -90,8 +90,9 @@ export function ApplicationForm({ mode, companies }: ApplicationFormProps) {
       return
     }
 
-    if (cvFile) await uploadApplicationDocument(result.data.applicationId, cvFile, 'cv')
-    if (scanFile) await uploadApplicationDocument(result.data.applicationId, scanFile, 'handwritten_scan')
+    const { applicationId, uploadToken } = result.data
+    if (cvFile) await uploadApplicationDocument(applicationId, cvFile, 'cv', uploadToken)
+    if (scanFile) await uploadApplicationDocument(applicationId, scanFile, 'handwritten_scan', uploadToken)
 
     setStatus('done')
   }
