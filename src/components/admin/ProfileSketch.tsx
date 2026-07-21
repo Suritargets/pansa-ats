@@ -97,7 +97,7 @@ export function ProfileSketch({
                     <p className="text-sm font-medium text-foreground">{DOCUMENT_LABELS[doc.kind]}</p>
                     <p className="text-xs text-muted-foreground">{doc.fileName}</p>
                   </div>
-                  <Button variant="secondary" render={<a href={doc.storagePath} target="_blank" rel="noreferrer" />}>
+                  <Button variant="secondary" render={<a href={`/api/documents/${doc.id}`} target="_blank" rel="noreferrer" />}>
                     Bekijken
                   </Button>
                 </li>

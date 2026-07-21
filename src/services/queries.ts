@@ -56,6 +56,13 @@ export async function listApplicationDocuments(applicationId: string) {
     .orderBy(desc(applicationDocuments.createdAt))
 }
 
+export async function getDocumentById(id: string) {
+  if (DB_MODE === 'demo') return null
+
+  const [doc] = await db.select().from(applicationDocuments).where(eq(applicationDocuments.id, id))
+  return doc ?? null
+}
+
 export async function listCompanies() {
   if (DB_MODE === 'demo') return []
 

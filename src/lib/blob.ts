@@ -1,18 +1,22 @@
 /**
  * blob.ts
- * WAT:    Upload van sollicitatiedocumenten (CV, scans, certificaten) naar Vercel Blob.
- * WAAROM: Vervangt Supabase Storage. Documenten bevatten persoonsgegevens, dus we uploaden
- *         met `access: 'public'` maar een niet-raadbaar pad (uuid + originele bestandsnaam) —
- *         downloaden gaat altijd via een ingelogde admin-actie, nooit via een publiek overzicht.
+ * WAT:    Upload en download van sollicitatiedocumenten (CV, scans, certificaten) via Vercel Blob.
+ * WAAROM: Vervangt Supabase Storage. Documenten bevatten persoonsgegevens (ID, scans), dus de
+ *         store staat op `access: 'private'` — downloaden kan alleen server-side (met het
+ *         BLOB_READ_WRITE_TOKEN) via `/api/documents/[id]`, nooit via een kale publieke URL.
  */
 
-import { put } from '@vercel/blob'
+import { get, put } from '@vercel/blob'
 
 export async function uploadDocument(
   applicationId: string,
   file: File
-): Promise<{ url: string; fileName: string }> {
-  const path = `application-documents/${applicationId}/${crypto.randomUUID()}-${file.name}`
-  const blob = await put(path, file, { access: 'public', addRandomSuffix: false })
-  return { url: blob.url, fileName: file.name }
+): Promise<{ pathname: string; fileName: string }> {
+  const pathname = `application-documents/${applicationId}/${crypto.randomUUID()}-${file.name}`
+  const blob = await put(pathname, file, { access: 'private', addRandomSuffix: false })
+  return { pathname: blob.pathname, fileName: file.name }
+}
+
+export async function readDocument(pathname: string) {
+  return get(pathname, { access: 'private' })
 }

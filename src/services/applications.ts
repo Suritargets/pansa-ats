@@ -129,16 +129,16 @@ export async function uploadApplicationDocument(
       return { success: false, error: 'Bestand is te groot (max 8MB).' }
     }
 
-    const { url, fileName } = await uploadDocument(applicationId, file)
+    const { pathname, fileName } = await uploadDocument(applicationId, file)
 
     await db.insert(applicationDocuments).values({
       applicationId,
       kind,
-      storagePath: url,
+      storagePath: pathname,
       fileName,
     })
 
-    return { success: true, data: { path: url } }
+    return { success: true, data: { path: pathname } }
   } catch (error) {
     console.error('[applications.uploadApplicationDocument]', error)
     return { success: false, error: 'Document kon niet worden geüpload.' }
