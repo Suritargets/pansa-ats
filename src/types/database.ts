@@ -4,7 +4,7 @@
  *         zodat er één bron van waarheid is tussen DB-schema en de rest van de app.
  */
 
-import type { Application, Candidate, Company } from '../../drizzle/schema'
+import type { Application, Candidate, ClientCandidateShareRow, Company } from '../../drizzle/schema'
 
 export type {
   ApplicationSource,
@@ -15,6 +15,7 @@ export type {
   DocumentKind,
   Application,
   ApplicationDocument,
+  ClientCandidateShareRow,
   Profile,
   UserRole,
 } from '../../drizzle/schema'
@@ -22,6 +23,10 @@ export type {
 export interface ApplicationWithCandidate extends Application {
   candidate: Candidate
   company: Company
+}
+
+export interface SharedApplication extends ApplicationWithCandidate {
+  share: ClientCandidateShareRow
 }
 
 export const APPLICATION_STATUS_LABELS: Record<Application['status'], string> = {

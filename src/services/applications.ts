@@ -9,7 +9,7 @@
  */
 
 import { revalidatePath } from 'next/cache'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { createUploadToken, getSession, requireSession, verifyUploadToken } from '@/lib/auth'
 import { uploadDocument } from '@/lib/blob'
@@ -22,6 +22,7 @@ import {
   applications,
   applicationStatusHistory,
   candidates,
+  clientCandidateShares,
   type ApplicationSource,
   type ApplicationStatus,
   type DocumentKind,
@@ -174,5 +175,59 @@ export async function updateApplicationStatus(
   } catch (error) {
     console.error('[applications.updateApplicationStatus]', error)
     return { success: false, error: 'Status kon niet worden bijgewerkt.' }
+  }
+}
+
+/**
+ * Deelt een sollicitatie met een klantbedrijf (client portal). Alleen staff.
+ */
+export async function shareApplicationWithClient(
+  applicationId: string,
+  clientCompanyId: string
+): Promise<ServiceResult<null>> {
+  try {
+    const session = await requireSession([...STAFF_ROLES])
+
+    await db
+      .insert(clientCandidateShares)
+      .values({ applicationId, clientCompanyId, sharedBy: session.userId })
+      .onConflictDoNothing({
+        target: [clientCandidateShares.applicationId, clientCandidateShares.clientCompanyId],
+      })
+
+    revalidatePath(`/admin/applications/${applicationId}`)
+
+    return { success: true, data: null }
+  } catch (error) {
+    console.error('[applications.shareApplicationWithClient]', error)
+    return { success: false, error: 'Delen met klant is mislukt.' }
+  }
+}
+
+/**
+ * Trekt het delen van een sollicitatie met een klantbedrijf in. Alleen staff.
+ */
+export async function unshareApplicationFromClient(
+  applicationId: string,
+  clientCompanyId: string
+): Promise<ServiceResult<null>> {
+  try {
+    await requireSession([...STAFF_ROLES])
+
+    await db
+      .delete(clientCandidateShares)
+      .where(
+        and(
+          eq(clientCandidateShares.applicationId, applicationId),
+          eq(clientCandidateShares.clientCompanyId, clientCompanyId)
+        )
+      )
+
+    revalidatePath(`/admin/applications/${applicationId}`)
+
+    return { success: true, data: null }
+  } catch (error) {
+    console.error('[applications.unshareApplicationFromClient]', error)
+    return { success: false, error: 'Delen ongedaan maken is mislukt.' }
   }
 }

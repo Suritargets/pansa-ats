@@ -9,8 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { StatusActions } from '@/components/admin/StatusActions'
+import { ShareWithClient } from '@/components/admin/ShareWithClient'
 import { formatDate } from '@/lib/utils'
-import { APPLICATION_STATUS_LABELS, type ApplicationDocument, type ApplicationStatus, type ApplicationWithCandidate } from '@/types/database'
+import {
+  APPLICATION_STATUS_LABELS,
+  type ApplicationDocument,
+  type ApplicationStatus,
+  type ApplicationWithCandidate,
+  type ClientCandidateShareRow,
+  type Company,
+} from '@/types/database'
 
 const STATUS_FLOW: ApplicationStatus[] = [
   'new',
@@ -33,9 +41,13 @@ const DOCUMENT_LABELS: Record<ApplicationDocument['kind'], string> = {
 export function ProfileSketch({
   application,
   documents,
+  shares,
+  shareableCompanies,
 }: {
   application: ApplicationWithCandidate
   documents: ApplicationDocument[]
+  shares: { share: ClientCandidateShareRow; company: Company }[]
+  shareableCompanies: Company[]
 }) {
   const currentIndex = STATUS_FLOW.indexOf(application.status)
   const nextStatus = currentIndex >= 0 && currentIndex < STATUS_FLOW.length - 1 && application.status !== 'rejected'
@@ -125,6 +137,15 @@ export function ProfileSketch({
             </ol>
 
             <StatusActions applicationId={application.id} currentStatus={application.status} nextStatus={nextStatus} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">Klantportaal</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ShareWithClient applicationId={application.id} shares={shares} shareableCompanies={shareableCompanies} />
           </CardContent>
         </Card>
       </div>

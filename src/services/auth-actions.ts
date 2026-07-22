@@ -24,7 +24,7 @@ export async function loginAction(
     return { error: 'Inloggen mislukt. Controleer je e-mail en wachtwoord.' }
   }
 
-  redirect('/admin/dashboard')
+  redirect(session.role === 'client' ? '/client/dashboard' : '/admin/dashboard')
 }
 
 export async function logoutAction(): Promise<void> {

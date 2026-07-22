@@ -5,7 +5,12 @@
 
 import { notFound } from 'next/navigation'
 import { requireSession } from '@/lib/auth'
-import { getApplicationById, listApplicationDocuments } from '@/services/queries'
+import {
+  getApplicationById,
+  listApplicationDocuments,
+  listApplicationShares,
+  listShareableCompaniesForApplication,
+} from '@/services/queries'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { ProfileSketch } from '@/components/admin/ProfileSketch'
 
@@ -16,11 +21,20 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
   const application = await getApplicationById(id)
   if (!application) notFound()
 
-  const documents = await listApplicationDocuments(id)
+  const [documents, shares, shareableCompanies] = await Promise.all([
+    listApplicationDocuments(id),
+    listApplicationShares(id),
+    listShareableCompaniesForApplication(id),
+  ])
 
   return (
     <AdminShell session={session}>
-      <ProfileSketch application={application} documents={documents} />
+      <ProfileSketch
+        application={application}
+        documents={documents}
+        shares={shares}
+        shareableCompanies={shareableCompanies}
+      />
     </AdminShell>
   )
 }

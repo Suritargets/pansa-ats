@@ -341,3 +341,5 @@ export type ApplicationDocument = typeof applicationDocuments.$inferSelect
 export type NewApplicationDocument = typeof applicationDocuments.$inferInsert
 
 export type ApplicationStatusHistoryRow = typeof applicationStatusHistory.$inferSelect
+
+export type ClientCandidateShareRow = typeof clientCandidateShares.$inferSelect
