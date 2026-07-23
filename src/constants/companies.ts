@@ -26,15 +26,18 @@ export const PANSA_SUBSIDIARIES = [
   },
 ] as const
 
-export const OPEN_POSITIONS = [
-  'Mining Support Personnel',
-  'Heavy Equipment Operator',
-  'Mechanic / Fitter',
-  'Welder (AWS/ASME)',
+/**
+ * Fallback-lijst voor het sollicitatieformulier wanneer er geen DB-verbinding is
+ * (DB_MODE 'demo'). In normale werking komt de functielijst uit `job_categories`
+ * via `listJobCategories()` — dit is alleen een offline-vangnet, geen bron van waarheid.
+ */
+export const FALLBACK_POSITIONS = [
+  'Mechanic',
+  'Welder',
   'Electrician',
-  'Civil Maintenance Technician',
-  'HSE Officer',
-  'Site Supervisor',
-  'Administratief / Support',
-  'Anders (zie motivatie)',
+  'Driver',
+  'Security',
+  'Administration',
+  'Allrounder',
+  'Other',
 ] as const

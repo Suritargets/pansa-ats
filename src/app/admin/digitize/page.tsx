@@ -4,13 +4,14 @@
  */
 
 import { requireSession } from '@/lib/auth'
-import { listCompanies } from '@/services/queries'
+import { STAFF_ROLES } from '@/lib/roles'
+import { listCompanies, listJobCategories } from '@/services/queries'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { ApplicationForm } from '@/components/candidate/ApplicationForm'
 
 export default async function DigitizePage() {
-  const session = await requireSession(['super_admin', 'hr_staff', 'recruiter'])
-  const companies = await listCompanies()
+  const session = await requireSession([...STAFF_ROLES])
+  const [companies, jobCategories] = await Promise.all([listCompanies(), listJobCategories()])
 
   return (
     <AdminShell session={session}>
@@ -19,7 +20,7 @@ export default async function DigitizePage() {
         Vul de gegevens over van het papieren formulier en voeg een scan of foto toe als bewijsstuk.
       </p>
       <div className="max-w-2xl">
-        <ApplicationForm mode="digitize" companies={companies} />
+        <ApplicationForm mode="digitize" companies={companies} jobCategories={jobCategories} />
       </div>
     </AdminShell>
   )

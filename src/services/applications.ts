@@ -30,6 +30,7 @@ import {
 
 export interface NewApplicationInput {
   companyId: string
+  jobCategoryId?: string
   positionApplied: string
   source: ApplicationSource
   coverNote?: string
@@ -79,6 +80,7 @@ export async function submitApplication(
       .values({
         candidateId: candidate.id,
         companyId: input.companyId,
+        jobCategoryId: input.jobCategoryId || null,
         positionApplied: input.positionApplied,
         source: input.source,
         coverNote: input.coverNote ?? null,

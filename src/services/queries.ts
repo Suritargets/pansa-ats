@@ -27,6 +27,7 @@ import {
   onboardingProgress,
   onboardingStepTemplates,
   payrollExportBatches,
+  payrollExportItems,
   suppliers,
   trainings,
   type ApplicationDocument,
@@ -470,6 +471,45 @@ export async function listPayrollBatches() {
   return guarded<typeof payrollExportBatches.$inferSelect[]>([], () =>
     db.select().from(payrollExportBatches).orderBy(desc(payrollExportBatches.createdAt))
   )
+}
+
+export async function getPayrollBatchById(id: string) {
+  return guarded<typeof payrollExportBatches.$inferSelect | null>(null, async () => {
+    const [row] = await db.select().from(payrollExportBatches).where(eq(payrollExportBatches.id, id))
+    return row ?? null
+  })
+}
+
+export async function listPayrollBatchItems(batchId: string) {
+  return guarded<(ApplicationWithCandidate & { externalEmployeeId: string | null })[]>([], async () => {
+    const rows = await db
+      .select({ item: payrollExportItems, application: applications, candidate: candidates, company: companies })
+      .from(payrollExportItems)
+      .innerJoin(applications, eq(payrollExportItems.applicationId, applications.id))
+      .innerJoin(candidates, eq(applications.candidateId, candidates.id))
+      .innerJoin(companies, eq(applications.companyId, companies.id))
+      .where(eq(payrollExportItems.batchId, batchId))
+
+    return rows.map(({ item, application, candidate, company }) => ({
+      ...application,
+      candidate,
+      company,
+      externalEmployeeId: item.externalEmployeeId,
+    }))
+  })
+}
+
+export async function listActiveApplicationsForExport() {
+  return guarded<ApplicationWithCandidate[]>([], async () => {
+    const rows = await db
+      .select({ application: applications, candidate: candidates, company: companies })
+      .from(applications)
+      .innerJoin(candidates, eq(applications.candidateId, candidates.id))
+      .innerJoin(companies, eq(applications.companyId, companies.id))
+      .orderBy(desc(applications.createdAt))
+
+    return rows.map(({ application, candidate, company }) => ({ ...application, candidate, company }))
+  })
 }
 
 // --- Dashboard KPIs ---

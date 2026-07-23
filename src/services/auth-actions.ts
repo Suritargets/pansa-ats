@@ -42,7 +42,7 @@ export async function loginAction(
  * Bind altijd met de juiste loginPath: `logoutAction.bind(null, '/admin' | '/client' | '/candidate')`
  * — zo weet de logout-knop in elke shell naar welke loginpagina hij terug moet.
  */
-export async function logoutAction(loginPath: string, _formData: FormData): Promise<void> {
+export async function logoutAction(loginPath: string): Promise<void> {
   await destroySession()
   redirect(loginPath)
 }

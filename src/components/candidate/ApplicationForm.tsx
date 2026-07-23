@@ -17,9 +17,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { OPEN_POSITIONS } from '@/constants/companies'
+import { FALLBACK_POSITIONS } from '@/constants/companies'
 import { submitApplication, uploadApplicationDocument } from '@/services/applications'
-import type { Company } from '@/types/database'
+import type { Company, JobCategory } from '@/types/database'
 import { cn } from '@/lib/utils'
 
 const schema = z.object({
@@ -33,7 +33,7 @@ const schema = z.object({
   nationality: z.string().optional(),
   yearsExperience: z.string().optional(),
   companyId: z.string().min(1, 'Kies een bedrijf'),
-  positionApplied: z.string().min(1, 'Kies een functie'),
+  jobCategoryId: z.string().min(1, 'Kies een functie'),
   coverNote: z.string().optional(),
 })
 
@@ -42,12 +42,13 @@ type FormValues = z.infer<typeof schema>
 interface ApplicationFormProps {
   mode: 'public' | 'digitize'
   companies: Company[]
+  jobCategories: JobCategory[]
 }
 
 const selectClasses =
   'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30'
 
-export function ApplicationForm({ mode, companies }: ApplicationFormProps) {
+export function ApplicationForm({ mode, companies, jobCategories }: ApplicationFormProps) {
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [cvFile, setCvFile] = useState<File | null>(null)
@@ -63,10 +64,13 @@ export function ApplicationForm({ mode, companies }: ApplicationFormProps) {
     setStatus('submitting')
     setErrorMessage(null)
 
+    const selectedJobCategory = jobCategories.find((jc) => jc.id === values.jobCategoryId)
+
     const result = await submitApplication(
       {
         companyId: values.companyId,
-        positionApplied: values.positionApplied,
+        jobCategoryId: values.jobCategoryId,
+        positionApplied: selectedJobCategory?.name ?? values.jobCategoryId,
         source: mode === 'digitize' ? 'digitized_paper' : 'online_form',
         coverNote: values.coverNote,
         candidate: {
@@ -170,12 +174,12 @@ export function ApplicationForm({ mode, companies }: ApplicationFormProps) {
               ))}
             </select>
           </FormField>
-          <FormField label="Functie" error={errors.positionApplied?.message}>
-            <select className={cn(selectClasses)} {...register('positionApplied')} defaultValue="">
+          <FormField label="Functie" error={errors.jobCategoryId?.message}>
+            <select className={cn(selectClasses)} {...register('jobCategoryId')} defaultValue="">
               <option value="">Kies een functie...</option>
-              {OPEN_POSITIONS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
+              {(jobCategories.length > 0 ? jobCategories.map((jc) => ({ id: jc.id, name: jc.name })) : FALLBACK_POSITIONS.map((p) => ({ id: p, name: p }))).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
                 </option>
               ))}
             </select>

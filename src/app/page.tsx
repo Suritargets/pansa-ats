@@ -27,6 +27,14 @@ export default function HomePage() {
           Staff / Admin login
         </Button>
       </div>
+      <div className="mt-4 flex gap-4 text-sm text-muted-foreground">
+        <Link href="/client" className="hover:text-foreground hover:underline">
+          Klantportaal
+        </Link>
+        <Link href="/candidate" className="hover:text-foreground hover:underline">
+          Mijn sollicitatie
+        </Link>
+      </div>
     </main>
   )
 }
