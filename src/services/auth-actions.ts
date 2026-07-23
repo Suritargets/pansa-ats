@@ -9,6 +9,7 @@
 
 import { redirect } from 'next/navigation'
 import { destroySession, login } from '@/lib/auth'
+import { logAuditEvent } from '@/lib/audit'
 import type { UserRole } from '../../drizzle/schema'
 
 const ROLE_HOME: Record<UserRole, string> = {
@@ -35,6 +36,7 @@ export async function loginAction(
     return { error: 'Inloggen mislukt. Controleer je e-mail en wachtwoord.' }
   }
 
+  await logAuditEvent(session, 'login', { entityType: 'profile', entityId: session.userId })
   redirect(ROLE_HOME[session.role])
 }
 

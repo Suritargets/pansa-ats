@@ -46,7 +46,18 @@ export default async function ClientRequestsAdminPage() {
             {requests.map((req) => (
               <TableRow key={req.id}>
                 <TableCell className="font-medium text-foreground">{req.client.name}</TableCell>
-                <TableCell className="text-muted-foreground">{req.jobCategory?.name ?? '—'}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {req.jobCategory?.name ?? '—'}
+                  {req.jobScope.length > 0 && (
+                    <ul className="mt-1 space-y-0.5 text-xs text-muted-foreground">
+                      {req.jobScope.map((entry, i) => (
+                        <li key={i}>
+                          <span className="font-medium text-foreground">{entry.category}:</span> {entry.requirement}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </TableCell>
                 <TableCell className="text-muted-foreground">{req.quantity}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{STATUS_LABELS[req.status]}</Badge>

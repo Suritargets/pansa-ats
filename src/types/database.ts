@@ -9,6 +9,9 @@ import type { Application, Candidate, ClientCandidateShareRow, Company } from '.
 export type {
   ApplicationSource,
   ApplicationStatus,
+  AuditLogRow,
+  NewAuditLogRow,
+  JobScopeEntry,
   Candidate,
   Client,
   ClientCandidateShareRow,
@@ -26,6 +29,7 @@ export type {
   EmploymentContract,
   Gender,
   Interview,
+  InterviewQuestion,
   InterviewType,
   JobBranche,
   JobCategory,

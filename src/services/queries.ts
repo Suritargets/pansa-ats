@@ -14,7 +14,9 @@ import { and, count, desc, eq, inArray, isNull, or } from 'drizzle-orm'
 import { db, DB_MODE } from '@/lib/db'
 import {
   applicationDocuments,
+  applicationStatusHistory,
   applications,
+  auditLog,
   candidateTrainingProgress,
   candidates,
   clientCandidateShares,
@@ -22,23 +24,28 @@ import {
   clients,
   companies,
   employmentContracts,
+  interviewQuestions,
   interviews,
   jobCategories,
   onboardingProgress,
   onboardingStepTemplates,
   payrollExportBatches,
   payrollExportItems,
+  profiles,
   suppliers,
   trainings,
   type ApplicationDocument,
   type ApplicationStatus,
+  type AuditLogRow,
   type Candidate,
   type Client,
+  type InterviewType,
   type JobBranche,
   type JobLevel,
+  type Profile,
   type Supplier,
 } from '../../drizzle/schema'
-import type { ApplicationWithCandidate } from '@/types/database'
+import { APPLICATION_STATUS_LABELS, type ApplicationWithCandidate } from '@/types/database'
 
 async function guarded<T>(empty: T, fn: () => Promise<T>): Promise<T> {
   if (DB_MODE === 'demo') return empty
@@ -140,6 +147,26 @@ export async function listCompanies() {
 
 export async function listClients() {
   return guarded<Client[]>([], () => db.select().from(clients).orderBy(clients.name))
+}
+
+export async function listProfiles() {
+  return guarded<Profile[]>([], () => db.select().from(profiles).orderBy(profiles.fullName))
+}
+
+export async function listAuditLog(filters?: { action?: string; entityType?: string }) {
+  return guarded<AuditLogRow[]>([], () => {
+    const conditions = [
+      filters?.action ? eq(auditLog.action, filters.action) : undefined,
+      filters?.entityType ? eq(auditLog.entityType, filters.entityType) : undefined,
+    ].filter((c): c is Exclude<typeof c, undefined> => c !== undefined)
+
+    return db
+      .select()
+      .from(auditLog)
+      .where(conditions.length ? and(...conditions) : undefined)
+      .orderBy(desc(auditLog.createdAt))
+      .limit(200)
+  })
 }
 
 export async function getClientById(id: string) {
@@ -349,6 +376,24 @@ export async function listInterviews(applicationId: string) {
   )
 }
 
+/** Actieve vragen voor het interview-formulier, gegroepeerd/gesorteerd per type. */
+export async function listInterviewQuestions(type?: InterviewType) {
+  return guarded<typeof interviewQuestions.$inferSelect[]>([], () =>
+    db
+      .select()
+      .from(interviewQuestions)
+      .where(type ? and(eq(interviewQuestions.type, type), eq(interviewQuestions.active, true)) : eq(interviewQuestions.active, true))
+      .orderBy(interviewQuestions.type, interviewQuestions.stepOrder)
+  )
+}
+
+/** Alle vragen (incl. inactieve) voor het beheerscherm. */
+export async function listAllInterviewQuestions() {
+  return guarded<typeof interviewQuestions.$inferSelect[]>([], () =>
+    db.select().from(interviewQuestions).orderBy(interviewQuestions.type, interviewQuestions.stepOrder)
+  )
+}
+
 export async function listContracts(applicationId: string) {
   return guarded<typeof employmentContracts.$inferSelect[]>([], () =>
     db
@@ -542,4 +587,66 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       return { byStatus, totalApplications, totalClients, totalCandidates, pendingVacancyRequests }
     }
   )
+}
+
+// --- Reporting: conversion funnel + time-in-stage ---
+
+export interface ReportingStats {
+  funnel: { status: ApplicationStatus; label: string; reached: number }[]
+  avgTimeInStageDays: { status: ApplicationStatus; label: string; avgDays: number; sampleSize: number }[]
+}
+
+const FUNNEL_ORDER: ApplicationStatus[] = ['new', 'in_review', 'shortlisted', 'interview', 'offer', 'onboarding', 'active']
+
+export async function getReportingStats(): Promise<ReportingStats> {
+  return guarded<ReportingStats>({ funnel: [], avgTimeInStageDays: [] }, async () => {
+    const reachedRows = await db
+      .select({ status: applicationStatusHistory.toStatus, value: count() })
+      .from(applicationStatusHistory)
+      .groupBy(applicationStatusHistory.toStatus)
+    const reachedByStatus = Object.fromEntries(reachedRows.map((r) => [r.status, r.value])) as Partial<
+      Record<ApplicationStatus, number>
+    >
+    const funnel = FUNNEL_ORDER.map((status) => ({
+      status,
+      label: APPLICATION_STATUS_LABELS[status],
+      reached: reachedByStatus[status] ?? 0,
+    }))
+
+    const historyRows = await db
+      .select({
+        applicationId: applicationStatusHistory.applicationId,
+        toStatus: applicationStatusHistory.toStatus,
+        createdAt: applicationStatusHistory.createdAt,
+      })
+      .from(applicationStatusHistory)
+      .orderBy(applicationStatusHistory.applicationId, applicationStatusHistory.createdAt)
+
+    const durationsByStatus = new Map<ApplicationStatus, number[]>()
+    let prevAppId: string | null = null
+    let prevStatus: ApplicationStatus | null = null
+    let prevAt: Date | null = null
+
+    for (const row of historyRows) {
+      if (row.applicationId === prevAppId && prevStatus && prevAt) {
+        const days = (row.createdAt.getTime() - prevAt.getTime()) / (1000 * 60 * 60 * 24)
+        if (days >= 0) {
+          const list = durationsByStatus.get(prevStatus) ?? []
+          list.push(days)
+          durationsByStatus.set(prevStatus, list)
+        }
+      }
+      prevAppId = row.applicationId
+      prevStatus = row.toStatus
+      prevAt = row.createdAt
+    }
+
+    const avgTimeInStageDays = FUNNEL_ORDER.filter((s) => s !== 'active').map((status) => {
+      const durations = durationsByStatus.get(status) ?? []
+      const avgDays = durations.length ? durations.reduce((sum, d) => sum + d, 0) / durations.length : 0
+      return { status, label: APPLICATION_STATUS_LABELS[status], avgDays, sampleSize: durations.length }
+    })
+
+    return { funnel, avgTimeInStageDays }
+  })
 }

@@ -27,6 +27,7 @@ import {
   type ClientCandidateShareRow,
   type EmploymentContract,
   type Interview,
+  type InterviewQuestion,
   type OnboardingProgressRow,
   type OnboardingStepTemplate,
 } from '@/types/database'
@@ -65,6 +66,7 @@ export function ProfileSketch({
   application,
   documents,
   interviews,
+  interviewQuestions,
   contracts,
   onboardingSteps,
   onboardingProgress,
@@ -74,6 +76,7 @@ export function ProfileSketch({
   application: ApplicationWithCandidate
   documents: ApplicationDocument[]
   interviews: Interview[]
+  interviewQuestions: InterviewQuestion[]
   contracts: EmploymentContract[]
   onboardingSteps: OnboardingStepTemplate[]
   onboardingProgress: OnboardingProgressRow[]
@@ -99,7 +102,12 @@ export function ProfileSketch({
                   Solliciteert bij {application.company.name} — {application.positionApplied}
                 </p>
               </div>
-              <StatusBadge status={application.status} />
+              <div className="flex items-center gap-3">
+                <Button variant="outline" size="sm" render={<a href={`/admin/applications/${application.id}/cv`} target="_blank" rel="noopener noreferrer" />}>
+                  CV bekijken
+                </Button>
+                <StatusBadge status={application.status} />
+              </div>
             </div>
           </CardHeader>
         </Card>
@@ -157,6 +165,16 @@ export function ProfileSketch({
                   <Field label="Bankrekening" value={application.candidate.bankAccountNumber} />
                   <Field label="Bank" value={application.candidate.bankName} />
                   <Field
+                    label="Familielid bij Pansa Group/HPS"
+                    value={
+                      application.candidate.relatedToStaffMember === null
+                        ? undefined
+                        : application.candidate.relatedToStaffMember
+                          ? `Ja — ${application.candidate.relatedToStaffMemberDetails || 'geen toelichting'}`
+                          : 'Nee'
+                    }
+                  />
+                  <Field
                     label="Bron"
                     value={application.source === 'digitized_paper' ? 'Handgeschreven (gedigitaliseerd)' : 'Online formulier'}
                   />
@@ -182,6 +200,24 @@ export function ProfileSketch({
                         {application.candidate.lastSupervisorContact ? ` (${application.candidate.lastSupervisorContact})` : ''}
                       </p>
                     )}
+                  </div>
+                )}
+
+                {application.candidate.personalCompetencies && (
+                  <div className="mt-6">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Persoonlijke competenties
+                    </p>
+                    <p className="text-sm text-foreground">{application.candidate.personalCompetencies}</p>
+                  </div>
+                )}
+
+                {application.candidate.languageSkills && (
+                  <div className="mt-6">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Taalvaardigheid
+                    </p>
+                    <p className="text-sm text-foreground">{application.candidate.languageSkills}</p>
                   </div>
                 )}
               </CardContent>
@@ -263,7 +299,7 @@ export function ProfileSketch({
 
           <TabsContent value="interviews" className="space-y-4 pt-4">
             <InterviewsList interviews={interviews} />
-            <InterviewForm applicationId={application.id} />
+            <InterviewForm applicationId={application.id} questions={interviewQuestions} />
           </TabsContent>
 
           <TabsContent value="onboarding" className="pt-4">

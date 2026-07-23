@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { requireSession } from '@/lib/auth'
-import { listJobCategories, listOwnVacancyRequestsForClient } from '@/services/queries'
+import { listInterviewQuestions, listJobCategories, listOwnVacancyRequestsForClient } from '@/services/queries'
 import { ClientShell } from '@/components/client/ClientShell'
 import { VacancyRequestForm } from '@/components/client/VacancyRequestForm'
 import { Badge } from '@/components/ui/badge'
@@ -24,17 +24,19 @@ export default async function ClientRequestsPage({
   if (!session.clientId) redirect('/client')
 
   const { saved } = await searchParams
-  const [jobCategories, requests] = await Promise.all([
+  const [jobCategories, requests, workExperienceQuestions] = await Promise.all([
     listJobCategories(),
     listOwnVacancyRequestsForClient(session.clientId),
+    listInterviewQuestions('work_experience'),
   ])
+  const scopeCategories = [...new Set(workExperienceQuestions.map((q) => q.category ?? q.text))]
 
   return (
     <ClientShell session={session}>
       <h1 className="mb-6 text-lg font-semibold text-foreground">Vacature aanvragen</h1>
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <VacancyRequestForm jobCategories={jobCategories} saved={saved === '1'} />
+        <VacancyRequestForm jobCategories={jobCategories} scopeCategories={scopeCategories} saved={saved === '1'} />
 
         <div>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">

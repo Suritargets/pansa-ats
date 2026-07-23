@@ -6,13 +6,16 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   Banknote,
+  BarChart3,
   Building2,
   ClipboardList,
   Download,
   GraduationCap,
+  History,
   Inbox,
   LayoutDashboard,
   ListChecks,
+  MessageCircleQuestion,
   ScanLine,
   Settings,
   Share2,
@@ -36,7 +39,10 @@ export interface NavGroup {
 
 export const ADMIN_NAV: NavGroup[] = [
   {
-    items: [{ label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard }],
+    items: [
+      { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+      { label: 'Rapportages', href: '/admin/reports', icon: BarChart3 },
+    ],
   },
   {
     label: 'CRM',
@@ -77,7 +83,12 @@ export const ADMIN_NAV: NavGroup[] = [
   {
     label: 'Instellingen',
     roles: ['super_admin'],
-    items: [{ label: 'Functiecategorieën', href: '/admin/settings/job-categories', icon: Tags }],
+    items: [
+      { label: 'Functiecategorieën', href: '/admin/settings/job-categories', icon: Tags },
+      { label: 'Interviewvragen', href: '/admin/settings/interview-questions', icon: MessageCircleQuestion },
+      { label: 'Gebruikers & rollen', href: '/admin/settings/users', icon: Users },
+      { label: 'Audit-log', href: '/admin/settings/audit-log', icon: History },
+    ],
   },
 ]
 

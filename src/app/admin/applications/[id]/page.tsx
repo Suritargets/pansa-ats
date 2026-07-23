@@ -11,6 +11,7 @@ import {
   listApplicationDocuments,
   listApplicationShares,
   listContracts,
+  listInterviewQuestions,
   listInterviews,
   listOnboardingProgress,
   listOnboardingStepTemplates,
@@ -26,10 +27,11 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
   const application = await getApplicationById(id)
   if (!application) notFound()
 
-  const [documents, interviews, contracts, onboardingSteps, onboardingProgress, shareableClients, shares] =
+  const [documents, interviews, interviewQuestions, contracts, onboardingSteps, onboardingProgress, shareableClients, shares] =
     await Promise.all([
       listApplicationDocuments(id),
       listInterviews(id),
+      listInterviewQuestions(),
       listContracts(id),
       listOnboardingStepTemplates(application.companyId),
       listOnboardingProgress(id),
@@ -43,6 +45,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
         application={application}
         documents={documents}
         interviews={interviews}
+        interviewQuestions={interviewQuestions}
         contracts={contracts}
         onboardingSteps={onboardingSteps}
         onboardingProgress={onboardingProgress}

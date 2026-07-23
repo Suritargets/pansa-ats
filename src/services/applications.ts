@@ -13,6 +13,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { createUploadToken, getSession, requireSession, verifyUploadToken } from '@/lib/auth'
 import { uploadDocument } from '@/lib/blob'
+import { logAuditEvent } from '@/lib/audit'
 import { STAFF_ROLES } from '@/lib/roles'
 import type { ServiceResult } from '@/lib/service-result'
 
@@ -72,6 +73,10 @@ export interface NewApplicationInput {
     availabilityDate?: string
     bankAccountNumber?: string
     bankName?: string
+    relatedToStaffMember?: boolean
+    relatedToStaffMemberDetails?: string
+    personalCompetencies?: string
+    languageSkills?: string
     yearsExperience?: number
     skills?: string[]
   }
@@ -123,6 +128,10 @@ export async function submitApplication(
         availabilityDate: input.candidate.availabilityDate ?? null,
         bankAccountNumber: input.candidate.bankAccountNumber ?? null,
         bankName: input.candidate.bankName ?? null,
+        relatedToStaffMember: input.candidate.relatedToStaffMember ?? null,
+        relatedToStaffMemberDetails: input.candidate.relatedToStaffMemberDetails ?? null,
+        personalCompetencies: input.candidate.personalCompetencies ?? null,
+        languageSkills: input.candidate.languageSkills ?? null,
         yearsExperience: input.candidate.yearsExperience?.toString() ?? null,
         skills: input.candidate.skills ?? [],
       })
@@ -219,6 +228,12 @@ export async function updateApplicationStatus(
       toStatus,
       changedBy: session.userId,
       note: note ?? null,
+    })
+
+    await logAuditEvent(session, 'application_status_changed', {
+      entityType: 'application',
+      entityId: applicationId,
+      metadata: { fromStatus, toStatus, note: note ?? null },
     })
 
     revalidatePath(`/admin/applications/${applicationId}`)

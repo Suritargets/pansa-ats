@@ -83,6 +83,10 @@ const schema = z.object({
   availabilityDate: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankName: z.string().optional(),
+  relatedToStaffMember: z.boolean().optional(),
+  relatedToStaffMemberDetails: z.string().optional(),
+  personalCompetencies: z.string().optional(),
+  languageSkills: z.string().optional(),
 })
 
 export type ApplicationFormValues = z.infer<typeof schema>
@@ -123,6 +127,7 @@ const STEPS: { id: string; title: string; fields: (keyof ApplicationFormValues)[
     fields: [
       'workedSimilarCompanyBefore', 'workedSimilarCompanyDetails', 'lastJobDescription',
       'lastSupervisorName', 'lastSupervisorContact', 'availabilityDate', 'bankAccountNumber', 'bankName',
+      'relatedToStaffMember', 'relatedToStaffMemberDetails', 'personalCompetencies', 'languageSkills',
     ],
   },
   {
@@ -182,6 +187,10 @@ const DEFAULT_VALUES: ApplicationFormValues = {
   availabilityDate: '',
   bankAccountNumber: '',
   bankName: '',
+  relatedToStaffMember: false,
+  relatedToStaffMemberDetails: '',
+  personalCompetencies: '',
+  languageSkills: '',
 }
 
 export function ApplicationForm({ mode, companies, jobCategories, ocrData, initialScanFile }: ApplicationFormProps) {
@@ -230,6 +239,7 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
   const hasJusticeRecord = useWatch({ control, name: 'hasJusticeRecord' })
   const hasDriversLicense = useWatch({ control, name: 'hasDriversLicense' })
   const workedSimilarCompanyBefore = useWatch({ control, name: 'workedSimilarCompanyBefore' })
+  const relatedToStaffMember = useWatch({ control, name: 'relatedToStaffMember' })
 
   async function onSubmit(values: ApplicationFormValues) {
     setStatus('submitting')
@@ -277,6 +287,10 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
           availabilityDate: values.availabilityDate || undefined,
           bankAccountNumber: values.bankAccountNumber || undefined,
           bankName: values.bankName || undefined,
+          relatedToStaffMember: values.relatedToStaffMember,
+          relatedToStaffMemberDetails: values.relatedToStaffMemberDetails || undefined,
+          personalCompetencies: values.personalCompetencies || undefined,
+          languageSkills: values.languageSkills || undefined,
           yearsExperience: values.yearsExperience ? Number(values.yearsExperience) : undefined,
         },
       },
@@ -583,6 +597,18 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
             <Input {...register('bankName')} />
           </FormField>
         </div>
+        <div className="space-y-2">
+          <CheckboxField label="Familielid werkzaam bij Pansa Group/HPS" {...register('relatedToStaffMember')} />
+          {relatedToStaffMember && (
+            <Input placeholder="Relatie en naam familielid" {...register('relatedToStaffMemberDetails')} />
+          )}
+        </div>
+        <FormField label="Persoonlijke competenties" hint="Voor op het CV">
+          <Textarea {...register('personalCompetencies')} />
+        </FormField>
+        <FormField label="Taalvaardigheid" hint="Welke talen spreek/lees/schrijf je?">
+          <Textarea {...register('languageSkills')} />
+        </FormField>
       </section>
       )}
 

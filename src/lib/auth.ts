@@ -130,7 +130,7 @@ export function verifyUploadToken(applicationId: string, token: string | undefin
  */
 export async function login(email: string, password: string): Promise<SessionData | null> {
   const [profile] = await db.select().from(profiles).where(eq(profiles.email, email.toLowerCase().trim()))
-  if (!profile) return null
+  if (!profile || !profile.active) return null
 
   const valid = await verifyPassword(password, profile.passwordHash)
   if (!valid) return null

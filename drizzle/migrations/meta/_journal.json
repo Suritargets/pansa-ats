@@ -29,6 +29,27 @@
       "when": 1784782208026,
       "tag": "0003_candidate_registration_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784783581870,
+      "tag": "0004_cv_fields_and_interview_questions",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784784311386,
+      "tag": "0005_audit_log_job_scope_police_clearance",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1784784875555,
+      "tag": "0006_profiles_active_flag",
+      "breakpoints": true
     }
   ]
 }

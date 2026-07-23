@@ -242,6 +242,7 @@ export const profiles = pgTable('profiles', {
   companyId: uuid('company_id').references(() => companies.id), // interne staff — thuisbedrijf
   clientId: uuid('client_id').references(() => clients.id), // voor role='client'
   candidateId: uuid('candidate_id').references(() => candidates.id), // voor role='candidate'
+  active: boolean('active').notNull().default(true),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
@@ -272,6 +273,7 @@ export const candidates = pgTable(
     justiceRecordReason: text('justice_record_reason'),
     hasDriversLicense: boolean('has_drivers_license'),
     driversLicenseCategory: text('drivers_license_category'),
+    policeClearanceDate: text('police_clearance_date'), // datum bewijs van goed gedrag (ISO)
     education: jsonb('education').$type<EducationEntry[]>().notNull().default([]),
     // kandidaat's eigen opleidingsgeschiedenis — niet te verwarren met `trainings`/
     // `candidate_training_progress`, dat is Pansa-training NA aanname.
@@ -285,6 +287,11 @@ export const candidates = pgTable(
     availabilityDate: text('availability_date'), // ISO date string
     bankAccountNumber: text('bank_account_number'), // girorekeningnummer
     bankName: text('bank_name'),
+    // Van het CV-sjabloon (references/cv-template.md) — belangenverstrengelings-check.
+    relatedToStaffMember: boolean('related_to_staff_member'),
+    relatedToStaffMemberDetails: text('related_to_staff_member_details'), // relatie + naam
+    personalCompetencies: text('personal_competencies'),
+    languageSkills: text('language_skills'),
     skills: text('skills').array().notNull().default([]),
     certifications: text('certifications').array().notNull().default([]),
     yearsExperience: numeric('years_experience'),
@@ -399,6 +406,24 @@ export const interviews = pgTable(
   (table) => [index('idx_interviews_application').on(table.applicationId)]
 )
 
+// --- Interview questions: beheerbare vragenbank (bron voor InterviewForm en, later,
+// een sollicitatie-chatwidget op de publieke website) ---
+
+export const interviewQuestions = pgTable(
+  'interview_questions',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    type: interviewTypeEnum('type').notNull().default('general'),
+    category: text('category'), // bv. "Technische vakkennis" (werkervaring-gesprek groepeert per categorie)
+    text: text('text').notNull(),
+    scored: boolean('scored').notNull().default(true), // algemeen gesprek = gescoord, werkervaring = open
+    stepOrder: integer('step_order').notNull().default(0),
+    active: boolean('active').notNull().default(true),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('idx_interview_questions_type').on(table.type)]
+)
+
 // --- Employment contracts: proeftijd -> termijn -> verlengingen ---
 
 export const employmentContracts = pgTable(
@@ -445,6 +470,11 @@ export const clientCandidateShares = pgTable(
   (table) => [unique().on(table.applicationId, table.clientId)]
 )
 
+export interface JobScopeEntry {
+  category: string // bv. "Technische vakkennis", "Veiligheid", "Gereedschappen" — zie interview_questions
+  requirement: string
+}
+
 export const clientVacancyRequests = pgTable('client_vacancy_requests', {
   id: uuid('id').defaultRandom().primaryKey(),
   clientId: uuid('client_id')
@@ -453,6 +483,9 @@ export const clientVacancyRequests = pgTable('client_vacancy_requests', {
   jobCategoryId: uuid('job_category_id').references(() => jobCategories.id),
   quantity: integer('quantity').notNull().default(1),
   notes: text('notes'),
+  // Gestructureerde functie-eisen — dezelfde categorieën als het werkervaring-interview,
+  // zodat HR de kandidaat er later precies op kan doorvragen. Optioneel, vrij aan te vullen.
+  jobScope: jsonb('job_scope').$type<JobScopeEntry[]>().notNull().default([]),
   status: vacancyRequestStatusEnum('status').notNull().default('submitted'),
   requestedBy: uuid('requested_by').references(() => profiles.id),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -533,6 +566,26 @@ export const payrollExportItems = pgTable('payroll_export_items', {
   externalEmployeeId: text('external_employee_id'),
   exportPayload: jsonb('export_payload'),
 })
+
+// --- Audit log: wie deed wat, wanneer — voor compliance en troubleshooting ---
+
+export const auditLog = pgTable(
+  'audit_log',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    actorId: uuid('actor_id').references(() => profiles.id),
+    actorEmail: text('actor_email'), // ook gezet bij niet-ingelogde acties (bv. publieke sollicitatie)
+    action: text('action').notNull(), // bv. "application.status_changed", "profile.created"
+    entityType: text('entity_type'), // bv. "application", "profile", "client"
+    entityId: text('entity_id'),
+    metadata: jsonb('metadata'), // vrije context, bv. { fromStatus, toStatus }
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('idx_audit_log_entity').on(table.entityType, table.entityId),
+    index('idx_audit_log_created').on(table.createdAt),
+  ]
+)
 
 // --- Relations (voor db.query.* joins) ---
 
@@ -686,6 +739,9 @@ export type ApplicationStatusHistoryRow = typeof applicationStatusHistory.$infer
 export type Interview = typeof interviews.$inferSelect
 export type NewInterview = typeof interviews.$inferInsert
 
+export type InterviewQuestion = typeof interviewQuestions.$inferSelect
+export type NewInterviewQuestion = typeof interviewQuestions.$inferInsert
+
 export type EmploymentContract = typeof employmentContracts.$inferSelect
 export type NewEmploymentContract = typeof employmentContracts.$inferInsert
 
@@ -706,3 +762,6 @@ export type CandidateTrainingProgressRow = typeof candidateTrainingProgress.$inf
 
 export type PayrollExportBatch = typeof payrollExportBatches.$inferSelect
 export type PayrollExportItem = typeof payrollExportItems.$inferSelect
+
+export type AuditLogRow = typeof auditLog.$inferSelect
+export type NewAuditLogRow = typeof auditLog.$inferInsert

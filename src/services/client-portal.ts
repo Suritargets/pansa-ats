@@ -14,8 +14,14 @@ import { redirect } from 'next/navigation'
 import { and, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
+import { logAuditEvent } from '@/lib/audit'
 import { STAFF_ROLES } from '@/lib/roles'
-import { clientCandidateShares, clientVacancyRequests, type VacancyRequestStatus } from '../../drizzle/schema'
+import {
+  clientCandidateShares,
+  clientVacancyRequests,
+  type JobScopeEntry,
+  type VacancyRequestStatus,
+} from '../../drizzle/schema'
 
 // --- Staff: profielen delen ---
 
@@ -27,13 +33,15 @@ export async function shareApplicationWithClient(applicationId: string, clientId
     .values({ applicationId, clientId, sharedBy: session.userId })
     .onConflictDoNothing()
 
+  await logAuditEvent(session, 'application_shared', { entityType: 'application', entityId: applicationId, metadata: { clientId } })
   revalidatePath(`/admin/applications/${applicationId}`)
   revalidatePath('/admin/client-shares')
 }
 
 export async function unshareApplication(shareId: string, applicationId: string): Promise<void> {
-  await requireSession([...STAFF_ROLES])
+  const session = await requireSession([...STAFF_ROLES])
   await db.delete(clientCandidateShares).where(eq(clientCandidateShares.id, shareId))
+  await logAuditEvent(session, 'application_unshared', { entityType: 'application', entityId: applicationId })
   revalidatePath(`/admin/applications/${applicationId}`)
   revalidatePath('/admin/client-shares')
 }
@@ -54,6 +62,19 @@ export async function submitClientFeedback(applicationId: string, feedback: stri
   revalidatePath(`/client/applications/${applicationId}`)
 }
 
+function parseJobScope(raw: FormDataEntryValue | null): JobScopeEntry[] {
+  if (typeof raw !== 'string' || !raw) return []
+  try {
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .filter((entry): entry is JobScopeEntry => typeof entry?.category === 'string' && typeof entry?.requirement === 'string')
+      .filter((entry) => entry.category.trim() && entry.requirement.trim())
+  } catch {
+    return []
+  }
+}
+
 // --- Client: vacature-aanvraag ---
 
 export async function createVacancyRequest(formData: FormData): Promise<void> {
@@ -63,12 +84,14 @@ export async function createVacancyRequest(formData: FormData): Promise<void> {
   const jobCategoryId = String(formData.get('jobCategoryId') ?? '').trim() || null
   const quantity = Number(formData.get('quantity') ?? 1) || 1
   const notes = String(formData.get('notes') ?? '').trim() || null
+  const jobScope = parseJobScope(formData.get('jobScope'))
 
   await db.insert(clientVacancyRequests).values({
     clientId: session.clientId,
     jobCategoryId,
     quantity,
     notes,
+    jobScope,
     requestedBy: session.userId,
   })
 
@@ -80,7 +103,8 @@ export async function createVacancyRequest(formData: FormData): Promise<void> {
 // --- Staff: vacature-aanvraag beoordelen ---
 
 export async function updateVacancyRequestStatus(id: string, status: VacancyRequestStatus): Promise<void> {
-  await requireSession([...STAFF_ROLES])
+  const session = await requireSession([...STAFF_ROLES])
   await db.update(clientVacancyRequests).set({ status }).where(eq(clientVacancyRequests.id, id))
+  await logAuditEvent(session, 'vacancy_request_status_changed', { entityType: 'client_vacancy_request', entityId: id, metadata: { status } })
   revalidatePath('/admin/client-requests')
 }
