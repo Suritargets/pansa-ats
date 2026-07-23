@@ -13,8 +13,9 @@ import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { createUploadToken, getSession, requireSession, verifyUploadToken } from '@/lib/auth'
 import { uploadDocument } from '@/lib/blob'
+import { STAFF_ROLES } from '@/lib/roles'
+import type { ServiceResult } from '@/lib/service-result'
 
-const STAFF_ROLES = ['super_admin', 'hr_staff', 'recruiter'] as const
 const ALLOWED_DOCUMENT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 const MAX_DOCUMENT_SIZE_BYTES = 8 * 1024 * 1024
 import {
@@ -45,8 +46,6 @@ export interface NewApplicationInput {
     skills?: string[]
   }
 }
-
-export type ServiceResult<T> = { success: true; data: T } | { success: false; error: string }
 
 /**
  * Maakt een candidate + application aan. Publiek toegankelijk (sollicitatieformulier) en
@@ -86,7 +85,7 @@ export async function submitApplication(
       })
       .returning({ id: applications.id })
 
-    if (requireStaff) revalidatePath('/admin/dashboard')
+    if (requireStaff) revalidatePath('/admin/applications')
 
     return {
       success: true,
@@ -168,7 +167,7 @@ export async function updateApplicationStatus(
     })
 
     revalidatePath(`/admin/applications/${applicationId}`)
-    revalidatePath('/admin/dashboard')
+    revalidatePath('/admin/applications')
 
     return { success: true, data: null }
   } catch (error) {

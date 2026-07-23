@@ -32,6 +32,8 @@ export interface SessionData {
   fullName: string
   role: UserRole
   companyId: string | null
+  clientId: string | null
+  candidateId: string | null
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -77,6 +79,8 @@ export async function getSession(): Promise<SessionData | null> {
       fullName: payload.fullName as string,
       role: payload.role as UserRole,
       companyId: (payload.companyId as string | null) ?? null,
+      clientId: (payload.clientId as string | null) ?? null,
+      candidateId: (payload.candidateId as string | null) ?? null,
     }
   } catch {
     return null
@@ -84,13 +88,14 @@ export async function getSession(): Promise<SessionData | null> {
 }
 
 /**
- * Gooit een redirect naar /admin (login) als er geen geldige sessie is.
- * Optioneel: beperk tot specifieke rollen (bv. alleen staff, geen client).
+ * Gooit een redirect naar de loginpagina als er geen geldige sessie is.
+ * Optioneel: beperk tot specifieke rollen (bv. alleen staff, geen client/candidate) en/of
+ * een ander loginPath voor de client-/candidate-portal (default: staff-login op /admin).
  */
-export async function requireSession(allowedRoles?: UserRole[]): Promise<SessionData> {
+export async function requireSession(allowedRoles?: UserRole[], loginPath = '/admin'): Promise<SessionData> {
   const session = await getSession()
-  if (!session) redirect('/admin')
-  if (allowedRoles && !allowedRoles.includes(session.role)) redirect('/admin')
+  if (!session) redirect(loginPath)
+  if (allowedRoles && !allowedRoles.includes(session.role)) redirect(loginPath)
   return session
 }
 
@@ -136,6 +141,8 @@ export async function login(email: string, password: string): Promise<SessionDat
     fullName: profile.fullName,
     role: profile.role,
     companyId: profile.companyId,
+    clientId: profile.clientId,
+    candidateId: profile.candidateId,
   }
   await createSession(session)
   return session

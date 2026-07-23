@@ -4,24 +4,52 @@
  *         zodat er één bron van waarheid is tussen DB-schema en de rest van de app.
  */
 
-import type { Application, Candidate, Company } from '../../drizzle/schema'
+import type { Application, Candidate, ClientCandidateShareRow, Company } from '../../drizzle/schema'
 
 export type {
   ApplicationSource,
   ApplicationStatus,
   Candidate,
+  Client,
+  ClientCandidateShareRow,
+  ClientStatus,
+  ClientVacancyRequest,
   Company,
   CompanyKind,
+  ContractStage,
+  ContractStatus,
   DocumentKind,
   Application,
   ApplicationDocument,
+  EmergencyContact,
+  EmploymentContract,
+  Interview,
+  InterviewType,
+  JobBranche,
+  JobCategory,
+  JobLevel,
+  OnboardingProgressRow,
+  OnboardingStepStatus,
+  OnboardingStepTemplate,
+  PayrollExportBatch,
+  PayrollExportItem,
   Profile,
+  Supplier,
+  SupplierKind,
+  Training,
+  CandidateTrainingProgressRow,
+  TrainingProgressStatus,
   UserRole,
+  VacancyRequestStatus,
 } from '../../drizzle/schema'
 
 export interface ApplicationWithCandidate extends Application {
   candidate: Candidate
   company: Company
+}
+
+export interface SharedApplication extends ApplicationWithCandidate {
+  share: ClientCandidateShareRow
 }
 
 export const APPLICATION_STATUS_LABELS: Record<Application['status'], string> = {

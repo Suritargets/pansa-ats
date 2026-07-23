@@ -1,0 +1,3 @@
+ALTER TABLE "client_candidate_shares" ADD COLUMN "client_id" uuid NOT NULL;--> statement-breakpoint
+ALTER TABLE "client_candidate_shares" ADD CONSTRAINT "client_candidate_shares_client_id_clients_id_fk" FOREIGN KEY ("client_id") REFERENCES "public"."clients"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "client_candidate_shares" ADD CONSTRAINT "client_candidate_shares_application_id_client_id_unique" UNIQUE("application_id","client_id");

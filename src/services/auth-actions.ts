@@ -3,10 +3,21 @@
 /**
  * auth-actions.ts
  * WAT:    Server Actions voor in- en uitloggen (roept lib/auth.ts aan).
+ * WAAROM: Eén loginAction voor alle drie de portalen — de rol op de profiles-rij bepaalt
+ *         waar de gebruiker na inloggen terechtkomt.
  */
 
 import { redirect } from 'next/navigation'
 import { destroySession, login } from '@/lib/auth'
+import type { UserRole } from '../../drizzle/schema'
+
+const ROLE_HOME: Record<UserRole, string> = {
+  super_admin: '/admin/dashboard',
+  hr_staff: '/admin/dashboard',
+  recruiter: '/admin/dashboard',
+  client: '/client/dashboard',
+  candidate: '/candidate/dashboard',
+}
 
 export async function loginAction(
   _prevState: { error: string | null },
@@ -24,10 +35,14 @@ export async function loginAction(
     return { error: 'Inloggen mislukt. Controleer je e-mail en wachtwoord.' }
   }
 
-  redirect('/admin/dashboard')
+  redirect(ROLE_HOME[session.role])
 }
 
-export async function logoutAction(): Promise<void> {
+/**
+ * Bind altijd met de juiste loginPath: `logoutAction.bind(null, '/admin' | '/client' | '/candidate')`
+ * — zo weet de logout-knop in elke shell naar welke loginpagina hij terug moet.
+ */
+export async function logoutAction(loginPath: string, _formData: FormData): Promise<void> {
   await destroySession()
-  redirect('/admin')
+  redirect(loginPath)
 }
