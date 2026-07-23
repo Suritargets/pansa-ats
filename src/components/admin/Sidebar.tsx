@@ -13,15 +13,13 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { setSidebarCollapsedAction } from '@/services/sidebar-actions'
-import type { NavGroup } from '@/constants/nav'
+import { ADMIN_NAV } from '@/constants/nav'
 import type { UserRole } from '../../../drizzle/schema'
 
 export function Sidebar({
-  groups,
   role,
   initialCollapsed,
 }: {
-  groups: NavGroup[]
   role: UserRole
   initialCollapsed: boolean
 }) {
@@ -37,7 +35,7 @@ export function Sidebar({
     })
   }
 
-  const visibleGroups = groups.filter((group) => !group.roles || group.roles.includes(role))
+  const visibleGroups = ADMIN_NAV.filter((group) => !group.roles || group.roles.includes(role))
 
   return (
     <aside

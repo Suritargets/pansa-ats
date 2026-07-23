@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Sidebar } from '@/components/admin/Sidebar'
 import { getSidebarCollapsed } from '@/lib/sidebar'
 import { logoutAction } from '@/services/auth-actions'
-import { ADMIN_NAV } from '@/constants/nav'
 import type { SessionData } from '@/lib/auth'
 
 export async function AdminShell({ session, children }: { session: SessionData; children: React.ReactNode }) {
@@ -17,7 +16,7 @@ export async function AdminShell({ session, children }: { session: SessionData; 
 
   return (
     <div className="flex min-h-screen bg-background">
-      <Sidebar groups={ADMIN_NAV} role={session.role} initialCollapsed={collapsed} />
+      <Sidebar role={session.role} initialCollapsed={collapsed} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center justify-between border-b border-border bg-card px-6 py-4">
           <span className="text-sm text-muted-foreground">Welkom, {session.fullName}</span>
