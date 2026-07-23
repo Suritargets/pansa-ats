@@ -2,6 +2,7 @@
  * admin/digitize/page.tsx
  * WAT:    Scherm waar staff een handgeschreven sollicitatieformulier overtypt — evt. met
  *         AI-OCR-hulp (foto/scan uploaden, automatisch invullen, controleren en opslaan).
+ *         Twee modi: één document, of meerdere documenten (bulk) achter elkaar.
  */
 
 import { requireSession } from '@/lib/auth'
@@ -9,6 +10,8 @@ import { STAFF_ROLES } from '@/lib/roles'
 import { listCompanies, listJobCategories } from '@/services/queries'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { DigitizeWorkspace } from '@/components/admin/DigitizeWorkspace'
+import { BulkDigitizeWorkspace } from '@/components/admin/BulkDigitizeWorkspace'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export default async function DigitizePage() {
   const session = await requireSession([...STAFF_ROLES])
@@ -22,7 +25,18 @@ export default async function DigitizePage() {
         handmatig over. Voeg de scan altijd toe als bewijsstuk.
       </p>
       <div className="max-w-3xl">
-        <DigitizeWorkspace companies={companies} jobCategories={jobCategories} />
+        <Tabs defaultValue="single">
+          <TabsList>
+            <TabsTrigger value="single">Eén document</TabsTrigger>
+            <TabsTrigger value="bulk">Meerdere documenten (bulk)</TabsTrigger>
+          </TabsList>
+          <TabsContent value="single" className="pt-4">
+            <DigitizeWorkspace companies={companies} jobCategories={jobCategories} />
+          </TabsContent>
+          <TabsContent value="bulk" className="pt-4">
+            <BulkDigitizeWorkspace companies={companies} jobCategories={jobCategories} />
+          </TabsContent>
+        </Tabs>
       </div>
     </AdminShell>
   )

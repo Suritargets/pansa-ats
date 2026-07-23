@@ -16,6 +16,7 @@ import type { WebhookEvent } from '@/types/database'
 const EVENT_LABELS: Record<WebhookEvent, string> = {
   'application.created': 'Sollicitatie aangemaakt',
   'application.status_changed': 'Status gewijzigd',
+  'vacancy_request.created': 'Vacature-aanvraag ontvangen',
 }
 
 export default async function WebhooksSettingsPage() {

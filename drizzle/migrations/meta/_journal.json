@@ -57,6 +57,20 @@
       "when": 1784810374402,
       "tag": "0007_api_keys_and_webhooks",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1784814460902,
+      "tag": "0008_police_clearance_document_kind",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1784815193517,
+      "tag": "0009_chat_kb_entries",
+      "breakpoints": true
     }
   ]
 }

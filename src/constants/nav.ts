@@ -7,6 +7,7 @@ import type { LucideIcon } from 'lucide-react'
 import {
   Banknote,
   BarChart3,
+  BookOpen,
   Building2,
   ClipboardList,
   Code2,
@@ -18,6 +19,7 @@ import {
   LayoutDashboard,
   ListChecks,
   MessageCircleQuestion,
+  MessagesSquare,
   ScanLine,
   Settings,
   Share2,
@@ -91,6 +93,7 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: 'Interviewvragen', href: '/admin/settings/interview-questions', icon: MessageCircleQuestion },
       { label: 'Gebruikers & rollen', href: '/admin/settings/users', icon: Users },
       { label: 'Audit-log', href: '/admin/settings/audit-log', icon: History },
+      { label: 'Handleiding', href: '/admin/settings/handleiding', icon: BookOpen },
     ],
   },
   {
@@ -100,6 +103,7 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: 'Formulier embedden', href: '/admin/settings/embed', icon: Code2 },
       { label: 'API-sleutels', href: '/admin/settings/api-keys', icon: KeyRound },
       { label: 'Webhooks', href: '/admin/settings/webhooks', icon: Webhook },
+      { label: 'Chat-kennisbank', href: '/admin/settings/chat-kb', icon: MessagesSquare },
     ],
   },
 ]

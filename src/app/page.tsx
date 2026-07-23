@@ -34,6 +34,9 @@ export default function HomePage() {
         <Link href="/candidate" className="hover:text-foreground hover:underline">
           Mijn sollicitatie
         </Link>
+        <Link href="/request-staffing" className="hover:text-foreground hover:underline">
+          Personeel aanvragen
+        </Link>
       </div>
     </main>
   )

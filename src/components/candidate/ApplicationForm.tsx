@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -145,6 +146,8 @@ interface ApplicationFormProps {
   ocrData?: Partial<ApplicationFormValues> | null
   /** De geüploade scan die voor de OCR gebruikt is — voorkomt dat staff hem twee keer moet uploaden. */
   initialScanFile?: File | null
+  /** Voor de bulk-digitaliseren-flow: laat de wachtrij weten dat dit item is opgeslagen. */
+  onSaved?: () => void
 }
 
 const selectClasses =
@@ -193,10 +196,13 @@ const DEFAULT_VALUES: ApplicationFormValues = {
   languageSkills: '',
 }
 
-export function ApplicationForm({ mode, companies, jobCategories, ocrData, initialScanFile }: ApplicationFormProps) {
+export function ApplicationForm({ mode, companies, jobCategories, ocrData, initialScanFile, onSaved }: ApplicationFormProps) {
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [cvFile, setCvFile] = useState<File | null>(null)
+  const [idDocumentFile, setIdDocumentFile] = useState<File | null>(null)
+  const [policeClearanceFile, setPoliceClearanceFile] = useState<File | null>(null)
+  const [diplomaFiles, setDiplomaFiles] = useState<File[]>([])
   // `initialScanFile`/`ocrData` only need to be read once per mount — DigitizeWorkspace
   // remounts this component (via `key`) whenever new OCR-data arrives, so a plain
   // useState-at-mount is correct here and no effect is needed to "sync" a prop into state.
@@ -306,8 +312,12 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
     const { applicationId, uploadToken } = result.data
     if (cvFile) await uploadApplicationDocument(applicationId, cvFile, 'cv', uploadToken)
     if (scanFile) await uploadApplicationDocument(applicationId, scanFile, 'handwritten_scan', uploadToken)
+    if (idDocumentFile) await uploadApplicationDocument(applicationId, idDocumentFile, 'id_document', uploadToken)
+    if (policeClearanceFile) await uploadApplicationDocument(applicationId, policeClearanceFile, 'police_clearance', uploadToken)
+    for (const diploma of diplomaFiles) await uploadApplicationDocument(applicationId, diploma, 'certificate', uploadToken)
 
     setStatus('done')
+    onSaved?.()
   }
 
   if (status === 'done') {
@@ -616,6 +626,9 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
       <section className="space-y-4">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Documenten</h3>
         <div className="grid gap-4 sm:grid-cols-2">
+          <FileInput label="ID-kaart" onChange={setIdDocumentFile} />
+          <FileInput label="Bewijs van goed gedrag (politieverklaring)" onChange={setPoliceClearanceFile} />
+          <MultiFileInput label="Diploma's / certificaten" files={diplomaFiles} onChange={setDiplomaFiles} />
           <FileInput label="CV (optioneel)" onChange={setCvFile} />
           {mode === 'digitize' && (
             <div>
@@ -700,6 +713,45 @@ function FileInput({ label, onChange }: { label: string; onChange: (file: File |
         onChange={(e) => onChange(e.target.files?.[0] ?? null)}
         className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/80"
       />
+    </div>
+  )
+}
+
+function MultiFileInput({
+  label,
+  files,
+  onChange,
+}: {
+  label: string
+  files: File[]
+  onChange: (files: File[]) => void
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label>{label}</Label>
+      <input
+        type="file"
+        accept="image/*,.pdf"
+        multiple
+        onChange={(e) => onChange([...files, ...Array.from(e.target.files ?? [])])}
+        className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/80"
+      />
+      {files.length > 0 && (
+        <ul className="space-y-1">
+          {files.map((file, i) => (
+            <li key={i} className="flex items-center justify-between rounded-lg bg-muted px-2 py-1 text-xs text-foreground">
+              <span className="truncate">{file.name}</span>
+              <button
+                type="button"
+                onClick={() => onChange(files.filter((_, fi) => fi !== i))}
+                className="ml-2 shrink-0 text-muted-foreground hover:text-destructive"
+              >
+                <X className="size-3.5" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

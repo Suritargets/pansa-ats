@@ -13,19 +13,8 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { ApplicationForm, type ApplicationFormValues } from '@/components/candidate/ApplicationForm'
 import { extractRegistrationForm } from '@/services/ocr'
+import { mapOcrResultToFormValues } from '@/lib/ocr-mapping'
 import type { Company, JobCategory } from '@/types/database'
-
-function fuzzyMatchId(list: { id: string; name: string }[], guess?: string): string {
-  if (!guess) return ''
-  const normalized = guess.trim().toLowerCase()
-  if (!normalized) return ''
-  const exact = list.find((item) => item.name.toLowerCase() === normalized)
-  if (exact) return exact.id
-  const partial = list.find(
-    (item) => item.name.toLowerCase().includes(normalized) || normalized.includes(item.name.toLowerCase())
-  )
-  return partial?.id ?? ''
-}
 
 export function DigitizeWorkspace({ companies, jobCategories }: { companies: Company[]; jobCategories: JobCategory[] }) {
   const [file, setFile] = useState<File | null>(null)
@@ -48,31 +37,7 @@ export function DigitizeWorkspace({ companies, jobCategories }: { companies: Com
         return
       }
 
-      const { companyNameGuess, jobCategoryGuess, education, priorTrainings, workHistory, ...rest } = result.data
-
-      setOcrData({
-        ...rest,
-        companyId: fuzzyMatchId(companies, companyNameGuess),
-        jobCategoryId: fuzzyMatchId(jobCategories, jobCategoryGuess),
-        education: (education ?? []).map((e) => ({
-          level: e.level ?? '',
-          fieldOfStudy: e.fieldOfStudy ?? '',
-          completed: e.completed ?? false,
-        })),
-        priorTrainings: (priorTrainings ?? []).map((t) => ({
-          kind: t.kind ?? '',
-          title: t.title ?? '',
-          period: t.period ?? '',
-          completed: t.completed ?? false,
-        })),
-        workHistory: (workHistory ?? []).map((w) => ({
-          period: w.period ?? '',
-          company: w.company ?? '',
-          role: w.role ?? '',
-          salary: w.salary ?? '',
-          reasonForLeaving: w.reasonForLeaving ?? '',
-        })),
-      })
+      setOcrData(mapOcrResultToFormValues(result.data, companies, jobCategories))
       setScanFileForForm(file)
       setFormKey((k) => k + 1)
     })

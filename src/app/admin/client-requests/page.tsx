@@ -1,9 +1,13 @@
+import Link from 'next/link'
+import { Code2 } from 'lucide-react'
 import { requireSession } from '@/lib/auth'
-import { STAFF_ROLES } from '@/lib/roles'
+import { STAFF_ROLES, SUPER_ADMIN_ROLES } from '@/lib/roles'
 import { listVacancyRequests } from '@/services/queries'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { VacancyRequestActions } from '@/components/admin/VacancyRequestActions'
+import { ListSearchBox } from '@/components/admin/ListSearchBox'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatDate } from '@/lib/utils'
 import type { VacancyRequestStatus } from '@/types/database'
@@ -16,13 +20,25 @@ const STATUS_LABELS: Record<VacancyRequestStatus, string> = {
   rejected: 'Afgewezen',
 }
 
-export default async function ClientRequestsAdminPage() {
+export default async function ClientRequestsAdminPage({ searchParams }: { searchParams: Promise<{ search?: string }> }) {
   const session = await requireSession([...STAFF_ROLES])
-  const requests = await listVacancyRequests()
+  const { search } = await searchParams
+  const requests = await listVacancyRequests(search)
 
   return (
     <AdminShell session={session}>
-      <h1 className="mb-4 text-lg font-semibold text-foreground">Vacature-aanvragen ({requests.length})</h1>
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-lg font-semibold text-foreground">Vacature-aanvragen ({requests.length})</h1>
+        <div className="flex items-center gap-3">
+          <ListSearchBox placeholder="Zoek op client..." />
+          {SUPER_ADMIN_ROLES.includes(session.role as (typeof SUPER_ADMIN_ROLES)[number]) && (
+            <Button variant="outline" size="sm" render={<Link href="/admin/settings/embed" />}>
+              <Code2 className="size-4" />
+              Aanvraagformulier embedden
+            </Button>
+          )}
+        </div>
+      </div>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <Table>
           <TableHeader>

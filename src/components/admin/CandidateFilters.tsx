@@ -6,7 +6,7 @@
  *         naar dezelfde pagina met bijgewerkte query-params, zelfde patroon als StatusFilter.
  */
 
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import type { JobBranche, JobCategory, JobLevel } from '@/types/database'
 
 const BRANCHE_LABELS: Record<JobBranche, string> = {
@@ -42,12 +42,12 @@ export function CandidateFilters({
   jobCategories: JobCategory[]
 }) {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   function updateParam(key: string, value: string) {
-    const params = new URLSearchParams({ branche, level, jobCategoryId })
+    const params = new URLSearchParams(searchParams.toString())
     if (value) params.set(key, value)
     else params.delete(key)
-    for (const [k, v] of Array.from(params.entries())) if (!v) params.delete(k)
     const query = params.toString()
     router.push(query ? `/admin/candidates?${query}` : '/admin/candidates')
   }

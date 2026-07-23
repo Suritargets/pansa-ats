@@ -58,7 +58,8 @@ const DOCUMENT_LABELS: Record<ApplicationDocument['kind'], string> = {
   cv: 'CV',
   handwritten_scan: 'Scan handgeschreven formulier',
   id_document: 'ID-document',
-  certificate: 'Certificaat',
+  certificate: 'Diploma/certificaat',
+  police_clearance: 'Bewijs van goed gedrag',
   other: 'Overig',
 }
 

@@ -4,9 +4,12 @@ import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export function EmbedSnippet({ origin }: { origin: string }) {
+export function EmbedSnippet({ origin, type }: { origin: string; type: 'apply' | 'vacancy-request' | 'chat' }) {
   const [copied, setCopied] = useState(false)
-  const snippet = `<div data-pansa-apply></div>\n<script src="${origin}/embed.js" async></script>`
+  const snippet =
+    type === 'chat'
+      ? `<script data-pansa-embed="chat" src="${origin}/embed.js" async></script>`
+      : `<div data-pansa-embed="${type}"></div>\n<script src="${origin}/embed.js" async></script>`
 
   return (
     <div className="space-y-2">

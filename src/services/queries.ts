@@ -10,7 +10,7 @@
  */
 
 import 'server-only'
-import { and, count, desc, eq, inArray, isNull, or } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, inArray, isNull, or } from 'drizzle-orm'
 import { db, DB_MODE } from '@/lib/db'
 import {
   apiKeys,
@@ -20,6 +20,7 @@ import {
   auditLog,
   candidateTrainingProgress,
   candidates,
+  chatKbEntries,
   clientCandidateShares,
   clientVacancyRequests,
   clients,
@@ -41,6 +42,7 @@ import {
   type ApplicationStatus,
   type AuditLogRow,
   type Candidate,
+  type ChatKbEntry,
   type Client,
   type InterviewType,
   type JobBranche,
@@ -58,14 +60,21 @@ async function guarded<T>(empty: T, fn: () => Promise<T>): Promise<T> {
 
 // --- Applications (fase 1) ---
 
-export async function listApplications(statusFilter?: ApplicationStatus) {
+export async function listApplications(statusFilter?: ApplicationStatus, search?: string) {
   return guarded<ApplicationWithCandidate[]>([], async () => {
+    const conditions = [
+      statusFilter ? eq(applications.status, statusFilter) : undefined,
+      search
+        ? or(ilike(candidates.firstName, `%${search}%`), ilike(candidates.lastName, `%${search}%`), ilike(applications.positionApplied, `%${search}%`))
+        : undefined,
+    ].filter((c): c is Exclude<typeof c, undefined> => c !== undefined)
+
     const rows = await db
       .select({ application: applications, candidate: candidates, company: companies })
       .from(applications)
       .innerJoin(candidates, eq(applications.candidateId, candidates.id))
       .innerJoin(companies, eq(applications.companyId, companies.id))
-      .where(statusFilter ? eq(applications.status, statusFilter) : undefined)
+      .where(conditions.length ? and(...conditions) : undefined)
       .orderBy(desc(applications.createdAt))
 
     return rows.map(({ application, candidate, company }) => ({ ...application, candidate, company }))
@@ -149,8 +158,14 @@ export async function listCompanies() {
 
 // --- CRM: clients, suppliers, job categories ---
 
-export async function listClients() {
-  return guarded<Client[]>([], () => db.select().from(clients).orderBy(clients.name))
+export async function listClients(search?: string) {
+  return guarded<Client[]>([], () =>
+    db
+      .select()
+      .from(clients)
+      .where(search ? or(ilike(clients.name, `%${search}%`), ilike(clients.contactName, `%${search}%`)) : undefined)
+      .orderBy(clients.name)
+  )
 }
 
 export async function listProfiles() {
@@ -181,6 +196,14 @@ export async function listWebhookEndpoints() {
   return guarded<WebhookEndpoint[]>([], () => db.select().from(webhookEndpoints).orderBy(desc(webhookEndpoints.createdAt)))
 }
 
+export async function listChatKbEntries() {
+  return guarded<ChatKbEntry[]>([], () => db.select().from(chatKbEntries).orderBy(desc(chatKbEntries.createdAt)))
+}
+
+export async function listActiveChatKbEntries() {
+  return guarded<ChatKbEntry[]>([], () => db.select().from(chatKbEntries).where(eq(chatKbEntries.active, true)))
+}
+
 export async function getClientById(id: string) {
   return guarded<Client | null>(null, async () => {
     const [row] = await db.select().from(clients).where(eq(clients.id, id))
@@ -188,8 +211,21 @@ export async function getClientById(id: string) {
   })
 }
 
-export async function listSuppliers() {
-  return guarded<Supplier[]>([], () => db.select().from(suppliers).orderBy(suppliers.name))
+export async function getClientByContactEmail(email: string) {
+  return guarded<Client | null>(null, async () => {
+    const [row] = await db.select().from(clients).where(eq(clients.contactEmail, email.toLowerCase().trim()))
+    return row ?? null
+  })
+}
+
+export async function listSuppliers(search?: string) {
+  return guarded<Supplier[]>([], () =>
+    db
+      .select()
+      .from(suppliers)
+      .where(search ? ilike(suppliers.name, `%${search}%`) : undefined)
+      .orderBy(suppliers.name)
+  )
 }
 
 export async function getSupplierById(id: string) {
@@ -212,17 +248,26 @@ export async function listAllJobCategories() {
 }
 
 export async function listCandidates(
-  filters: { branche?: JobBranche; level?: JobLevel; jobCategoryId?: string } = {}
+  filters: { branche?: JobBranche; level?: JobLevel; jobCategoryId?: string; search?: string } = {}
 ) {
   return guarded<Candidate[]>([], async () => {
+    const searchCondition = filters.search
+      ? or(ilike(candidates.firstName, `%${filters.search}%`), ilike(candidates.lastName, `%${filters.search}%`))
+      : undefined
+
     if (!filters.branche && !filters.level && !filters.jobCategoryId) {
-      return db.select().from(candidates).orderBy(candidates.lastName, candidates.firstName)
+      return db
+        .select()
+        .from(candidates)
+        .where(searchCondition)
+        .orderBy(candidates.lastName, candidates.firstName)
     }
 
     const conditions = []
     if (filters.jobCategoryId) conditions.push(eq(applications.jobCategoryId, filters.jobCategoryId))
     if (filters.branche) conditions.push(eq(jobCategories.branche, filters.branche))
     if (filters.level) conditions.push(eq(jobCategories.level, filters.level))
+    if (searchCondition) conditions.push(searchCondition)
 
     const rows = await db
       .select({ candidate: candidates })
@@ -332,7 +377,7 @@ export async function listAllShares() {
   )
 }
 
-export async function listVacancyRequests() {
+export async function listVacancyRequests(search?: string) {
   return guarded<
     (typeof clientVacancyRequests.$inferSelect & { client: Client; jobCategory: typeof jobCategories.$inferSelect | null })[]
   >([], async () => {
@@ -341,6 +386,7 @@ export async function listVacancyRequests() {
       .from(clientVacancyRequests)
       .innerJoin(clients, eq(clientVacancyRequests.clientId, clients.id))
       .leftJoin(jobCategories, eq(clientVacancyRequests.jobCategoryId, jobCategories.id))
+      .where(search ? ilike(clients.name, `%${search}%`) : undefined)
       .orderBy(desc(clientVacancyRequests.createdAt))
 
     return rows.map(({ request, client, jobCategory }) => ({ ...request, client, jobCategory }))

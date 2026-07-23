@@ -59,6 +59,7 @@ export const documentKindEnum = pgEnum('document_kind', [
   'handwritten_scan',
   'id_document',
   'certificate',
+  'police_clearance',
   'other',
 ])
 
@@ -603,7 +604,11 @@ export const apiKeys = pgTable('api_keys', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
-export const webhookEventEnum = pgEnum('webhook_event', ['application.created', 'application.status_changed'])
+export const webhookEventEnum = pgEnum('webhook_event', [
+  'application.created',
+  'application.status_changed',
+  'vacancy_request.created',
+])
 
 export const webhookEndpoints = pgTable('webhook_endpoints', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -611,6 +616,17 @@ export const webhookEndpoints = pgTable('webhook_endpoints', {
   url: text('url').notNull(),
   secret: text('secret').notNull(), // voor HMAC-SHA256 ondertekening van de payload (X-Pansa-Signature)
   events: jsonb('events').$type<string[]>().notNull().default([]),
+  active: boolean('active').notNull().default(true),
+  createdBy: uuid('created_by').references(() => profiles.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// --- Chat-widget kennisbank (eenvoudige keyword-RAG, geen vector-embeddings) ---
+
+export const chatKbEntries = pgTable('chat_kb_entries', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  topic: text('topic').notNull(), // bv. "Sollicitatieprocedure", "Openingstijden"
+  content: text('content').notNull(), // het antwoord/de context die de AI mag gebruiken
   active: boolean('active').notNull().default(true),
   createdBy: uuid('created_by').references(() => profiles.id),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -802,3 +818,6 @@ export type ApiKeyScope = (typeof apiKeyScopeEnum.enumValues)[number]
 export type WebhookEndpoint = typeof webhookEndpoints.$inferSelect
 export type NewWebhookEndpoint = typeof webhookEndpoints.$inferInsert
 export type WebhookEvent = (typeof webhookEventEnum.enumValues)[number]
+
+export type ChatKbEntry = typeof chatKbEntries.$inferSelect
+export type NewChatKbEntry = typeof chatKbEntries.$inferInsert

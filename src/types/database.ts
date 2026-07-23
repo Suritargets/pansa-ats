@@ -13,6 +13,7 @@ export type {
   ApplicationStatus,
   AuditLogRow,
   NewAuditLogRow,
+  ChatKbEntry,
   JobScopeEntry,
   WebhookEndpoint,
   WebhookEvent,

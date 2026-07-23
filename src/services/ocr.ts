@@ -15,6 +15,7 @@ import { generateObject } from 'ai'
 import { z } from 'zod'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
+import { resolveDriveShareLink } from '@/lib/drive-link'
 import type { ServiceResult } from '@/lib/service-result'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
@@ -104,6 +105,23 @@ Regels:
 - Werkervaring, opleiding en training zijn tabellen met meerdere rijen — geef elke
   ingevulde rij als apart item terug, sla lege rijen over.`
 
+async function extractFromBytes(bytes: Uint8Array, mediaType: string): Promise<OcrExtractionResult> {
+  const { object } = await generateObject({
+    model: 'anthropic/claude-sonnet-5',
+    schema: ocrSchema,
+    messages: [
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: PROMPT },
+          { type: 'file', data: bytes, mediaType },
+        ],
+      },
+    ],
+  })
+  return object
+}
+
 /**
  * Uploadt een scan/foto en geeft de door AI geëxtraheerde velden terug. Alleen voor staff —
  * het resultaat wordt altijd eerst in het formulier getoond ter controle, nooit direct
@@ -121,24 +139,50 @@ export async function extractRegistrationForm(file: File): Promise<ServiceResult
     }
 
     const bytes = new Uint8Array(await file.arrayBuffer())
-
-    const { object } = await generateObject({
-      model: 'anthropic/claude-sonnet-5',
-      schema: ocrSchema,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: PROMPT },
-            { type: 'file', data: bytes, mediaType: file.type },
-          ],
-        },
-      ],
-    })
-
-    return { success: true, data: object }
+    return { success: true, data: await extractFromBytes(bytes, file.type) }
   } catch (error) {
     console.error('[ocr.extractRegistrationForm]', error)
     return { success: false, error: 'Kon het formulier niet automatisch uitlezen. Vul handmatig in.' }
+  }
+}
+
+/**
+ * Zelfde als `extractRegistrationForm`, maar haalt het bestand op vanaf een URL (bv. een
+ * publiek gedeelde Google Drive-link) i.p.v. een browser-upload — voor de bulk-digitaliseren-flow.
+ */
+export async function extractRegistrationFormFromUrl(url: string): Promise<ServiceResult<OcrExtractionResult>> {
+  try {
+    await requireSession([...STAFF_ROLES])
+
+    let parsed: URL
+    try {
+      parsed = new URL(url)
+    } catch {
+      return { success: false, error: 'Ongeldige URL.' }
+    }
+    if (parsed.protocol !== 'https:') {
+      return { success: false, error: 'Alleen https-links worden ondersteund.' }
+    }
+
+    const resolvedUrl = resolveDriveShareLink(url)
+    const response = await fetch(resolvedUrl, { signal: AbortSignal.timeout(20000) })
+    if (!response.ok) {
+      return { success: false, error: `Kon het bestand niet ophalen (${response.status}). Controleer of de link publiek deelbaar is.` }
+    }
+
+    const mediaType = response.headers.get('content-type')?.split(';')[0] ?? ''
+    if (!ALLOWED_TYPES.includes(mediaType)) {
+      return { success: false, error: 'De link wijst niet naar een JPG, PNG, WEBP of PDF.' }
+    }
+
+    const arrayBuffer = await response.arrayBuffer()
+    if (arrayBuffer.byteLength > MAX_SIZE_BYTES) {
+      return { success: false, error: 'Bestand is te groot (max 10MB).' }
+    }
+
+    return { success: true, data: await extractFromBytes(new Uint8Array(arrayBuffer), mediaType) }
+  } catch (error) {
+    console.error('[ocr.extractRegistrationFormFromUrl]', error)
+    return { success: false, error: 'Kon het formulier niet automatisch uitlezen vanaf de link. Vul handmatig in.' }
   }
 }

@@ -7,6 +7,7 @@
 
 import { Button } from '@/components/ui/button'
 import { Sidebar } from '@/components/admin/Sidebar'
+import { CommandPalette } from '@/components/admin/CommandPalette'
 import { getSidebarCollapsed } from '@/lib/sidebar'
 import { logoutAction } from '@/services/auth-actions'
 import type { SessionData } from '@/lib/auth'
@@ -18,9 +19,10 @@ export async function AdminShell({ session, children }: { session: SessionData; 
     <div className="flex min-h-screen bg-background">
       <Sidebar role={session.role} initialCollapsed={collapsed} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-border bg-card px-6 py-4">
-          <span className="text-sm text-muted-foreground">Welkom, {session.fullName}</span>
-          <form action={logoutAction.bind(null, '/admin')}>
+        <header className="flex items-center justify-between gap-4 border-b border-border bg-card px-6 py-4">
+          <span className="shrink-0 text-sm text-muted-foreground">Welkom, {session.fullName}</span>
+          <CommandPalette role={session.role} />
+          <form action={logoutAction.bind(null, '/admin')} className="shrink-0">
             <Button type="submit" variant="ghost">
               Uitloggen
             </Button>
