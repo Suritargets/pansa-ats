@@ -7,8 +7,8 @@
  * WAAROM: De kandidatenlijst had geen detail-/edit-weergave — klikken deed niets.
  */
 
-import { useActionState, useState } from 'react'
-import { Pencil } from 'lucide-react'
+import { useActionState, useEffect, useState } from 'react'
+import { FileText, Pencil } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -22,8 +22,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { StatusBadge } from '@/components/admin/StatusBadge'
 import { formatDate } from '@/lib/utils'
-import { updateCandidate, type UpdateCandidateState } from '@/services/candidates'
+import {
+  getApplicationsForCandidate,
+  updateCandidate,
+  type CandidateApplicationSummary,
+  type UpdateCandidateState,
+} from '@/services/candidates'
 import type { Candidate } from '@/types/database'
 
 const MARITAL_STATUS_LABELS: Record<string, string> = {
@@ -52,6 +58,17 @@ export function CandidateDetailSheet({
   const [mode, setMode] = useState<'view' | 'edit'>('view')
   const boundAction = updateCandidate.bind(null, candidate.id)
   const [state, formAction, pending] = useActionState(boundAction, initialState)
+
+  const [applications, setApplications] = useState<CandidateApplicationSummary[] | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    getApplicationsForCandidate(candidate.id).then((rows) => {
+      if (!cancelled) setApplications(rows)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [candidate.id])
 
   // Na een geslaagde opslag terug naar view-mode — tijdens render afgeleid uit de
   // vorige actie-state (React's aanbevolen patroon, i.p.v. een effect).
@@ -85,7 +102,10 @@ export function CandidateDetailSheet({
 
         <div className="flex-1 overflow-y-auto px-6 py-4">
           {mode === 'view' ? (
-            <ViewFields candidate={display} />
+            <div className="space-y-6">
+              <ApplicationsSection applications={applications} />
+              <ViewFields candidate={display} />
+            </div>
           ) : (
             <form id="candidate-edit-form" action={formAction} className="space-y-4">
               {state.error && (
@@ -215,6 +235,55 @@ export function CandidateDetailSheet({
         )}
       </SheetContent>
     </Sheet>
+  )
+}
+
+function ApplicationsSection({ applications }: { applications: CandidateApplicationSummary[] | null }) {
+  if (applications === null) {
+    return <p className="text-sm text-muted-foreground">Sollicitaties laden...</p>
+  }
+  if (applications.length === 0) {
+    return null
+  }
+
+  return (
+    <div>
+      <h3 className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        Sollicitaties ({applications.length})
+      </h3>
+      <ul className="space-y-2">
+        {applications.map((app) => (
+          <li
+            key={app.id}
+            className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2"
+          >
+            <div className="min-w-0">
+              <p className="truncate text-sm font-medium text-foreground">{app.companyName}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {app.positionApplied} — {formatDate(app.createdAt)}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <StatusBadge status={app.status} />
+              <Button
+                size="icon-sm"
+                variant="outline"
+                render={
+                  <a
+                    href={`/admin/applications/${app.id}/cv`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="CV bekijken"
+                  />
+                }
+              >
+                <FileText className="size-3.5" />
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 

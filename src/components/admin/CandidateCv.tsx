@@ -15,7 +15,10 @@ export function CandidateCv({ application }: { application: ApplicationWithCandi
   return (
     <div className="mx-auto max-w-3xl overflow-hidden rounded-xl border border-border bg-card print:border-0 print:shadow-none">
       <header className="bg-primary px-8 py-6 text-primary-foreground">
-        <p className="text-xs font-medium uppercase tracking-widest opacity-80">Pansa Group of Companies N.V.</p>
+        <p className="text-xs font-medium uppercase tracking-widest opacity-80">{application.company.name}</p>
+        {application.company.kind === 'subsidiary' && (
+          <p className="text-[11px] opacity-60">Onderdeel van Pansa Group of Companies N.V.</p>
+        )}
         <h1 className="font-heading text-4xl font-semibold tracking-wide">Curriculum Vitae</h1>
         <p className="mt-1 text-lg">
           {candidate.firstName} {candidate.lastName}

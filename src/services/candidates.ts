@@ -8,12 +8,21 @@
  */
 
 import { revalidatePath } from 'next/cache'
-import { eq } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
 import { logAuditEvent } from '@/lib/audit'
-import { emergencyContacts, candidates, type Candidate, type Gender, type MaritalStatus } from '../../drizzle/schema'
+import {
+  applications,
+  companies,
+  emergencyContacts,
+  candidates,
+  type ApplicationStatus,
+  type Candidate,
+  type Gender,
+  type MaritalStatus,
+} from '../../drizzle/schema'
 
 export interface EmergencyContactInput {
   name: string
@@ -108,4 +117,34 @@ export async function updateCandidate(
   revalidatePath('/admin/candidates')
 
   return { success: true, candidate: updated }
+}
+
+export interface CandidateApplicationSummary {
+  id: string
+  positionApplied: string
+  status: ApplicationStatus
+  companyName: string
+  createdAt: Date
+}
+
+// Opgehaald vanuit het CandidateDetailSheet client component (candidates-lijst) om per
+// kandidaat te tonen bij welke bedrijven gesolliciteerd is + een link naar het CV per
+// sollicitatie (CV-huisstijl hangt af van het bedrijf, zie CandidateCv.tsx).
+export async function getApplicationsForCandidate(candidateId: string): Promise<CandidateApplicationSummary[]> {
+  await requireSession([...STAFF_ROLES])
+
+  const rows = await db
+    .select({ application: applications, companyName: companies.name })
+    .from(applications)
+    .innerJoin(companies, eq(applications.companyId, companies.id))
+    .where(eq(applications.candidateId, candidateId))
+    .orderBy(desc(applications.createdAt))
+
+  return rows.map(({ application, companyName }) => ({
+    id: application.id,
+    positionApplied: application.positionApplied,
+    status: application.status,
+    companyName,
+    createdAt: application.createdAt,
+  }))
 }
