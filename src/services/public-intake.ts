@@ -16,6 +16,13 @@ import { logAuditEvent } from '@/lib/audit'
 import { dispatchWebhookEvent } from '@/lib/webhooks'
 import { clients, clientVacancyRequests, type JobScopeEntry } from '../../drizzle/schema'
 
+const ALLOWED_REDIRECT_PATHS = ['/request-staffing', '/embed/vacancy-request']
+
+function safeRedirectPath(raw: FormDataEntryValue | null): string {
+  const value = String(raw ?? '')
+  return ALLOWED_REDIRECT_PATHS.includes(value) ? value : '/request-staffing'
+}
+
 function parseJobScope(raw: FormDataEntryValue | null): JobScopeEntry[] {
   if (typeof raw !== 'string' || !raw) return []
   try {
@@ -38,7 +45,7 @@ export async function submitPublicVacancyRequest(formData: FormData): Promise<vo
   const quantity = Number(formData.get('quantity') ?? 1) || 1
   const notes = String(formData.get('notes') ?? '').trim() || null
   const jobScope = parseJobScope(formData.get('jobScope'))
-  const redirectTo = String(formData.get('redirectTo') ?? '/request-staffing')
+  const redirectTo = safeRedirectPath(formData.get('redirectTo'))
 
   if (!companyName || !contactName || !contactEmail) {
     redirect(`${redirectTo}?error=1`)

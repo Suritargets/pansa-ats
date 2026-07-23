@@ -15,7 +15,7 @@ import { generateObject } from 'ai'
 import { z } from 'zod'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
-import { resolveDriveShareLink } from '@/lib/drive-link'
+import { isAllowedDriveHost, resolveDriveShareLink } from '@/lib/drive-link'
 import type { ServiceResult } from '@/lib/service-result'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
@@ -146,28 +146,59 @@ export async function extractRegistrationForm(file: File): Promise<ServiceResult
   }
 }
 
+const MAX_REDIRECTS = 3
+
 /**
- * Zelfde als `extractRegistrationForm`, maar haalt het bestand op vanaf een URL (bv. een
- * publiek gedeelde Google Drive-link) i.p.v. een browser-upload — voor de bulk-digitaliseren-flow.
+ * Haalt een URL op zonder de fetch-redirects automatisch te laten volgen — elke hop
+ * (inclusief de eerste) wordt tegen de Drive-hostname-allowlist gevalideerd voordat hij
+ * gevolgd wordt. Voorkomt dat een toegestane Drive-link naar een intern/willekeurig adres
+ * kan doorverwijzen (SSRF via open redirect).
+ */
+async function fetchAllowedUrl(url: string): Promise<Response> {
+  let currentUrl = url
+
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    if (!isAllowedDriveHost(currentUrl)) {
+      throw new Error('Alleen publiek gedeelde Google Drive-links worden ondersteund.')
+    }
+
+    const response = await fetch(currentUrl, { redirect: 'manual', signal: AbortSignal.timeout(20000) })
+
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get('location')
+      if (!location) throw new Error('Kon de link niet volgen.')
+      currentUrl = new URL(location, currentUrl).toString()
+      continue
+    }
+
+    return response
+  }
+
+  throw new Error('Te veel doorverwijzingen.')
+}
+
+/**
+ * Zelfde als `extractRegistrationForm`, maar haalt het bestand op vanaf een publiek gedeelde
+ * Google Drive-link i.p.v. een browser-upload — voor de bulk-digitaliseren-flow.
  */
 export async function extractRegistrationFormFromUrl(url: string): Promise<ServiceResult<OcrExtractionResult>> {
   try {
     await requireSession([...STAFF_ROLES])
 
-    let parsed: URL
-    try {
-      parsed = new URL(url)
-    } catch {
-      return { success: false, error: 'Ongeldige URL.' }
-    }
-    if (parsed.protocol !== 'https:') {
-      return { success: false, error: 'Alleen https-links worden ondersteund.' }
+    if (!isAllowedDriveHost(url)) {
+      return { success: false, error: 'Alleen publiek gedeelde Google Drive-links worden ondersteund (https).' }
     }
 
     const resolvedUrl = resolveDriveShareLink(url)
-    const response = await fetch(resolvedUrl, { signal: AbortSignal.timeout(20000) })
+
+    let response: Response
+    try {
+      response = await fetchAllowedUrl(resolvedUrl)
+    } catch {
+      return { success: false, error: 'Kon het bestand niet ophalen. Controleer of de link publiek deelbaar is.' }
+    }
     if (!response.ok) {
-      return { success: false, error: `Kon het bestand niet ophalen (${response.status}). Controleer of de link publiek deelbaar is.` }
+      return { success: false, error: 'Kon het bestand niet ophalen. Controleer of de link publiek deelbaar is.' }
     }
 
     const mediaType = response.headers.get('content-type')?.split(';')[0] ?? ''

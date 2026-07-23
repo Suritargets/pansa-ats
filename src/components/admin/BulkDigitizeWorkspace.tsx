@@ -128,7 +128,7 @@ export function BulkDigitizeWorkspace({ companies, jobCategories }: { companies:
           />
         </div>
         <div>
-          <Label htmlFor="linkInput">Of een link toevoegen (bv. een publiek gedeelde Google Drive-link)</Label>
+          <Label htmlFor="linkInput">Of een Google Drive-link toevoegen</Label>
           <div className="mt-2 flex gap-2">
             <Input
               id="linkInput"
