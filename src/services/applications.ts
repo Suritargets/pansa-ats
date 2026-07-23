@@ -26,6 +26,11 @@ import {
   type ApplicationSource,
   type ApplicationStatus,
   type DocumentKind,
+  type EducationEntry,
+  type Gender,
+  type MaritalStatus,
+  type PriorTrainingEntry,
+  type WorkHistoryEntry,
 } from '../../drizzle/schema'
 
 export interface NewApplicationInput {
@@ -40,9 +45,33 @@ export interface NewApplicationInput {
     email?: string
     phone?: string
     dateOfBirth?: string
+    birthPlace?: string
     address?: string
+    residence?: string
+    district?: string
+    originVillage?: string
+    traditionalAuthority?: string
     idNumber?: string
     nationality?: string
+    maritalStatus?: MaritalStatus
+    gender?: Gender
+    religion?: string
+    ethnicGroup?: string
+    hasJusticeRecord?: boolean
+    justiceRecordReason?: string
+    hasDriversLicense?: boolean
+    driversLicenseCategory?: string
+    education?: EducationEntry[]
+    priorTrainings?: PriorTrainingEntry[]
+    workHistory?: WorkHistoryEntry[]
+    workedSimilarCompanyBefore?: boolean
+    workedSimilarCompanyDetails?: string
+    lastJobDescription?: string
+    lastSupervisorName?: string
+    lastSupervisorContact?: string
+    availabilityDate?: string
+    bankAccountNumber?: string
+    bankName?: string
     yearsExperience?: number
     skills?: string[]
   }
@@ -67,9 +96,33 @@ export async function submitApplication(
         email: input.candidate.email ?? null,
         phone: input.candidate.phone ?? null,
         dateOfBirth: input.candidate.dateOfBirth ?? null,
+        birthPlace: input.candidate.birthPlace ?? null,
         address: input.candidate.address ?? null,
+        residence: input.candidate.residence ?? null,
+        district: input.candidate.district ?? null,
+        originVillage: input.candidate.originVillage ?? null,
+        traditionalAuthority: input.candidate.traditionalAuthority ?? null,
         idNumber: input.candidate.idNumber ?? null,
         nationality: input.candidate.nationality ?? null,
+        maritalStatus: input.candidate.maritalStatus ?? null,
+        gender: input.candidate.gender ?? null,
+        religion: input.candidate.religion ?? null,
+        ethnicGroup: input.candidate.ethnicGroup ?? null,
+        hasJusticeRecord: input.candidate.hasJusticeRecord ?? null,
+        justiceRecordReason: input.candidate.justiceRecordReason ?? null,
+        hasDriversLicense: input.candidate.hasDriversLicense ?? null,
+        driversLicenseCategory: input.candidate.driversLicenseCategory ?? null,
+        education: input.candidate.education ?? [],
+        priorTrainings: input.candidate.priorTrainings ?? [],
+        workHistory: input.candidate.workHistory ?? [],
+        workedSimilarCompanyBefore: input.candidate.workedSimilarCompanyBefore ?? null,
+        workedSimilarCompanyDetails: input.candidate.workedSimilarCompanyDetails ?? null,
+        lastJobDescription: input.candidate.lastJobDescription ?? null,
+        lastSupervisorName: input.candidate.lastSupervisorName ?? null,
+        lastSupervisorContact: input.candidate.lastSupervisorContact ?? null,
+        availabilityDate: input.candidate.availabilityDate ?? null,
+        bankAccountNumber: input.candidate.bankAccountNumber ?? null,
+        bankName: input.candidate.bankName ?? null,
         yearsExperience: input.candidate.yearsExperience?.toString() ?? null,
         skills: input.candidate.skills ?? [],
       })

@@ -137,6 +137,39 @@ export const vacancyRequestStatusEnum = pgEnum('vacancy_request_status', [
   'rejected',
 ])
 
+export const maritalStatusEnum = pgEnum('marital_status', [
+  'gehuwd',
+  'ongehuwd',
+  'concubinaat',
+  'gescheiden',
+])
+
+export const genderEnum = pgEnum('gender', ['man', 'vrouw'])
+
+// --- Candidate jsonb sub-shapes (opleiding, training, werkervaring — herhalende groepen) ---
+
+export interface EducationEntry {
+  level: string // opleidingsniveau
+  fieldOfStudy?: string // studierichting
+  completed: boolean // afgerond (diploma) vs niet afgerond (rapport)
+  notes?: string
+}
+
+export interface PriorTrainingEntry {
+  kind?: string // soort training
+  title: string // titel van de training
+  period?: string
+  completed: boolean
+}
+
+export interface WorkHistoryEntry {
+  period?: string
+  company: string
+  role?: string // functie/skills
+  salary?: string // genoten salaris
+  reasonForLeaving?: string
+}
+
 // --- Companies: Pansa Group + subsidiaries (werkgever) ---
 
 export const companies = pgTable('companies', {
@@ -223,9 +256,35 @@ export const candidates = pgTable(
     email: text('email'),
     phone: text('phone'),
     dateOfBirth: text('date_of_birth'), // ISO date string (yyyy-mm-dd)
+    birthPlace: text('birth_place'),
     address: text('address'),
+    residence: text('residence'), // woonplaats
+    district: text('district'),
+    originVillage: text('origin_village'), // afkomstig van het dorp (naam)
+    traditionalAuthority: text('traditional_authority'), // traditioneel gezag van het dorp
     idNumber: text('id_number'),
     nationality: text('nationality'),
+    maritalStatus: maritalStatusEnum('marital_status'),
+    gender: genderEnum('gender'),
+    religion: text('religion'),
+    ethnicGroup: text('ethnic_group'), // bevolkingsgroep
+    hasJusticeRecord: boolean('has_justice_record'),
+    justiceRecordReason: text('justice_record_reason'),
+    hasDriversLicense: boolean('has_drivers_license'),
+    driversLicenseCategory: text('drivers_license_category'),
+    education: jsonb('education').$type<EducationEntry[]>().notNull().default([]),
+    // kandidaat's eigen opleidingsgeschiedenis — niet te verwarren met `trainings`/
+    // `candidate_training_progress`, dat is Pansa-training NA aanname.
+    priorTrainings: jsonb('prior_trainings').$type<PriorTrainingEntry[]>().notNull().default([]),
+    workHistory: jsonb('work_history').$type<WorkHistoryEntry[]>().notNull().default([]),
+    workedSimilarCompanyBefore: boolean('worked_similar_company_before'),
+    workedSimilarCompanyDetails: text('worked_similar_company_details'),
+    lastJobDescription: text('last_job_description'),
+    lastSupervisorName: text('last_supervisor_name'),
+    lastSupervisorContact: text('last_supervisor_contact'),
+    availabilityDate: text('availability_date'), // ISO date string
+    bankAccountNumber: text('bank_account_number'), // girorekeningnummer
+    bankName: text('bank_name'),
     skills: text('skills').array().notNull().default([]),
     certifications: text('certifications').array().notNull().default([]),
     yearsExperience: numeric('years_experience'),
@@ -590,6 +649,8 @@ export type InterviewType = (typeof interviewTypeEnum.enumValues)[number]
 export type ContractStage = (typeof contractStageEnum.enumValues)[number]
 export type ContractStatus = (typeof contractStatusEnum.enumValues)[number]
 export type VacancyRequestStatus = (typeof vacancyRequestStatusEnum.enumValues)[number]
+export type MaritalStatus = (typeof maritalStatusEnum.enumValues)[number]
+export type Gender = (typeof genderEnum.enumValues)[number]
 
 // --- Types ---
 

@@ -31,6 +31,18 @@ import {
   type OnboardingStepTemplate,
 } from '@/types/database'
 
+const MARITAL_STATUS_LABELS: Record<string, string> = {
+  gehuwd: 'Gehuwd',
+  ongehuwd: 'Ongehuwd',
+  concubinaat: 'Concubinaat',
+  gescheiden: 'Gescheiden',
+}
+
+const GENDER_LABELS: Record<string, string> = {
+  man: 'Man',
+  vrouw: 'Vrouw',
+}
+
 const STATUS_FLOW: ApplicationStatus[] = [
   'new',
   'in_review',
@@ -108,10 +120,42 @@ export function ProfileSketch({
                   <Field label="E-mail" value={application.candidate.email} />
                   <Field label="Telefoon" value={application.candidate.phone} />
                   <Field label="Geboortedatum" value={formatDate(application.candidate.dateOfBirth)} />
+                  <Field label="Geboorteplaats" value={application.candidate.birthPlace} />
                   <Field label="ID-nummer" value={application.candidate.idNumber} />
                   <Field label="Nationaliteit" value={application.candidate.nationality} />
+                  <Field label="Burgerlijke staat" value={MARITAL_STATUS_LABELS[application.candidate.maritalStatus ?? '']} />
+                  <Field label="Geslacht" value={GENDER_LABELS[application.candidate.gender ?? '']} />
+                  <Field label="Godsdienst" value={application.candidate.religion} />
+                  <Field label="Bevolkingsgroep" value={application.candidate.ethnicGroup} />
                   <Field label="Jaren ervaring" value={application.candidate.yearsExperience?.toString()} />
                   <Field label="Adres" value={application.candidate.address} />
+                  <Field label="Woonplaats" value={application.candidate.residence} />
+                  <Field label="District" value={application.candidate.district} />
+                  <Field label="Afkomstig van het dorp" value={application.candidate.originVillage} />
+                  <Field label="Traditioneel gezag" value={application.candidate.traditionalAuthority} />
+                  <Field
+                    label="Justitiecontact"
+                    value={
+                      application.candidate.hasJusticeRecord === null
+                        ? undefined
+                        : application.candidate.hasJusticeRecord
+                          ? `Ja — ${application.candidate.justiceRecordReason || 'geen toelichting'}`
+                          : 'Nee'
+                    }
+                  />
+                  <Field
+                    label="Rijbewijs"
+                    value={
+                      application.candidate.hasDriversLicense === null
+                        ? undefined
+                        : application.candidate.hasDriversLicense
+                          ? `Ja — categorie ${application.candidate.driversLicenseCategory || '?'}`
+                          : 'Nee'
+                    }
+                  />
+                  <Field label="Beschikbaar vanaf" value={formatDate(application.candidate.availabilityDate)} />
+                  <Field label="Bankrekening" value={application.candidate.bankAccountNumber} />
+                  <Field label="Bank" value={application.candidate.bankName} />
                   <Field
                     label="Bron"
                     value={application.source === 'digitized_paper' ? 'Handgeschreven (gedigitaliseerd)' : 'Online formulier'}
@@ -125,8 +169,87 @@ export function ProfileSketch({
                     <p className="text-sm text-foreground">{application.coverNote}</p>
                   </div>
                 )}
+
+                {application.candidate.lastJobDescription && (
+                  <div className="mt-6">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Laatste functie/baan
+                    </p>
+                    <p className="text-sm text-foreground">{application.candidate.lastJobDescription}</p>
+                    {(application.candidate.lastSupervisorName || application.candidate.lastSupervisorContact) && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Supervisor: {application.candidate.lastSupervisorName || '—'}
+                        {application.candidate.lastSupervisorContact ? ` (${application.candidate.lastSupervisorContact})` : ''}
+                      </p>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
+
+            {application.candidate.education.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">Opleiding</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {application.candidate.education.map((entry, i) => (
+                    <p key={i} className="text-sm text-foreground">
+                      {entry.level}
+                      {entry.fieldOfStudy ? ` — ${entry.fieldOfStudy}` : ''}{' '}
+                      <span className="text-xs text-muted-foreground">
+                        ({entry.completed ? 'afgerond' : 'niet afgerond'})
+                      </span>
+                    </p>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {application.candidate.priorTrainings.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">
+                    Eerder gevolgde trainingen
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {application.candidate.priorTrainings.map((entry, i) => (
+                    <p key={i} className="text-sm text-foreground">
+                      {entry.title}
+                      {entry.kind ? ` (${entry.kind})` : ''}
+                      {entry.period ? ` — ${entry.period}` : ''}{' '}
+                      <span className="text-xs text-muted-foreground">
+                        ({entry.completed ? 'afgerond' : 'niet afgerond'})
+                      </span>
+                    </p>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {application.candidate.workHistory.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">Werkervaring</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {application.candidate.workHistory.map((entry, i) => (
+                    <div key={i} className="text-sm">
+                      <p className="font-medium text-foreground">
+                        {entry.company}
+                        {entry.role ? ` — ${entry.role}` : ''}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {entry.period}
+                        {entry.salary ? ` · salaris: ${entry.salary}` : ''}
+                        {entry.reasonForLeaving ? ` · reden vertrek: ${entry.reasonForLeaving}` : ''}
+                      </p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
             <Card>
               <CardHeader>
