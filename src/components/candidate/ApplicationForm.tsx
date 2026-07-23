@@ -437,6 +437,7 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
             <Input {...register('traditionalAuthority')} />
           </FormField>
         </div>
+        <FileInput label="Bewijs van goed gedrag (politieverklaring)" onChange={setPoliceClearanceFile} />
       </section>
       )}
 
@@ -627,7 +628,6 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Documenten</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <FileInput label="ID-kaart" onChange={setIdDocumentFile} />
-          <FileInput label="Bewijs van goed gedrag (politieverklaring)" onChange={setPoliceClearanceFile} />
           <MultiFileInput label="Diploma's / certificaten" files={diplomaFiles} onChange={setDiplomaFiles} />
           <FileInput label="CV (optioneel)" onChange={setCvFile} />
           {mode === 'digitize' && (
