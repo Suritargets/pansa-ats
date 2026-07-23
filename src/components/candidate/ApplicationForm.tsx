@@ -202,6 +202,7 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
   const [cvFile, setCvFile] = useState<File | null>(null)
   const [idDocumentFile, setIdDocumentFile] = useState<File | null>(null)
   const [policeClearanceFile, setPoliceClearanceFile] = useState<File | null>(null)
+  const [policeClearanceError, setPoliceClearanceError] = useState(false)
   const [diplomaFiles, setDiplomaFiles] = useState<File[]>([])
   // `initialScanFile`/`ocrData` only need to be read once per mount — DigitizeWorkspace
   // remounts this component (via `key`) whenever new OCR-data arrives, so a plain
@@ -225,6 +226,10 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
 
   async function goNext() {
     const valid = await trigger(STEPS[stepIndex].fields)
+    if (stepIndex === 0 && mode === 'public' && !policeClearanceFile) {
+      setPoliceClearanceError(true)
+      return
+    }
     if (valid) setStepIndex((i) => Math.min(i + 1, STEPS.length - 1))
   }
 
@@ -437,7 +442,15 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
             <Input {...register('traditionalAuthority')} />
           </FormField>
         </div>
-        <FileInput label="Bewijs van goed gedrag (politieverklaring)" onChange={setPoliceClearanceFile} />
+        <FileInput
+          label="Bewijs van goed gedrag (politieverklaring)"
+          required={mode === 'public'}
+          error={policeClearanceError ? 'Verplicht — upload je bewijs van goed gedrag.' : undefined}
+          onChange={(file) => {
+            setPoliceClearanceFile(file)
+            if (file) setPoliceClearanceError(false)
+          }}
+        />
       </section>
       )}
 
@@ -703,16 +716,30 @@ const CheckboxField = ({
 )
 CheckboxField.displayName = 'CheckboxField'
 
-function FileInput({ label, onChange }: { label: string; onChange: (file: File | null) => void }) {
+function FileInput({
+  label,
+  onChange,
+  required,
+  error,
+}: {
+  label: string
+  onChange: (file: File | null) => void
+  required?: boolean
+  error?: string
+}) {
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
+      <Label>
+        {label}
+        {required && <span className="text-destructive"> *</span>}
+      </Label>
       <input
         type="file"
         accept="image/*,.pdf"
         onChange={(e) => onChange(e.target.files?.[0] ?? null)}
         className="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-primary file:px-3 file:py-2 file:text-sm file:font-medium file:text-primary-foreground hover:file:bg-primary/80"
       />
+      {error && <p className="text-xs text-destructive">{error}</p>}
     </div>
   )
 }
