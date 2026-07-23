@@ -13,6 +13,7 @@ import 'server-only'
 import { and, count, desc, eq, inArray, isNull, or } from 'drizzle-orm'
 import { db, DB_MODE } from '@/lib/db'
 import {
+  apiKeys,
   applicationDocuments,
   applicationStatusHistory,
   applications,
@@ -34,6 +35,8 @@ import {
   profiles,
   suppliers,
   trainings,
+  webhookEndpoints,
+  type ApiKey,
   type ApplicationDocument,
   type ApplicationStatus,
   type AuditLogRow,
@@ -44,6 +47,7 @@ import {
   type JobLevel,
   type Profile,
   type Supplier,
+  type WebhookEndpoint,
 } from '../../drizzle/schema'
 import { APPLICATION_STATUS_LABELS, type ApplicationWithCandidate } from '@/types/database'
 
@@ -167,6 +171,14 @@ export async function listAuditLog(filters?: { action?: string; entityType?: str
       .orderBy(desc(auditLog.createdAt))
       .limit(200)
   })
+}
+
+export async function listApiKeys() {
+  return guarded<ApiKey[]>([], () => db.select().from(apiKeys).orderBy(desc(apiKeys.createdAt)))
+}
+
+export async function listWebhookEndpoints() {
+  return guarded<WebhookEndpoint[]>([], () => db.select().from(webhookEndpoints).orderBy(desc(webhookEndpoints.createdAt)))
 }
 
 export async function getClientById(id: string) {

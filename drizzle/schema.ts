@@ -587,6 +587,35 @@ export const auditLog = pgTable(
   ]
 )
 
+// --- Integraties: publieke API-sleutels + uitgaande webhooks ---
+
+export const apiKeyScopeEnum = pgEnum('api_key_scope', ['applications:read', 'applications:write'])
+
+export const apiKeys = pgTable('api_keys', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: text('name').notNull(),
+  keyPrefix: text('key_prefix').notNull(), // eerste tekens, om de sleutel herkenbaar te tonen zonder de hash te tonen
+  keyHash: text('key_hash').notNull().unique(), // sha256 — géén bcrypt, moet indexeerbaar zijn voor lookup
+  scopes: jsonb('scopes').$type<string[]>().notNull().default([]),
+  active: boolean('active').notNull().default(true),
+  createdBy: uuid('created_by').references(() => profiles.id),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const webhookEventEnum = pgEnum('webhook_event', ['application.created', 'application.status_changed'])
+
+export const webhookEndpoints = pgTable('webhook_endpoints', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  name: text('name').notNull(),
+  url: text('url').notNull(),
+  secret: text('secret').notNull(), // voor HMAC-SHA256 ondertekening van de payload (X-Pansa-Signature)
+  events: jsonb('events').$type<string[]>().notNull().default([]),
+  active: boolean('active').notNull().default(true),
+  createdBy: uuid('created_by').references(() => profiles.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
 // --- Relations (voor db.query.* joins) ---
 
 export const companiesRelations = relations(companies, ({ many }) => ({
@@ -765,3 +794,11 @@ export type PayrollExportItem = typeof payrollExportItems.$inferSelect
 
 export type AuditLogRow = typeof auditLog.$inferSelect
 export type NewAuditLogRow = typeof auditLog.$inferInsert
+
+export type ApiKey = typeof apiKeys.$inferSelect
+export type NewApiKey = typeof apiKeys.$inferInsert
+export type ApiKeyScope = (typeof apiKeyScopeEnum.enumValues)[number]
+
+export type WebhookEndpoint = typeof webhookEndpoints.$inferSelect
+export type NewWebhookEndpoint = typeof webhookEndpoints.$inferInsert
+export type WebhookEvent = (typeof webhookEventEnum.enumValues)[number]

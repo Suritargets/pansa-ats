@@ -7,11 +7,15 @@
 import type { Application, Candidate, ClientCandidateShareRow, Company } from '../../drizzle/schema'
 
 export type {
+  ApiKey,
+  ApiKeyScope,
   ApplicationSource,
   ApplicationStatus,
   AuditLogRow,
   NewAuditLogRow,
   JobScopeEntry,
+  WebhookEndpoint,
+  WebhookEvent,
   Candidate,
   Client,
   ClientCandidateShareRow,

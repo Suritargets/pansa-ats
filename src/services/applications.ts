@@ -14,6 +14,7 @@ import { db } from '@/lib/db'
 import { createUploadToken, getSession, requireSession, verifyUploadToken } from '@/lib/auth'
 import { uploadDocument } from '@/lib/blob'
 import { logAuditEvent } from '@/lib/audit'
+import { dispatchWebhookEvent } from '@/lib/webhooks'
 import { STAFF_ROLES } from '@/lib/roles'
 import type { ServiceResult } from '@/lib/service-result'
 
@@ -151,6 +152,15 @@ export async function submitApplication(
 
     if (requireStaff) revalidatePath('/admin/applications')
 
+    dispatchWebhookEvent('application.created', {
+      applicationId: application.id,
+      candidateId: candidate.id,
+      firstName: input.candidate.firstName,
+      lastName: input.candidate.lastName,
+      positionApplied: input.positionApplied,
+      source: input.source,
+    })
+
     return {
       success: true,
       data: {
@@ -235,6 +245,8 @@ export async function updateApplicationStatus(
       entityId: applicationId,
       metadata: { fromStatus, toStatus, note: note ?? null },
     })
+
+    dispatchWebhookEvent('application.status_changed', { applicationId, fromStatus, toStatus, note: note ?? null })
 
     revalidatePath(`/admin/applications/${applicationId}`)
     revalidatePath('/admin/applications')

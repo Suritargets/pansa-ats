@@ -9,10 +9,12 @@ import {
   BarChart3,
   Building2,
   ClipboardList,
+  Code2,
   Download,
   GraduationCap,
   History,
   Inbox,
+  KeyRound,
   LayoutDashboard,
   ListChecks,
   MessageCircleQuestion,
@@ -22,6 +24,7 @@ import {
   Tags,
   Truck,
   Users,
+  Webhook,
 } from 'lucide-react'
 
 export interface NavItem {
@@ -88,6 +91,15 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: 'Interviewvragen', href: '/admin/settings/interview-questions', icon: MessageCircleQuestion },
       { label: 'Gebruikers & rollen', href: '/admin/settings/users', icon: Users },
       { label: 'Audit-log', href: '/admin/settings/audit-log', icon: History },
+    ],
+  },
+  {
+    label: 'Integraties',
+    roles: ['super_admin'],
+    items: [
+      { label: 'Formulier embedden', href: '/admin/settings/embed', icon: Code2 },
+      { label: 'API-sleutels', href: '/admin/settings/api-keys', icon: KeyRound },
+      { label: 'Webhooks', href: '/admin/settings/webhooks', icon: Webhook },
     ],
   },
 ]
