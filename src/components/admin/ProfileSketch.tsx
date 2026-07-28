@@ -17,6 +17,7 @@ import { ContractForm } from '@/components/admin/ContractForm'
 import { ContractsList } from '@/components/admin/ContractsList'
 import { OnboardingChecklist } from '@/components/admin/OnboardingChecklist'
 import { ShareWithClient } from '@/components/admin/ShareWithClient'
+import { EmergencyContacts } from '@/components/admin/EmergencyContacts'
 import { formatDate } from '@/lib/utils'
 import {
   APPLICATION_STATUS_LABELS,
@@ -25,6 +26,7 @@ import {
   type ApplicationWithCandidate,
   type Client,
   type ClientCandidateShareRow,
+  type EmergencyContact,
   type EmploymentContract,
   type Interview,
   type InterviewQuestion,
@@ -73,6 +75,7 @@ export function ProfileSketch({
   onboardingProgress,
   shareableClients,
   shares,
+  emergencyContacts,
 }: {
   application: ApplicationWithCandidate
   documents: ApplicationDocument[]
@@ -83,6 +86,7 @@ export function ProfileSketch({
   onboardingProgress: OnboardingProgressRow[]
   shareableClients: Client[]
   shares: (ClientCandidateShareRow & { client: Client })[]
+  emergencyContacts: EmergencyContact[]
 }) {
   const currentIndex = STATUS_FLOW.indexOf(application.status)
   const nextStatus = currentIndex >= 0 && currentIndex < STATUS_FLOW.length - 1 && application.status !== 'rejected'
@@ -287,6 +291,19 @@ export function ProfileSketch({
                 </CardContent>
               </Card>
             )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">Noodcontacten</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <EmergencyContacts
+                  candidateId={application.candidate.id}
+                  applicationId={application.id}
+                  contacts={emergencyContacts}
+                />
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader>
