@@ -11,6 +11,7 @@ import {
   listApplicationDocuments,
   listApplicationShares,
   listContracts,
+  listEmergencyContacts,
   listInterviewQuestions,
   listInterviews,
   listOnboardingProgress,
@@ -27,17 +28,27 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
   const application = await getApplicationById(id)
   if (!application) notFound()
 
-  const [documents, interviews, interviewQuestions, contracts, onboardingSteps, onboardingProgress, shareableClients, shares] =
-    await Promise.all([
-      listApplicationDocuments(id),
-      listInterviews(id),
-      listInterviewQuestions(),
-      listContracts(id),
-      listOnboardingStepTemplates(application.companyId),
-      listOnboardingProgress(id),
-      listShareableClientsForApplication(id),
-      listApplicationShares(id),
-    ])
+  const [
+    documents,
+    interviews,
+    interviewQuestions,
+    contracts,
+    onboardingSteps,
+    onboardingProgress,
+    shareableClients,
+    shares,
+    emergencyContacts,
+  ] = await Promise.all([
+    listApplicationDocuments(id),
+    listInterviews(id),
+    listInterviewQuestions(),
+    listContracts(id),
+    listOnboardingStepTemplates(application.companyId),
+    listOnboardingProgress(id),
+    listShareableClientsForApplication(id),
+    listApplicationShares(id),
+    listEmergencyContacts(application.candidateId),
+  ])
 
   return (
     <AdminShell session={session}>
@@ -51,6 +62,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
         onboardingProgress={onboardingProgress}
         shareableClients={shareableClients}
         shares={shares}
+        emergencyContacts={emergencyContacts}
       />
     </AdminShell>
   )

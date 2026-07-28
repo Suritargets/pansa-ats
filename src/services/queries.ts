@@ -25,6 +25,7 @@ import {
   clientVacancyRequests,
   clients,
   companies,
+  emergencyContacts,
   employmentContracts,
   interviewQuestions,
   interviews,
@@ -44,6 +45,7 @@ import {
   type Candidate,
   type ChatKbEntry,
   type Client,
+  type EmergencyContact,
   type InterviewType,
   type JobBranche,
   type JobLevel,
@@ -287,6 +289,16 @@ export async function getCandidateById(id: string) {
     const [row] = await db.select().from(candidates).where(eq(candidates.id, id))
     return row ?? null
   })
+}
+
+export async function listEmergencyContacts(candidateId: string) {
+  return guarded<EmergencyContact[]>([], () =>
+    db
+      .select()
+      .from(emergencyContacts)
+      .where(eq(emergencyContacts.candidateId, candidateId))
+      .orderBy(emergencyContacts.priority)
+  )
 }
 
 // --- Client portal ---
