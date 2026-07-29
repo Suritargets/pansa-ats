@@ -16,6 +16,7 @@ import { InterviewsList } from '@/components/admin/InterviewsList'
 import { ContractForm } from '@/components/admin/ContractForm'
 import { ContractsList } from '@/components/admin/ContractsList'
 import { OnboardingChecklist } from '@/components/admin/OnboardingChecklist'
+import { CandidateTrainings } from '@/components/admin/CandidateTrainings'
 import { ShareWithClient } from '@/components/admin/ShareWithClient'
 import { formatDate } from '@/lib/utils'
 import {
@@ -23,6 +24,7 @@ import {
   type ApplicationDocument,
   type ApplicationStatus,
   type ApplicationWithCandidate,
+  type CandidateTrainingProgressRow,
   type Client,
   type ClientCandidateShareRow,
   type EmploymentContract,
@@ -30,6 +32,7 @@ import {
   type InterviewQuestion,
   type OnboardingProgressRow,
   type OnboardingStepTemplate,
+  type Training,
 } from '@/types/database'
 
 const MARITAL_STATUS_LABELS: Record<string, string> = {
@@ -71,6 +74,8 @@ export function ProfileSketch({
   contracts,
   onboardingSteps,
   onboardingProgress,
+  trainingsCatalog,
+  trainingProgress,
   shareableClients,
   shares,
 }: {
@@ -81,6 +86,8 @@ export function ProfileSketch({
   contracts: EmploymentContract[]
   onboardingSteps: OnboardingStepTemplate[]
   onboardingProgress: OnboardingProgressRow[]
+  trainingsCatalog: Training[]
+  trainingProgress: (CandidateTrainingProgressRow & { training: Training })[]
   shareableClients: Client[]
   shares: (ClientCandidateShareRow & { client: Client })[]
 }) {
@@ -118,6 +125,7 @@ export function ProfileSketch({
             <TabsTrigger value="profiel">Profiel</TabsTrigger>
             <TabsTrigger value="interviews">Interviews ({interviews.length})</TabsTrigger>
             <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
+            <TabsTrigger value="trainingen">Trainingen ({trainingProgress.length})</TabsTrigger>
             <TabsTrigger value="contract">Contract</TabsTrigger>
             <TabsTrigger value="documenten">Documenten ({documents.length})</TabsTrigger>
           </TabsList>
@@ -308,6 +316,14 @@ export function ProfileSketch({
               <p className="text-sm text-muted-foreground">Geen onboarding-stappen ingesteld.</p>
             ) : (
               <OnboardingChecklist applicationId={application.id} steps={onboardingSteps} progress={onboardingProgress} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="trainingen" className="pt-4">
+            {trainingsCatalog.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nog geen trainingen in de catalogus.</p>
+            ) : (
+              <CandidateTrainings applicationId={application.id} catalog={trainingsCatalog} progress={trainingProgress} />
             )}
           </TabsContent>
 
