@@ -10,12 +10,14 @@ import {
   getApplicationById,
   listApplicationDocuments,
   listApplicationShares,
+  listCandidateTrainingProgress,
   listContracts,
   listInterviewQuestions,
   listInterviews,
   listOnboardingProgress,
   listOnboardingStepTemplates,
   listShareableClientsForApplication,
+  listTrainings,
 } from '@/services/queries'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { ProfileSketch } from '@/components/admin/ProfileSketch'
@@ -27,17 +29,29 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
   const application = await getApplicationById(id)
   if (!application) notFound()
 
-  const [documents, interviews, interviewQuestions, contracts, onboardingSteps, onboardingProgress, shareableClients, shares] =
-    await Promise.all([
-      listApplicationDocuments(id),
-      listInterviews(id),
-      listInterviewQuestions(),
-      listContracts(id),
-      listOnboardingStepTemplates(application.companyId),
-      listOnboardingProgress(id),
-      listShareableClientsForApplication(id),
-      listApplicationShares(id),
-    ])
+  const [
+    documents,
+    interviews,
+    interviewQuestions,
+    contracts,
+    onboardingSteps,
+    onboardingProgress,
+    shareableClients,
+    shares,
+    trainings,
+    trainingProgress,
+  ] = await Promise.all([
+    listApplicationDocuments(id),
+    listInterviews(id),
+    listInterviewQuestions(),
+    listContracts(id),
+    listOnboardingStepTemplates(application.companyId),
+    listOnboardingProgress(id),
+    listShareableClientsForApplication(id),
+    listApplicationShares(id),
+    listTrainings(),
+    listCandidateTrainingProgress(id),
+  ])
 
   return (
     <AdminShell session={session}>
@@ -51,6 +65,8 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
         onboardingProgress={onboardingProgress}
         shareableClients={shareableClients}
         shares={shares}
+        trainings={trainings}
+        trainingProgress={trainingProgress}
       />
     </AdminShell>
   )
