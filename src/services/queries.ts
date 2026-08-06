@@ -494,7 +494,12 @@ export async function listOnboardingProgress(applicationId: string) {
 
 export async function listOnboardingOverview() {
   return guarded<(ApplicationWithCandidate & { doneSteps: number; totalSteps: number })[]>([], async () => {
-    const totalSteps = (await db.select().from(onboardingStepTemplates)).length
+    const allTemplates = await db.select().from(onboardingStepTemplates)
+    const globalStepCount = allTemplates.filter((t) => t.companyId === null).length
+    const companyStepCounts = new Map<string, number>()
+    for (const t of allTemplates) {
+      if (t.companyId) companyStepCounts.set(t.companyId, (companyStepCounts.get(t.companyId) ?? 0) + 1)
+    }
 
     const apps = await db
       .select({ application: applications, candidate: candidates, company: companies })
@@ -516,7 +521,7 @@ export async function listOnboardingOverview() {
       candidate,
       company,
       doneSteps: doneMap.get(application.id) ?? 0,
-      totalSteps,
+      totalSteps: globalStepCount + (companyStepCounts.get(application.companyId) ?? 0),
     }))
   })
 }
