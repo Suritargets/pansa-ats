@@ -6,6 +6,7 @@
  */
 
 import { revalidatePath } from 'next/cache'
+import { sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
@@ -41,7 +42,7 @@ export async function setCandidateTrainingProgress(
       trainingId,
       status,
       score: score?.toString() ?? null,
-      startedAt: status === 'in_progress' ? new Date() : null,
+      startedAt: status === 'not_started' ? null : new Date(),
       completedAt: status === 'completed' ? new Date() : null,
     })
     .onConflictDoUpdate({
@@ -49,6 +50,9 @@ export async function setCandidateTrainingProgress(
       set: {
         status,
         score: score?.toString() ?? null,
+        // coalesce zodat een al bestaande startedAt niet wordt overschreven bij een herhaalde update
+        startedAt:
+          status === 'not_started' ? null : sql`coalesce(${candidateTrainingProgress.startedAt}, now())`,
         completedAt: status === 'completed' ? new Date() : null,
       },
     })
