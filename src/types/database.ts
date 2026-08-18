@@ -4,7 +4,14 @@
  *         zodat er één bron van waarheid is tussen DB-schema en de rest van de app.
  */
 
-import type { Application, Candidate, ClientCandidateShareRow, Company } from '../../drizzle/schema'
+import type {
+  Application,
+  Candidate,
+  CandidateTrainingProgressRow,
+  ClientCandidateShareRow,
+  Company,
+  Training,
+} from '../../drizzle/schema'
 
 export type {
   ApiKey,
@@ -64,6 +71,10 @@ export interface ApplicationWithCandidate extends Application {
 
 export interface SharedApplication extends ApplicationWithCandidate {
   share: ClientCandidateShareRow
+}
+
+export interface CandidateTrainingProgressWithTraining extends CandidateTrainingProgressRow {
+  training: Training
 }
 
 export const APPLICATION_STATUS_LABELS: Record<Application['status'], string> = {
