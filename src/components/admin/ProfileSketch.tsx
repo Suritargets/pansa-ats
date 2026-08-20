@@ -15,6 +15,7 @@ import { InterviewForm } from '@/components/admin/InterviewForm'
 import { InterviewsList } from '@/components/admin/InterviewsList'
 import { ContractForm } from '@/components/admin/ContractForm'
 import { ContractsList } from '@/components/admin/ContractsList'
+import { ProbationEvaluation } from '@/components/admin/ProbationEvaluation'
 import { OnboardingChecklist } from '@/components/admin/OnboardingChecklist'
 import { ShareWithClient } from '@/components/admin/ShareWithClient'
 import { formatDate } from '@/lib/utils'
@@ -313,6 +314,7 @@ export function ProfileSketch({
 
           <TabsContent value="contract" className="space-y-4 pt-4">
             <ContractsList contracts={contracts} />
+            <ProbationEvaluation contracts={contracts} applicationId={application.id} />
             <ContractForm applicationId={application.id} />
           </TabsContent>
 
