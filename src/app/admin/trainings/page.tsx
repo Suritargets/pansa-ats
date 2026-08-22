@@ -51,12 +51,13 @@ export default async function TrainingsPage() {
                   <TableHead>Kandidaat</TableHead>
                   <TableHead>Training</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Score</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {progress.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="py-6 text-center text-muted-foreground">
+                    <TableCell colSpan={4} className="py-6 text-center text-muted-foreground">
                       Nog geen voortgang geregistreerd.
                     </TableCell>
                   </TableRow>
@@ -72,6 +73,7 @@ export default async function TrainingsPage() {
                     <TableCell>
                       <Badge variant="outline">{STATUS_LABELS[p.status]}</Badge>
                     </TableCell>
+                    <TableCell className="text-muted-foreground">{p.score ?? '—'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
