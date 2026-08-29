@@ -2,7 +2,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { createUser } from '@/services/users'
-import type { Client, UserRole } from '@/types/database'
+import type { Candidate, Client, UserRole } from '@/types/database'
 import { cn } from '@/lib/utils'
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -16,7 +16,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
 const selectClasses =
   'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30'
 
-export function UserForm({ clients }: { clients: Client[] }) {
+export function UserForm({ clients, candidates }: { clients: Client[]; candidates: Candidate[] }) {
   return (
     <form action={createUser} className="max-w-md space-y-4">
       <div className="space-y-1.5">
@@ -48,6 +48,17 @@ export function UserForm({ clients }: { clients: Client[] }) {
           {clients.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="candidateId">Koppel aan kandidaat (verplicht bij rol &quot;Kandidaat&quot;)</Label>
+        <select id="candidateId" name="candidateId" defaultValue="" className={cn(selectClasses)}>
+          <option value="">Geen</option>
+          {candidates.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.firstName} {c.lastName}
             </option>
           ))}
         </select>

@@ -22,8 +22,10 @@ export async function createUser(formData: FormData): Promise<void> {
   const password = String(formData.get('password') ?? '')
   const role = String(formData.get('role') ?? 'hr_staff') as UserRole
   const clientId = String(formData.get('clientId') ?? '').trim() || null
+  const candidateId = String(formData.get('candidateId') ?? '').trim() || null
 
   if (!email || !fullName || password.length < 8) return
+  if (role === 'candidate' && !candidateId) return
 
   const [created] = await db
     .insert(profiles)
@@ -32,6 +34,7 @@ export async function createUser(formData: FormData): Promise<void> {
       fullName,
       role,
       clientId: role === 'client' ? clientId : null,
+      candidateId: role === 'candidate' ? candidateId : null,
       passwordHash: await hashPassword(password),
     })
     .returning({ id: profiles.id })
@@ -51,6 +54,15 @@ export async function toggleUserActive(id: string, active: boolean): Promise<voi
 export async function updateUserRole(id: string, role: UserRole): Promise<void> {
   const session = await requireSession([...SUPER_ADMIN_ROLES])
   if (session.userId === id) return // eigen rol niet wijzigen
+
+  // 'client'/'candidate' hebben een verplichte koppeling (clientId/candidateId) die alleen het
+  // aanmaakformulier zet — zonder die check zou een rolwissel hier een onbruikbaar account opleveren.
+  if (role === 'client' || role === 'candidate') {
+    const [target] = await db.select().from(profiles).where(eq(profiles.id, id))
+    const linked = role === 'client' ? target?.clientId : target?.candidateId
+    if (!linked) return
+  }
+
   await db.update(profiles).set({ role }).where(eq(profiles.id, id))
   await logAuditEvent(session, 'user_role_changed', { entityType: 'profile', entityId: id, metadata: { role } })
   revalidatePath('/admin/settings/users')
