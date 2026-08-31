@@ -12,7 +12,7 @@ import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
-import { applications, payrollExportBatches, payrollExportItems } from '../../drizzle/schema'
+import { applications, payrollExportBatches, payrollExportItems, type PayrollExportStatus } from '../../drizzle/schema'
 
 export async function createPayrollBatch(): Promise<void> {
   const session = await requireSession([...STAFF_ROLES])
@@ -32,6 +32,17 @@ export async function createPayrollBatch(): Promise<void> {
       }))
     )
   }
+
+  revalidatePath('/admin/export/payroll')
+}
+
+export async function markPayrollBatchOutcome(batchId: string, status: PayrollExportStatus): Promise<void> {
+  await requireSession([...STAFF_ROLES])
+
+  await db
+    .update(payrollExportBatches)
+    .set({ status, completedAt: new Date() })
+    .where(eq(payrollExportBatches.id, batchId))
 
   revalidatePath('/admin/export/payroll')
 }
