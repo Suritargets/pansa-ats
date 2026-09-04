@@ -35,3 +35,14 @@ export async function createPayrollBatch(): Promise<void> {
 
   revalidatePath('/admin/export/payroll')
 }
+
+export async function markPayrollBatchExported(batchId: string): Promise<void> {
+  await requireSession([...STAFF_ROLES])
+
+  await db
+    .update(payrollExportBatches)
+    .set({ status: 'exported', completedAt: new Date() })
+    .where(eq(payrollExportBatches.id, batchId))
+
+  revalidatePath('/admin/export/payroll')
+}
