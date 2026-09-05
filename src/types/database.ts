@@ -4,7 +4,7 @@
  *         zodat er één bron van waarheid is tussen DB-schema en de rest van de app.
  */
 
-import type { Application, Candidate, ClientCandidateShareRow, Company } from '../../drizzle/schema'
+import type { Application, Candidate, ClientCandidateShareRow, Company, DocumentKind } from '../../drizzle/schema'
 
 export type {
   ApiKey,
@@ -76,4 +76,13 @@ export const APPLICATION_STATUS_LABELS: Record<Application['status'], string> = 
   active: 'Actief geplaatst',
   rejected: 'Afgewezen',
   withdrawn: 'Ingetrokken',
+}
+
+export const DOCUMENT_LABELS: Record<DocumentKind, string> = {
+  cv: 'CV',
+  handwritten_scan: 'Scan handgeschreven formulier',
+  id_document: 'ID-document',
+  certificate: 'Diploma/certificaat',
+  police_clearance: 'Bewijs van goed gedrag',
+  other: 'Overig',
 }

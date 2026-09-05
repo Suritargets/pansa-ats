@@ -2,19 +2,29 @@
  * api/documents/[id]/route.ts
  * WAT:    Streamt een document (CV, scan, ID, certificaat) uit de private Vercel Blob store.
  * WAAROM: De store staat op `access: 'private'` — dit is de enige plek waar een document
- *         gelezen kan worden, en alleen voor ingelogde staff.
+ *         gelezen kan worden. Staff mag elk document zien; een client/candidate alleen een
+ *         document dat hoort bij een sollicitatie die met hen gedeeld is, resp. hun eigen
+ *         sollicitatie (zie `getDocumentByIdScoped`, nooit `getDocumentById` voor die rollen).
  */
 
 import { NextResponse } from 'next/server'
-import { requireSession } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
+import { STAFF_ROLES } from '@/lib/roles'
 import { readDocument } from '@/lib/blob'
-import { getDocumentById } from '@/services/queries'
+import { getDocumentById, getDocumentByIdScoped } from '@/services/queries'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  await requireSession(['super_admin', 'hr_staff', 'recruiter'])
+  const session = await getSession()
+  if (!session) return NextResponse.json({ error: 'Niet geautoriseerd.' }, { status: 401 })
 
   const { id } = await params
-  const doc = await getDocumentById(id)
+  const isStaff = STAFF_ROLES.includes(session.role as (typeof STAFF_ROLES)[number])
+  const doc = isStaff
+    ? await getDocumentById(id)
+    : await getDocumentByIdScoped(id, {
+        clientId: session.clientId ?? undefined,
+        candidateId: session.candidateId ?? undefined,
+      })
   if (!doc) return NextResponse.json({ error: 'Document niet gevonden.' }, { status: 404 })
 
   const result = await readDocument(doc.storagePath)
