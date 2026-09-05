@@ -20,6 +20,7 @@ import { ShareWithClient } from '@/components/admin/ShareWithClient'
 import { formatDate } from '@/lib/utils'
 import {
   APPLICATION_STATUS_LABELS,
+  DOCUMENT_LABELS,
   type ApplicationDocument,
   type ApplicationStatus,
   type ApplicationWithCandidate,
@@ -53,15 +54,6 @@ const STATUS_FLOW: ApplicationStatus[] = [
   'onboarding',
   'active',
 ]
-
-const DOCUMENT_LABELS: Record<ApplicationDocument['kind'], string> = {
-  cv: 'CV',
-  handwritten_scan: 'Scan handgeschreven formulier',
-  id_document: 'ID-document',
-  certificate: 'Diploma/certificaat',
-  police_clearance: 'Bewijs van goed gedrag',
-  other: 'Overig',
-}
 
 export function ProfileSketch({
   application,

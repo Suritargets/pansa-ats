@@ -105,6 +105,21 @@ export async function listApplicationDocuments(applicationId: string) {
   )
 }
 
+/**
+ * Documenten die getoond mogen worden aan een client in de client-portal — alleen het CV.
+ * ID-bewijs, bewijs van goed gedrag e.d. zijn gevoelige persoonsgegevens die pas relevant
+ * zijn ná plaatsing (onboarding), niet voor een externe client die nog een keuze maakt.
+ */
+export async function listClientVisibleDocuments(applicationId: string) {
+  return guarded<ApplicationDocument[]>([], () =>
+    db
+      .select()
+      .from(applicationDocuments)
+      .where(and(eq(applicationDocuments.applicationId, applicationId), eq(applicationDocuments.kind, 'cv')))
+      .orderBy(desc(applicationDocuments.createdAt))
+  )
+}
+
 export async function getDocumentById(id: string) {
   return guarded<ApplicationDocument | null>(null, async () => {
     const [doc] = await db.select().from(applicationDocuments).where(eq(applicationDocuments.id, id))
