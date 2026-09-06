@@ -18,6 +18,7 @@ import { ContractsList } from '@/components/admin/ContractsList'
 import { OnboardingChecklist } from '@/components/admin/OnboardingChecklist'
 import { ShareWithClient } from '@/components/admin/ShareWithClient'
 import { formatDate } from '@/lib/utils'
+import { DOCUMENT_LABELS } from '@/lib/documents'
 import {
   APPLICATION_STATUS_LABELS,
   type ApplicationDocument,
@@ -53,15 +54,6 @@ const STATUS_FLOW: ApplicationStatus[] = [
   'onboarding',
   'active',
 ]
-
-const DOCUMENT_LABELS: Record<ApplicationDocument['kind'], string> = {
-  cv: 'CV',
-  handwritten_scan: 'Scan handgeschreven formulier',
-  id_document: 'ID-document',
-  certificate: 'Diploma/certificaat',
-  police_clearance: 'Bewijs van goed gedrag',
-  other: 'Overig',
-}
 
 export function ProfileSketch({
   application,

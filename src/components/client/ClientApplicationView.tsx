@@ -1,10 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ClientFeedbackForm } from '@/components/client/ClientFeedbackForm'
 import { formatDate } from '@/lib/utils'
-import type { SharedApplication } from '@/types/database'
+import { DOCUMENT_LABELS } from '@/lib/documents'
+import type { ApplicationDocument, SharedApplication } from '@/types/database'
 
-export function ClientApplicationView({ application }: { application: SharedApplication }) {
+export function ClientApplicationView({
+  application,
+  documents,
+}: {
+  application: SharedApplication
+  documents: ApplicationDocument[]
+}) {
   return (
     <div className="space-y-6">
       <Card>
@@ -25,6 +33,34 @@ export function ClientApplicationView({ application }: { application: SharedAppl
             <Field label="Jaren ervaring" value={application.candidate.yearsExperience?.toString()} />
             <Field label="Gedeeld op" value={formatDate(application.share.sharedAt)} />
           </dl>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm uppercase tracking-wide text-muted-foreground">Documenten</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {documents.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Geen documenten beschikbaar.</p>
+          ) : (
+            <ul className="space-y-2">
+              {documents.map((doc) => (
+                <li key={doc.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{DOCUMENT_LABELS[doc.kind]}</p>
+                    <p className="text-xs text-muted-foreground">{doc.fileName}</p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    render={<a href={`/api/client/documents/${doc.id}`} target="_blank" rel="noreferrer" />}
+                  >
+                    Bekijken
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
         </CardContent>
       </Card>
 

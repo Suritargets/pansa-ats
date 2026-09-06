@@ -12,6 +12,7 @@
 import 'server-only'
 import { and, count, desc, eq, ilike, inArray, isNull, or } from 'drizzle-orm'
 import { db, DB_MODE } from '@/lib/db'
+import { CLIENT_VISIBLE_DOCUMENT_KINDS } from '@/lib/documents'
 import {
   apiKeys,
   applicationDocuments,
@@ -306,6 +307,21 @@ export async function listSharedApplicationsForClient(clientId: string) {
 
       return rows.map(({ application, candidate, company, share }) => ({ ...application, candidate, company, share }))
     }
+  )
+}
+
+export async function listClientVisibleDocuments(applicationId: string) {
+  return guarded<ApplicationDocument[]>([], () =>
+    db
+      .select()
+      .from(applicationDocuments)
+      .where(
+        and(
+          eq(applicationDocuments.applicationId, applicationId),
+          inArray(applicationDocuments.kind, CLIENT_VISIBLE_DOCUMENT_KINDS)
+        )
+      )
+      .orderBy(desc(applicationDocuments.createdAt))
   )
 }
 
