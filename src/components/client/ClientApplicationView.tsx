@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ClientFeedbackForm } from '@/components/client/ClientFeedbackForm'
 import { formatDate } from '@/lib/utils'
@@ -16,7 +17,12 @@ export function ClientApplicationView({ application }: { application: SharedAppl
               </CardTitle>
               <p className="text-sm text-muted-foreground">{application.positionApplied}</p>
             </div>
-            <StatusBadge status={application.status} />
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" render={<a href={`/client/applications/${application.id}/cv`} target="_blank" rel="noopener noreferrer" />}>
+                CV bekijken
+              </Button>
+              <StatusBadge status={application.status} />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
