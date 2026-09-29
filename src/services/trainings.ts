@@ -48,8 +48,10 @@ export async function setCandidateTrainingProgress(
       target: [candidateTrainingProgress.applicationId, candidateTrainingProgress.trainingId],
       set: {
         status,
-        score: score?.toString() ?? null,
         completedAt: status === 'completed' ? new Date() : null,
+        // score omitted on purpose when not passed in, so cycling status alone never wipes a previously recorded score
+        ...(score !== undefined ? { score: score.toString() } : {}),
+        ...(status === 'in_progress' ? { startedAt: new Date() } : {}),
       },
     })
 
