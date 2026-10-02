@@ -5,7 +5,11 @@
  */
 
 function escapeCsvValue(value: unknown): string {
-  const str = value === null || value === undefined ? '' : String(value)
+  let str = value === null || value === undefined ? '' : String(value)
+  // Voorkom formule-injectie: spreadsheet-apps (Excel/Sheets) voeren een cel die begint
+  // met =, +, -, @ of een tab/CR uit als formule zodra het CSV-bestand geopend wordt.
+  // Deze velden kunnen vrije tekst van een niet-geauthenticeerde sollicitant bevatten.
+  if (/^[=+\-@\t\r]/.test(str)) str = `'${str}`
   if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`
   return str
 }
