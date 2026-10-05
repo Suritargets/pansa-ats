@@ -7,10 +7,16 @@
  * WAAROM: Zoekt een bestaand client-record op contact-e-mail; anders wordt een nieuwe
  *         client aangemaakt met status 'prospect' zodat staff die later kan opwaarderen
  *         via het gewone Clienten-scherm. `requestedBy` blijft leeg (geen sessie).
+ *         Het e-mail-matchen koppelt alleen aan een client die zelf nog 'prospect' is
+ *         (dus zelf ooit via dit ongeauthenticeerde formulier is aangemaakt) — nooit aan
+ *         een bestaande 'active'/'inactive' client. Anders kan iedereen die het publieke
+ *         contact-e-mailadres van een echte, al geverifieerde client kent, aanvragen
+ *         onder diens naam injecteren die voor staff niet te onderscheiden zijn van een
+ *         echte aanvraag.
  */
 
 import { redirect } from 'next/navigation'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { logAuditEvent } from '@/lib/audit'
 import { dispatchWebhookEvent } from '@/lib/webhooks'
@@ -51,7 +57,14 @@ export async function submitPublicVacancyRequest(formData: FormData): Promise<vo
     redirect(`${redirectTo}?error=1`)
   }
 
-  let client = contactEmail ? (await db.select().from(clients).where(eq(clients.contactEmail, contactEmail)))[0] : undefined
+  let client = contactEmail
+    ? (
+        await db
+          .select()
+          .from(clients)
+          .where(and(eq(clients.contactEmail, contactEmail), eq(clients.status, 'prospect')))
+      )[0]
+    : undefined
 
   if (!client) {
     ;[client] = await db
