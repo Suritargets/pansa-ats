@@ -4,8 +4,16 @@
  *         kandidaat-bulk-import. Geen externe dependency nodig voor dit formaat.
  */
 
+// Cellen die beginnen met =, +, -, @ of een tab worden door Excel/Sheets/LibreOffice
+// als formule geïnterpreteerd zodra het bestand geopend wordt ("CSV injection") — een
+// kandidaat/client kan zo'n waarde via een vrij-tekstveld (bv. coverNote) laten
+// binnenkomen. Een voorloop-apostrof neutraliseert dat zonder de zichtbare waarde
+// te veranderen.
+const FORMULA_PREFIX = /^[=+\-@\t]/
+
 function escapeCsvValue(value: unknown): string {
-  const str = value === null || value === undefined ? '' : String(value)
+  let str = value === null || value === undefined ? '' : String(value)
+  if (FORMULA_PREFIX.test(str)) str = `'${str}`
   if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`
   return str
 }
