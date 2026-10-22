@@ -13,7 +13,7 @@ import { countAttentionItems } from '@/services/queries'
 import { Button } from '@/components/ui/button'
 import { Sidebar } from '@/components/admin/Sidebar'
 import { CommandPalette } from '@/components/admin/CommandPalette'
-import { getSidebarCollapsed } from '@/lib/sidebar'
+import { getSidebarCollapsed, getSidebarOpenGroups } from '@/lib/sidebar'
 import { logoutAction } from '@/services/auth-actions'
 import type { SessionData } from '@/lib/auth'
 
@@ -29,12 +29,12 @@ function initials(fullName: string): string {
 }
 
 export async function AdminShell({ session, children }: { session: SessionData; children: React.ReactNode }) {
-  const [collapsed, attention] = await Promise.all([getSidebarCollapsed(), countAttentionItems()])
+  const [collapsed, openGroups, attention] = await Promise.all([getSidebarCollapsed(), getSidebarOpenGroups(), countAttentionItems()])
   const logo = logoSrc()
 
   return (
     <div className="flex min-h-screen bg-canvas">
-      <Sidebar role={session.role} initialCollapsed={collapsed} />
+      <Sidebar role={session.role} initialCollapsed={collapsed} initialOpenGroups={openGroups} />
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-4 border-b border-border bg-card px-6 py-3">
           <Link href="/admin/dashboard" className="hidden shrink-0 items-center gap-3 lg:flex">

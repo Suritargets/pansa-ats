@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Eye } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -50,13 +51,17 @@ export function CandidatesTable({ candidates }: { candidates: Candidate[] }) {
                 <TableRow key={candidate.id} onClick={() => setSelectedId(candidate.id)} className="cursor-pointer">
                   <TableCell className="text-muted-foreground tabular-nums">{i + 1}</TableCell>
                   <TableCell>
-                    <span className="flex items-center gap-3">
+                    <Link
+                      href={`/admin/candidates/${candidate.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-3 hover:underline"
+                    >
                       <Avatar name={name} size="sm" />
                       <span>
                         <span className="block font-medium text-foreground">{name}</span>
                         <span className="block text-xs text-muted-foreground">{candidate.email || '—'}</span>
                       </span>
-                    </span>
+                    </Link>
                   </TableCell>
                   <TableCell className="text-muted-foreground tabular-nums">{registrationLabel(candidate)}</TableCell>
                   <TableCell className="text-muted-foreground">{candidate.phone || '—'}</TableCell>

@@ -53,12 +53,15 @@ export function CandidateDetailSheet({
   candidate,
   open,
   onOpenChange,
+  initialMode = 'view',
 }: {
   candidate: Candidate
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** 'edit' opent het paneel direct in bewerkmodus (profielpagina → "Bewerken"). */
+  initialMode?: 'view' | 'edit'
 }) {
-  const [mode, setMode] = useState<'view' | 'edit'>('view')
+  const [mode, setMode] = useState<'view' | 'edit'>(initialMode)
   const boundAction = updateCandidate.bind(null, candidate.id)
   const [state, formAction, pending] = useActionState(boundAction, initialState)
 

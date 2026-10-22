@@ -2,31 +2,34 @@
 
 /**
  * Sidebar.tsx
- * WAT:    Collapsible navigatie voor de staff-admin. Lokale state voor instant toggle,
- *         persisteert async naar een cookie (UI chrome, geen data — geen revalidatePath nodig).
+ * WAT:    Collapsible navigatie voor de staff-admin. Menugroepen staan standaard dicht; een groep
+ *         die de gebruiker opent blijft open (cookie) tot die hem weer sluit — ook na navigeren.
+ *         Lokale state voor een directe reactie, persistentie async naar een cookie (UI chrome,
+ *         geen data — geen revalidatePath nodig).
  */
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { setSidebarCollapsedAction } from '@/services/sidebar-actions'
+import { setSidebarCollapsedAction, setSidebarOpenGroupsAction } from '@/services/sidebar-actions'
 import { ADMIN_NAV } from '@/constants/nav'
 import type { UserRole } from '../../../drizzle/schema'
 
 export function Sidebar({
   role,
   initialCollapsed,
+  initialOpenGroups,
 }: {
   role: UserRole
   initialCollapsed: boolean
+  initialOpenGroups: string[]
 }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed)
+  const [openGroups, setOpenGroups] = useState<string[]>(initialOpenGroups)
   const [, startTransition] = useTransition()
-  // Per-groep in-/uitklappen — puur sessie-lokale UI-state, geen persistentie nodig.
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
   const pathname = usePathname()
 
   function toggle() {
@@ -38,7 +41,11 @@ export function Sidebar({
   }
 
   function toggleGroup(label: string) {
-    setCollapsedGroups((prev) => ({ ...prev, [label]: !prev[label] }))
+    const next = openGroups.includes(label) ? openGroups.filter((g) => g !== label) : [...openGroups, label]
+    setOpenGroups(next)
+    startTransition(() => {
+      void setSidebarOpenGroupsAction(next)
+    })
   }
 
   const visibleGroups = ADMIN_NAV.filter((group) => !group.roles || group.roles.includes(role))
@@ -57,28 +64,37 @@ export function Sidebar({
         </Button>
       </div>
 
-      <nav className="flex-1 space-y-2 overflow-y-auto px-2 pb-4">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
         {visibleGroups.map((group, groupIndex) => {
           const groupKey = group.label ?? String(groupIndex)
-          const groupHasActiveItem = group.items.some(
-            (item) => pathname === item.href || pathname.startsWith(`${item.href}/`)
-          )
-          const groupCollapsed = !groupHasActiveItem && Boolean(collapsedGroups[groupKey])
+          const groupHasActiveItem = group.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
+          // Groepen zonder label (Dashboard/Rapportages) staan altijd open; de rest alleen als de gebruiker ze opende.
+          // Een ingeklapte sidebar toont alle iconen, daar is er niets om open/dicht te klappen.
+          const isOpen = !group.label || collapsed || openGroups.includes(groupKey)
 
           return (
-            <div key={groupKey}>
+            <div key={groupKey} className={cn(group.label && 'pt-1')}>
               {group.label && !collapsed && (
                 <button
                   type="button"
                   onClick={() => toggleGroup(groupKey)}
-                  className="flex w-full items-center justify-between px-2 pb-1 text-xs font-medium uppercase tracking-wide text-sidebar-foreground/60 hover:text-sidebar-foreground/90"
+                  aria-expanded={isOpen}
+                  className={cn(
+                    'flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-xs font-bold tracking-wider uppercase transition-colors hover:bg-sidebar-accent',
+                    groupHasActiveItem ? 'text-sidebar-foreground' : 'text-sidebar-foreground/75'
+                  )}
                 >
-                  {group.label}
-                  <ChevronDown className={cn('size-3 transition-transform', groupCollapsed && '-rotate-90')} />
+                  <span className="flex items-center gap-2">
+                    {group.label}
+                    {groupHasActiveItem && !isOpen && (
+                      <span aria-hidden="true" className="size-1.5 rounded-full bg-[var(--color-brand-yellow)]" />
+                    )}
+                  </span>
+                  <ChevronRight className={cn('size-3.5 transition-transform', isOpen && 'rotate-90')} />
                 </button>
               )}
-              {(!groupCollapsed || collapsed) && (
-                <ul className="space-y-1">
+              {isOpen && (
+                <ul className={cn('space-y-1', group.label && !collapsed && 'pb-1')}>
                   {group.items.map((item) => {
                     const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
                     return (

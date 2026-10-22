@@ -502,6 +502,33 @@ export async function listStatusHistory(applicationId: string) {
   )
 }
 
+/** Alle sollicitaties van één kandidaat (nieuwste eerst) — voor de profielpagina. */
+export async function listApplicationsForCandidate(candidateId: string) {
+  return guarded<ApplicationWithCandidate[]>([], async () => {
+    const rows = await db
+      .select({ application: applications, candidate: candidates, company: companies })
+      .from(applications)
+      .innerJoin(candidates, eq(applications.candidateId, candidates.id))
+      .innerJoin(companies, eq(applications.companyId, companies.id))
+      .where(eq(applications.candidateId, candidateId))
+      .orderBy(desc(applications.createdAt))
+    return rows.map(({ application, candidate, company }) => ({ ...application, candidate, company }))
+  })
+}
+
+/** Alle documenten over alle sollicitaties van één kandidaat heen. */
+export async function listDocumentsForCandidate(candidateId: string) {
+  return guarded<(ApplicationDocument & { positionApplied: string })[]>([], async () => {
+    const rows = await db
+      .select({ document: applicationDocuments, positionApplied: applications.positionApplied })
+      .from(applicationDocuments)
+      .innerJoin(applications, eq(applicationDocuments.applicationId, applications.id))
+      .where(eq(applications.candidateId, candidateId))
+      .orderBy(desc(applicationDocuments.createdAt))
+    return rows.map(({ document, positionApplied }) => ({ ...document, positionApplied }))
+  })
+}
+
 export interface ContractMonitorRow {
   contract: EmploymentContract
   application: ApplicationWithCandidate
