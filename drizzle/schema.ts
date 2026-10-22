@@ -60,6 +60,14 @@ export const documentKindEnum = pgEnum('document_kind', [
   'id_document',
   'certificate',
   'police_clearance',
+  // Onderdelen van de Index Personeelsdossier (PGC-HR-F-0508-04) en het client pre-employment pakket:
+  'drivers_license',
+  'diploma',
+  'photo_family_docs', // pasfoto, uittreksel, kopie familieboek
+  'medical_certificate',
+  'sor_declaration',
+  'medical_insurance',
+  'signed_contract',
   'other',
 ])
 
@@ -171,6 +179,20 @@ export interface WorkHistoryEntry {
   reasonForLeaving?: string
 }
 
+// Local Community of Interest (CV-sjabloon PGC-HR-F-0503-05, blok "District Brokopondo"): RGM houdt
+// per contractor bij of die uit/verbonden met het district Brokopondo of het Klein Saramacca-gebied is.
+// Elke vraag: ja/nee + bij "ja" welk gebied (zie COI_AREAS in src/constants/coi.ts).
+export interface CommunityOfInterest {
+  bornInArea?: boolean
+  bornArea?: string
+  spouseFromArea?: boolean
+  spouseArea?: string
+  parentsFromArea?: boolean
+  parentsArea?: string
+  resident?: boolean
+  residentArea?: string // een gebied uit de lijst, of vrije tekst bij "Other"
+}
+
 // --- Companies: Pansa Group + subsidiaries (werkgever) ---
 
 export const companies = pgTable('companies', {
@@ -253,6 +275,11 @@ export const candidates = pgTable(
   'candidates',
   {
     id: uuid('id').defaultRandom().primaryKey(),
+    // Registratie-nr van het papieren registratieformulier. `registration_seq` is een automatisch
+    // volgnummer (identity) en dient als weergave-fallback ('REG-00042') als er geen papieren
+    // nummer is ingevoerd — zie registrationLabel() in src/lib/registration.ts.
+    registrationNumber: text('registration_number').unique(),
+    registrationSeq: integer('registration_seq').generatedAlwaysAsIdentity(),
     firstName: text('first_name').notNull(),
     lastName: text('last_name').notNull(),
     email: text('email'),
@@ -275,6 +302,7 @@ export const candidates = pgTable(
     hasDriversLicense: boolean('has_drivers_license'),
     driversLicenseCategory: text('drivers_license_category'),
     policeClearanceDate: text('police_clearance_date'), // datum bewijs van goed gedrag (ISO)
+    communityOfInterest: jsonb('community_of_interest').$type<CommunityOfInterest>(), // null = nog niet gevraagd
     education: jsonb('education').$type<EducationEntry[]>().notNull().default([]),
     // kandidaat's eigen opleidingsgeschiedenis — niet te verwarren met `trainings`/
     // `candidate_training_progress`, dat is Pansa-training NA aanname.
@@ -286,9 +314,11 @@ export const candidates = pgTable(
     lastSupervisorName: text('last_supervisor_name'),
     lastSupervisorContact: text('last_supervisor_contact'),
     availabilityDate: text('availability_date'), // ISO date string
+    generalPractitioner: text('general_practitioner'), // huisarts (Basisgegevens nieuwe medewerker)
     bankAccountNumber: text('bank_account_number'), // girorekeningnummer
     bankName: text('bank_name'),
-    // Van het CV-sjabloon (references/cv-template.md) — belangenverstrengelings-check.
+    // Van het CV-sjabloon (references/cv-template.md) — belangenverstrengelings-check
+    // (sinds PGC-HR-F-0503-05: "familielid werkzaam bij RGM"; kolomnaam is historisch generiek).
     relatedToStaffMember: boolean('related_to_staff_member'),
     relatedToStaffMemberDetails: text('related_to_staff_member_details'), // relatie + naam
     personalCompetencies: text('personal_competencies'),
@@ -425,6 +455,36 @@ export const interviewQuestions = pgTable(
   (table) => [index('idx_interview_questions_type').on(table.type)]
 )
 
+// --- Reference checks: Vragenlijst antecedentenonderzoek (PGC-HR-F-0507-04) ---
+// Een sollicitatie kan meerdere referenties hebben (HR belt de opgegeven referent).
+
+export const referenceChecks = pgTable(
+  'reference_checks',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    applicationId: uuid('application_id')
+      .notNull()
+      .references(() => applications.id, { onDelete: 'cascade' }),
+    refereeName: text('referee_name'),
+    refereePosition: text('referee_position'), // functie van de gebelde referent
+    refereeCompany: text('referee_company'),
+    refereeAddress: text('referee_address'),
+    refereePhone: text('referee_phone'),
+    employmentDuration: text('employment_duration'), // hoelang in dienst
+    reasonForLeaving: text('reason_for_leaving'),
+    department: text('department'),
+    positionsHeld: text('positions_held'),
+    oneWord: text('one_word'), // beschrijving in één woord
+    oneWordReason: text('one_word_reason'),
+    workAttitude: text('work_attitude'),
+    wouldRehire: boolean('would_rehire'), // null = niet beantwoord
+    notes: text('notes'),
+    checkedBy: uuid('checked_by').references(() => profiles.id),
+    checkedAt: timestamp('checked_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('idx_reference_checks_application').on(table.applicationId)]
+)
+
 // --- Employment contracts: proeftijd -> termijn -> verlengingen ---
 
 export const employmentContracts = pgTable(
@@ -440,6 +500,10 @@ export const employmentContracts = pgTable(
     endDate: text('end_date'),
     hourlyWage: numeric('hourly_wage'),
     badgeNumber: text('badge_number'),
+    badgeExpiryDate: text('badge_expiry_date'), // RGM-badge vervaldatum — maandelijks badge-overzicht
+    department: text('department'), // AO art. 1 "afdeling" / Basisgegevens "department"
+    jobLevel: text('job_level'), // AO art. 1 "level"
+    projectLocation: text('project_location'), // Basisgegevens "project / locatie"
     bankAccount: text('bank_account'),
     bankName: text('bank_name'),
     probationWeek4Notes: text('probation_week4_notes'),
@@ -483,6 +547,7 @@ export const clientVacancyRequests = pgTable('client_vacancy_requests', {
     .references(() => clients.id),
   jobCategoryId: uuid('job_category_id').references(() => jobCategories.id),
   quantity: integer('quantity').notNull().default(1),
+  referenceNumber: text('reference_number'), // Req# / RFP-ID# van de klantaanvraag (RGM Labor request monitoring)
   notes: text('notes'),
   // Gestructureerde functie-eisen — dezelfde categorieën als het werkervaring-interview,
   // zodat HR de kandidaat er later precies op kan doorvragen. Optioneel, vrij aan te vullen.
@@ -683,6 +748,7 @@ export const applicationsRelations = relations(applications, ({ one, many }) => 
   documents: many(applicationDocuments),
   statusHistory: many(applicationStatusHistory),
   interviews: many(interviews),
+  referenceChecks: many(referenceChecks),
   contracts: many(employmentContracts),
 }))
 
@@ -696,6 +762,13 @@ export const applicationDocumentsRelations = relations(applicationDocuments, ({ 
 export const interviewsRelations = relations(interviews, ({ one }) => ({
   application: one(applications, {
     fields: [interviews.applicationId],
+    references: [applications.id],
+  }),
+}))
+
+export const referenceChecksRelations = relations(referenceChecks, ({ one }) => ({
+  application: one(applications, {
+    fields: [referenceChecks.applicationId],
     references: [applications.id],
   }),
 }))
@@ -786,6 +859,9 @@ export type NewInterview = typeof interviews.$inferInsert
 
 export type InterviewQuestion = typeof interviewQuestions.$inferSelect
 export type NewInterviewQuestion = typeof interviewQuestions.$inferInsert
+
+export type ReferenceCheck = typeof referenceChecks.$inferSelect
+export type NewReferenceCheck = typeof referenceChecks.$inferInsert
 
 export type EmploymentContract = typeof employmentContracts.$inferSelect
 export type NewEmploymentContract = typeof employmentContracts.$inferInsert

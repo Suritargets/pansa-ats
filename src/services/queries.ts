@@ -25,6 +25,7 @@ import {
   clientVacancyRequests,
   clients,
   companies,
+  emergencyContacts,
   employmentContracts,
   interviewQuestions,
   interviews,
@@ -34,6 +35,7 @@ import {
   payrollExportBatches,
   payrollExportItems,
   profiles,
+  referenceChecks,
   suppliers,
   trainings,
   webhookEndpoints,
@@ -44,14 +46,20 @@ import {
   type Candidate,
   type ChatKbEntry,
   type Client,
+  type EmergencyContact,
+  type EmploymentContract,
   type InterviewType,
   type JobBranche,
   type JobLevel,
   type Profile,
+  type ReferenceCheck,
   type Supplier,
+  type VacancyRequestStatus,
   type WebhookEndpoint,
 } from '../../drizzle/schema'
 import { APPLICATION_STATUS_LABELS, type ApplicationWithCandidate } from '@/types/database'
+import { needsAttention, probationAttention } from '@/lib/contract-monitor'
+import { BRANCHE_SHORT_LABELS } from '@/constants/branche'
 
 async function guarded<T>(empty: T, fn: () => Promise<T>): Promise<T> {
   if (DB_MODE === 'demo') return empty
@@ -462,6 +470,63 @@ export async function listContracts(applicationId: string) {
   )
 }
 
+export async function listReferenceChecks(applicationId: string) {
+  return guarded<ReferenceCheck[]>([], () =>
+    db
+      .select()
+      .from(referenceChecks)
+      .where(eq(referenceChecks.applicationId, applicationId))
+      .orderBy(desc(referenceChecks.checkedAt))
+  )
+}
+
+export async function listEmergencyContacts(candidateId: string) {
+  return guarded<EmergencyContact[]>([], () =>
+    db
+      .select()
+      .from(emergencyContacts)
+      .where(eq(emergencyContacts.candidateId, candidateId))
+      .orderBy(emergencyContacts.priority)
+  )
+}
+
+export interface ContractMonitorRow {
+  contract: EmploymentContract
+  application: ApplicationWithCandidate
+  clientName: string | null
+}
+
+/**
+ * Alle lopende (concept/actieve) arbeidsovereenkomsten met sollicitatie + kandidaat — voor
+ * "Contractperiode monitoren" en het RGM-badge-overzicht (PGC-HR-PR-0501-05). Sortering/filtering
+ * op einddatum en badge-vervaldatum gebeurt in de pagina (datums zijn ISO-tekst).
+ */
+export async function listContractsForMonitoring() {
+  return guarded<ContractMonitorRow[]>([], async () => {
+    const rows = await db
+      .select({
+        contract: employmentContracts,
+        application: applications,
+        candidate: candidates,
+        company: companies,
+        clientName: clients.name,
+      })
+      .from(employmentContracts)
+      .innerJoin(applications, eq(employmentContracts.applicationId, applications.id))
+      .innerJoin(candidates, eq(applications.candidateId, candidates.id))
+      .innerJoin(companies, eq(applications.companyId, companies.id))
+      .leftJoin(clients, eq(applications.clientId, clients.id))
+      .where(inArray(employmentContracts.status, ['draft', 'active']))
+      .orderBy(desc(employmentContracts.createdAt))
+
+    return rows.map(({ contract, application, candidate, company, clientName }) => ({
+      contract,
+      application: { ...application, candidate, company },
+      clientName,
+    }))
+  })
+}
+
 export async function listOnboardingStepTemplates(companyId?: string) {
   return guarded<typeof onboardingStepTemplates.$inferSelect[]>([], () =>
     db
@@ -623,11 +688,26 @@ export interface DashboardStats {
   totalClients: number
   totalCandidates: number
   pendingVacancyRequests: number
+  /** Lopende contracten die binnen `EXPIRY_WARNING_DAYS` aflopen of al verlopen zijn. */
+  contractsEndingSoon: number
+  /** Lopende contracten met een RGM-badge die binnen `EXPIRY_WARNING_DAYS` verloopt of al verlopen is. */
+  badgesExpiringSoon: number
+  /** Proeftijdevaluaties (week 4/8) die open staan en verlopen zijn of binnen `PROBATION_LOOKAHEAD_DAYS` aan de beurt zijn. */
+  probationEvaluationsDue: number
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   return guarded<DashboardStats>(
-    { byStatus: {}, totalApplications: 0, totalClients: 0, totalCandidates: 0, pendingVacancyRequests: 0 },
+    {
+      byStatus: {},
+      totalApplications: 0,
+      totalClients: 0,
+      totalCandidates: 0,
+      pendingVacancyRequests: 0,
+      contractsEndingSoon: 0,
+      badgesExpiringSoon: 0,
+      probationEvaluationsDue: 0,
+    },
     async () => {
       const statusRows = await db.select({ status: applications.status, value: count() }).from(applications).groupBy(applications.status)
       const byStatus = Object.fromEntries(statusRows.map((r) => [r.status, r.value])) as Partial<
@@ -642,7 +722,27 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         .from(clientVacancyRequests)
         .where(eq(clientVacancyRequests.status, 'submitted'))
 
-      return { byStatus, totalApplications, totalClients, totalCandidates, pendingVacancyRequests }
+      const running = await listContractsForMonitoring()
+      const contractsEndingSoon = running.filter(
+        ({ contract }) => contract.status === 'active' && needsAttention(contract.endDate)
+      ).length
+      const badgesExpiringSoon = running.filter(
+        ({ contract }) => contract.status === 'active' && needsAttention(contract.badgeExpiryDate)
+      ).length
+      const probationEvaluationsDue = running.filter(
+        ({ contract }) => contract.status === 'active' && probationAttention(contract).length > 0
+      ).length
+
+      return {
+        byStatus,
+        totalApplications,
+        totalClients,
+        totalCandidates,
+        pendingVacancyRequests,
+        contractsEndingSoon,
+        badgesExpiringSoon,
+        probationEvaluationsDue,
+      }
     }
   )
 }
@@ -706,5 +806,239 @@ export async function getReportingStats(): Promise<ReportingStats> {
     })
 
     return { funnel, avgTimeInStageDays }
+  })
+}
+
+// --- Reporting overview: KPI-kaarten, plaatsingen per maand, kandidaten per status ---
+
+export interface Kpi {
+  value: number
+  /** Verandering t.o.v. de vorige maand: procent (candidates/placements/clients) of procentpunt (ratio). `null` = geen vergelijkbare vorige maand. */
+  deltaPct: number | null
+  deltaUnit: '%' | 'pt'
+  /** Laatste 6 maanden t/m de gekozen maand, voor de sparkline. */
+  series: number[]
+}
+
+export interface StatusSlice {
+  key: 'new' | 'review' | 'interview' | 'placed' | 'closed'
+  label: string
+  count: number
+}
+
+export interface ReportsOverview {
+  year: number
+  years: number[]
+  monthLabels: string[]
+  kpis: { candidates: Kpi; placements: Kpi; placementRatio: Kpi; activeClients: Kpi }
+  placementsPerMonth: number[]
+  statusBreakdown: StatusSlice[]
+}
+
+const MONTH_LABELS = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
+
+// Gegroepeerd zoals het rapportage-ontwerp: vijf fasen i.p.v. negen statussen.
+const STATUS_GROUPS: { key: StatusSlice['key']; label: string; statuses: ApplicationStatus[] }[] = [
+  { key: 'new', label: 'Nieuw', statuses: ['new'] },
+  { key: 'review', label: 'In beoordeling', statuses: ['in_review', 'shortlisted'] },
+  { key: 'interview', label: 'Gesprek & aanbod', statuses: ['interview', 'offer'] },
+  { key: 'placed', label: 'Geplaatst', statuses: ['onboarding', 'active'] },
+  { key: 'closed', label: 'Afgewezen / ingetrokken', statuses: ['rejected', 'withdrawn'] },
+]
+
+function pctChange(current: number, previous: number): number | null {
+  if (previous <= 0) return null
+  return Math.round(((current - previous) / previous) * 100)
+}
+
+export async function getReportsOverview(requestedYear?: number): Promise<ReportsOverview> {
+  const now = new Date()
+  const emptyKpi: Kpi = { value: 0, deltaPct: null, deltaUnit: '%', series: [0, 0, 0, 0, 0, 0] }
+  return guarded<ReportsOverview>(
+    {
+      year: now.getFullYear(),
+      years: [now.getFullYear()],
+      monthLabels: MONTH_LABELS,
+      kpis: { candidates: emptyKpi, placements: emptyKpi, placementRatio: emptyKpi, activeClients: emptyKpi },
+      placementsPerMonth: Array(12).fill(0),
+      statusBreakdown: STATUS_GROUPS.map((g) => ({ key: g.key, label: g.label, count: 0 })),
+    },
+    async () => {
+      const [candidateRows, clientRows, historyRows, statusRows] = await Promise.all([
+        db.select({ createdAt: candidates.createdAt }).from(candidates),
+        db.select({ createdAt: clients.createdAt, status: clients.status }).from(clients),
+        db
+          .select({
+            applicationId: applicationStatusHistory.applicationId,
+            toStatus: applicationStatusHistory.toStatus,
+            createdAt: applicationStatusHistory.createdAt,
+          })
+          .from(applicationStatusHistory)
+          .where(inArray(applicationStatusHistory.toStatus, ['offer', 'active'])),
+        db.select({ status: applications.status, value: count() }).from(applications).groupBy(applications.status),
+      ])
+
+      // Beschikbare jaren: van het oudste record t/m dit jaar.
+      const allDates = [...candidateRows.map((r) => r.createdAt), ...historyRows.map((r) => r.createdAt)]
+      const firstYear = allDates.length ? Math.min(...allDates.map((d) => d.getFullYear())) : now.getFullYear()
+      const years: number[] = []
+      for (let y = now.getFullYear(); y >= firstYear; y--) years.push(y)
+
+      const year = requestedYear && years.includes(requestedYear) ? requestedYear : now.getFullYear()
+      const selMonth = year === now.getFullYear() ? now.getMonth() : 11
+
+      // Exclusieve einddatum van de maand `selMonth - offset` (offset 0 = gekozen maand).
+      const endOf = (offset: number) => new Date(year, selMonth - offset + 1, 1)
+      const startOf = (offset: number) => new Date(year, selMonth - offset, 1)
+      const offsets = [5, 4, 3, 2, 1, 0]
+
+      const cumulative = (dates: Date[], offset: number) => dates.filter((d) => d < endOf(offset)).length
+      const activeTransitions = historyRows.filter((r) => r.toStatus === 'active')
+      const inMonth = (rows: { createdAt: Date }[], offset: number) =>
+        rows.filter((r) => r.createdAt >= startOf(offset) && r.createdAt < endOf(offset)).length
+
+      const candidateDates = candidateRows.map((r) => r.createdAt)
+      const candidatesKpi: Kpi = {
+        value: cumulative(candidateDates, 0),
+        deltaPct: pctChange(cumulative(candidateDates, 0), cumulative(candidateDates, 1)),
+        deltaUnit: '%',
+        series: offsets.map((o) => cumulative(candidateDates, o)),
+      }
+
+      const placementsKpi: Kpi = {
+        value: inMonth(activeTransitions, 0),
+        deltaPct: pctChange(inMonth(activeTransitions, 0), inMonth(activeTransitions, 1)),
+        deltaUnit: '%',
+        series: offsets.map((o) => inMonth(activeTransitions, o)),
+      }
+
+      // Plaatsingsratio: van alle sollicitaties die een aanbod kregen, welk deel is uiteindelijk geplaatst.
+      const ratioAt = (offset: number) => {
+        const cutoff = endOf(offset)
+        const reached = (status: 'offer' | 'active') =>
+          new Set(historyRows.filter((r) => r.toStatus === status && r.createdAt < cutoff).map((r) => r.applicationId)).size
+        const offered = reached('offer')
+        return offered === 0 ? 0 : Math.round((reached('active') / offered) * 100)
+      }
+      const ratioKpi: Kpi = {
+        value: ratioAt(0),
+        deltaPct: ratioAt(1) === 0 && ratioAt(0) === 0 ? null : ratioAt(0) - ratioAt(1),
+        deltaUnit: 'pt',
+        series: offsets.map(ratioAt),
+      }
+
+      const activeClientDates = clientRows.filter((c) => c.status === 'active').map((c) => c.createdAt)
+      const clientsKpi: Kpi = {
+        value: clientRows.filter((c) => c.status === 'active').length,
+        deltaPct: pctChange(cumulative(activeClientDates, 0), cumulative(activeClientDates, 1)),
+        deltaUnit: '%',
+        series: offsets.map((o) => cumulative(activeClientDates, o)),
+      }
+
+      const placementsPerMonth = MONTH_LABELS.map(
+        (_, m) =>
+          activeTransitions.filter((r) => r.createdAt.getFullYear() === year && r.createdAt.getMonth() === m).length
+      )
+
+      const byStatus = Object.fromEntries(statusRows.map((r) => [r.status, r.value])) as Partial<Record<ApplicationStatus, number>>
+      const statusBreakdown = STATUS_GROUPS.map((g) => ({
+        key: g.key,
+        label: g.label,
+        count: g.statuses.reduce((sum, s) => sum + (byStatus[s] ?? 0), 0),
+      }))
+
+      return {
+        year,
+        years,
+        monthLabels: MONTH_LABELS,
+        kpis: { candidates: candidatesKpi, placements: placementsKpi, placementRatio: ratioKpi, activeClients: clientsKpi },
+        placementsPerMonth,
+        statusBreakdown,
+      }
+    }
+  )
+}
+
+// --- Landingspagina: publieke, geanonimiseerde teasers ---
+
+export interface LandingVacancy {
+  id: string
+  title: string // functiecategorie
+  place: string // klant-industrie of Pansa-bedrijf — nooit de klantnaam
+  tag: string // branche-label
+  isNew: boolean
+  quantity: number
+}
+
+export interface LandingCandidate {
+  id: string
+  role: string
+  place: string // district/woonplaats
+  tag: string
+  available: boolean
+}
+
+export interface LandingData {
+  openVacancies: number
+  availableCandidates: number
+  vacancies: LandingVacancy[]
+  candidates: LandingCandidate[]
+}
+
+
+const OPEN_VACANCY_STATUSES: VacancyRequestStatus[] = ['submitted', 'reviewing', 'approved']
+const AVAILABLE_STATUSES: ApplicationStatus[] = ['new', 'in_review', 'shortlisted', 'interview', 'offer']
+
+/**
+ * Teasers voor de publieke landingspagina. Bewust zonder persoonsgegevens: geen namen, geen
+ * klantnamen — alleen functie, branche, plaats en aantallen.
+ */
+export async function getLandingData(): Promise<LandingData> {
+  return guarded<LandingData>({ openVacancies: 0, availableCandidates: 0, vacancies: [], candidates: [] }, async () => {
+    const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
+
+    const [vacancyRows, candidateRows, [{ value: availableCandidates }], openRows] = await Promise.all([
+      db
+        .select({ request: clientVacancyRequests, jobCategory: jobCategories, industry: clients.industry })
+        .from(clientVacancyRequests)
+        .innerJoin(clients, eq(clientVacancyRequests.clientId, clients.id))
+        .leftJoin(jobCategories, eq(clientVacancyRequests.jobCategoryId, jobCategories.id))
+        .where(inArray(clientVacancyRequests.status, OPEN_VACANCY_STATUSES))
+        .orderBy(desc(clientVacancyRequests.createdAt))
+        .limit(4),
+      db
+        .select({ application: applications, candidate: candidates, jobCategory: jobCategories })
+        .from(applications)
+        .innerJoin(candidates, eq(applications.candidateId, candidates.id))
+        .leftJoin(jobCategories, eq(applications.jobCategoryId, jobCategories.id))
+        .where(inArray(applications.status, AVAILABLE_STATUSES))
+        .orderBy(desc(applications.createdAt))
+        .limit(4),
+      db.select({ value: count() }).from(applications).where(inArray(applications.status, AVAILABLE_STATUSES)),
+      db
+        .select({ quantity: clientVacancyRequests.quantity })
+        .from(clientVacancyRequests)
+        .where(inArray(clientVacancyRequests.status, OPEN_VACANCY_STATUSES)),
+    ])
+
+    return {
+      openVacancies: openRows.reduce((sum, r) => sum + r.quantity, 0),
+      availableCandidates,
+      vacancies: vacancyRows.map(({ request, jobCategory, industry }) => ({
+        id: request.id,
+        title: jobCategory?.name ?? 'Diverse functies',
+        place: industry || 'Pansa Group',
+        tag: jobCategory ? BRANCHE_SHORT_LABELS[jobCategory.branche] : 'Overig',
+        isNew: request.createdAt >= twoWeeksAgo,
+        quantity: request.quantity,
+      })),
+      candidates: candidateRows.map(({ application, candidate, jobCategory }) => ({
+        id: application.id,
+        role: application.positionApplied,
+        place: candidate.district || candidate.residence || 'Suriname',
+        tag: jobCategory ? BRANCHE_SHORT_LABELS[jobCategory.branche] : 'Overig',
+        available: true,
+      })),
+    }
   })
 }

@@ -11,12 +11,15 @@ import {
   listApplicationDocuments,
   listApplicationShares,
   listContracts,
+  listEmergencyContacts,
   listInterviewQuestions,
   listInterviews,
   listOnboardingProgress,
   listOnboardingStepTemplates,
+  listReferenceChecks,
   listShareableClientsForApplication,
 } from '@/services/queries'
+import { buildDossierIndex, buildPreEmploymentChecklist } from '@/lib/dossier'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { ProfileSketch } from '@/components/admin/ProfileSketch'
 
@@ -27,17 +30,41 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
   const application = await getApplicationById(id)
   if (!application) notFound()
 
-  const [documents, interviews, interviewQuestions, contracts, onboardingSteps, onboardingProgress, shareableClients, shares] =
-    await Promise.all([
-      listApplicationDocuments(id),
-      listInterviews(id),
-      listInterviewQuestions(),
-      listContracts(id),
-      listOnboardingStepTemplates(application.companyId),
-      listOnboardingProgress(id),
-      listShareableClientsForApplication(id),
-      listApplicationShares(id),
-    ])
+  const [
+    documents,
+    interviews,
+    interviewQuestions,
+    referenceChecks,
+    contracts,
+    emergencyContacts,
+    onboardingSteps,
+    onboardingProgress,
+    shareableClients,
+    shares,
+  ] = await Promise.all([
+    listApplicationDocuments(id),
+    listInterviews(id),
+    listInterviewQuestions(),
+    listReferenceChecks(id),
+    listContracts(id),
+    listEmergencyContacts(application.candidateId),
+    listOnboardingStepTemplates(application.companyId),
+    listOnboardingProgress(id),
+    listShareableClientsForApplication(id),
+    listApplicationShares(id),
+  ])
+
+  const dossierItems = buildDossierIndex({
+    candidate: application.candidate,
+    documents,
+    interviews,
+    referenceChecks,
+    contracts,
+    emergencyContacts,
+    onboardingSteps,
+    onboardingProgress,
+  })
+  const preEmployment = buildPreEmploymentChecklist(application.candidate, documents)
 
   return (
     <AdminShell session={session}>
@@ -46,11 +73,15 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
         documents={documents}
         interviews={interviews}
         interviewQuestions={interviewQuestions}
+        referenceChecks={referenceChecks}
         contracts={contracts}
+        emergencyContacts={emergencyContacts}
         onboardingSteps={onboardingSteps}
         onboardingProgress={onboardingProgress}
         shareableClients={shareableClients}
         shares={shares}
+        dossierItems={dossierItems}
+        preEmployment={preEmployment}
       />
     </AdminShell>
   )

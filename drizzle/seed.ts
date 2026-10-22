@@ -12,8 +12,9 @@ config({ path: '.env.local' })
 import { neon } from '@neondatabase/serverless'
 import { drizzle } from 'drizzle-orm/neon-http'
 import bcrypt from 'bcryptjs'
-import { eq } from 'drizzle-orm'
+import { eq, isNull } from 'drizzle-orm'
 import * as schema from './schema'
+import { ONBOARDING_STEPS } from '../src/constants/onboarding-steps'
 
 async function main() {
   const databaseUrl = process.env.DATABASE_URL
@@ -103,15 +104,28 @@ async function main() {
   }
 
   console.log('Onboarding-stappen zaaien...')
-  const existingSteps = await db.select().from(schema.onboardingStepTemplates)
-  if (existingSteps.length === 0) {
-    for (let i = 0; i < ONBOARDING_STEPS.length; i++) {
-      await db.insert(schema.onboardingStepTemplates).values({ ...ONBOARDING_STEPS[i], stepOrder: i + 1 })
+  // Upsert op titel (globale stappen: companyId = null): nieuwe stappen uit een nieuwere procesversie
+  // worden ook in een bestaande database toegevoegd; bestaande stappen houden hun id (en dus de
+  // voortgang die al op die stap is vastgelegd) en krijgen alleen een bijgewerkte volgorde/omschrijving.
+  const existingSteps = await db
+    .select()
+    .from(schema.onboardingStepTemplates)
+    .where(isNull(schema.onboardingStepTemplates.companyId))
+  let addedSteps = 0
+  for (let i = 0; i < ONBOARDING_STEPS.length; i++) {
+    const step = ONBOARDING_STEPS[i]
+    const existing = existingSteps.find((e) => e.title === step.title)
+    if (existing) {
+      await db
+        .update(schema.onboardingStepTemplates)
+        .set({ stepOrder: i + 1, description: step.description })
+        .where(eq(schema.onboardingStepTemplates.id, existing.id))
+    } else {
+      await db.insert(schema.onboardingStepTemplates).values({ ...step, stepOrder: i + 1 })
+      addedSteps++
     }
-    console.log(`  ${ONBOARDING_STEPS.length} onboarding-stappen OK.`)
-  } else {
-    console.log('  Onboarding-stappen bestaan al — overgeslagen.')
   }
+  console.log(`  ${ONBOARDING_STEPS.length} onboarding-stappen OK (${addedSteps} nieuw).`)
 
   const adminEmail = process.env.SEED_ADMIN_EMAIL
   const adminPassword = process.env.SEED_ADMIN_PASSWORD
@@ -157,7 +171,6 @@ async function main() {
   console.log('Klaar.')
 }
 
-// Van de Aanstellingsprocedure (PGC-HR-PR-0501-05) — globale stappen, geldig voor alle bedrijven.
 // Van "Vragenlijst sollicitatiegesprek" (PGC-HR-F-0504-04) — algemeen, gescoord.
 const GENERAL_QUESTIONS = [
   'Vertel iets over jezelf',
@@ -191,18 +204,6 @@ const WORK_EXPERIENCE_CATEGORIES = [
   "Kennis van softwareprogramma's",
   'Kennis van ISO-standaarden/procedures',
   'Housekeeping, werkattitude en taalvaardigheid',
-]
-
-const ONBOARDING_STEPS: { title: string; description: string }[] = [
-  { title: 'Bedrijfsbeleid & regels bespreken', description: 'HR-, kwaliteits- en HSE-beleid, personeelsgids doornemen.' },
-  { title: 'Arbeidsovereenkomst ondertekenen', description: 'Proeftijd 2 maanden, daarna termijn/verlengingen conform contract_stage.' },
-  { title: 'Personeelsdossier aanmaken', description: 'Personeelsdossier + personeelsbestand bijwerken.' },
-  { title: 'PPE aanvragen', description: 'PPE-aanvraag bij de OHSEQ-afdeling, afgifte laten ondertekenen.' },
-  { title: 'Rondleiding & kennismaking', description: 'Rondleiding en kennismaking met het personeel binnen het bedrijf.' },
-  { title: 'Memo nieuwe medewerker versturen', description: 'Memo naar het totale personeel mailen.' },
-  { title: 'Eerste dag on-site begeleiding', description: 'Telefonisch of on-site begeleiden op de eerste werkdag bij de klant.' },
-  { title: 'Proeftijdevaluatie week 4', description: 'Tussentijdse evaluatie aan de hand van de afdelingsbeschrijving.' },
-  { title: 'Proeftijdevaluatie week 8', description: 'Eindevaluatie proeftijd — proeftijd beoordelingsformulier invullen en bespreken.' },
 ]
 
 const JOB_CATEGORIES: { name: string; branche: (typeof schema.jobBrancheEnum.enumValues)[number]; level: (typeof schema.jobLevelEnum.enumValues)[number] }[] = [

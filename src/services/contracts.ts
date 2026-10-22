@@ -21,6 +21,10 @@ export interface ContractInput {
   endDate?: string
   hourlyWage?: number
   badgeNumber?: string
+  badgeExpiryDate?: string
+  department?: string
+  jobLevel?: string
+  projectLocation?: string
   bankAccount?: string
   bankName?: string
 }
@@ -36,12 +40,30 @@ export async function addContract(applicationId: string, input: ContractInput): 
     endDate: input.endDate || null,
     hourlyWage: input.hourlyWage?.toString() ?? null,
     badgeNumber: input.badgeNumber || null,
+    badgeExpiryDate: input.badgeExpiryDate || null,
+    department: input.department?.trim() || null,
+    jobLevel: input.jobLevel?.trim() || null,
+    projectLocation: input.projectLocation?.trim() || null,
     bankAccount: input.bankAccount || null,
     bankName: input.bankName || null,
     createdBy: session.userId,
   })
 
   revalidatePath(`/admin/applications/${applicationId}`)
+  revalidatePath('/admin/contracts')
+}
+
+export async function setContractStatus(
+  contractId: string,
+  applicationId: string,
+  status: ContractStatus
+): Promise<void> {
+  await requireSession([...STAFF_ROLES])
+
+  await db.update(employmentContracts).set({ status }).where(eq(employmentContracts.id, contractId))
+
+  revalidatePath(`/admin/applications/${applicationId}`)
+  revalidatePath('/admin/contracts')
 }
 
 export async function updateProbationNotes(

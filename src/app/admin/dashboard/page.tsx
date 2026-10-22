@@ -3,11 +3,26 @@
  * WAT:    KPI-overzicht voor staff. De sollicitatiepipeline zelf staat op /admin/applications.
  */
 
+import Link from 'next/link'
 import { requireSession } from '@/lib/auth'
 import { getDashboardStats } from '@/services/queries'
 import { STAFF_ROLES } from '@/lib/roles'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { KpiCard } from '@/components/admin/KpiCard'
+import {
+  Building2,
+  CalendarClock,
+  ClipboardList,
+  FileSignature,
+  IdCard,
+  Inbox,
+  ListChecks,
+  UserCheck,
+  UserPlus,
+  UserSearch,
+  Users,
+} from 'lucide-react'
 import { APPLICATION_STATUS_LABELS } from '@/types/database'
 
 export default async function AdminDashboardPage() {
@@ -19,14 +34,28 @@ export default async function AdminDashboardPage() {
       <h1 className="mb-6 text-xl font-bold text-foreground">Dashboard</h1>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Totaal sollicitaties" value={stats.totalApplications} />
-        <StatCard label="Actief geplaatst" value={stats.byStatus.active ?? 0} />
-        <StatCard label="Clienten" value={stats.totalClients} />
-        <StatCard label="Kandidaten" value={stats.totalCandidates} />
-        <StatCard label="Openstaande vacature-aanvragen" value={stats.pendingVacancyRequests} />
-        <StatCard label="Nieuw" value={stats.byStatus.new ?? 0} />
-        <StatCard label="In beoordeling" value={stats.byStatus.in_review ?? 0} />
-        <StatCard label="Onboarding" value={stats.byStatus.onboarding ?? 0} />
+        <KpiCard icon={ClipboardList} label="Totaal sollicitaties" value={stats.totalApplications} />
+        <KpiCard icon={UserCheck} label="Actief geplaatst" value={stats.byStatus.active ?? 0} />
+        <KpiCard icon={Building2} label="Clienten" value={stats.totalClients} />
+        <KpiCard icon={Users} label="Kandidaten" value={stats.totalCandidates} />
+        <KpiCard icon={Inbox} label="Openstaande vacature-aanvragen" value={stats.pendingVacancyRequests} />
+        <KpiCard icon={UserPlus} label="Nieuw" value={stats.byStatus.new ?? 0} />
+        <KpiCard icon={UserSearch} label="In beoordeling" value={stats.byStatus.in_review ?? 0} />
+        <KpiCard icon={ListChecks} label="Onboarding" value={stats.byStatus.onboarding ?? 0} />
+      </div>
+
+      <div className="mt-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Aandachtspunten</h2>
+          <Link href="/admin/contracts" className="text-sm text-primary hover:underline">
+            Naar contracten &amp; badges
+          </Link>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <KpiCard icon={FileSignature} label="Contracten die aflopen" value={stats.contractsEndingSoon} warn />
+          <KpiCard icon={IdCard} label="RGM-badges die vervallen" value={stats.badgesExpiringSoon} warn />
+          <KpiCard icon={CalendarClock} label="Proeftijdevaluaties aan de beurt" value={stats.probationEvaluationsDue} warn />
+        </div>
       </div>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
@@ -64,18 +93,5 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
     </AdminShell>
-  )
-}
-
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm text-muted-foreground">{label}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-3xl font-heading font-semibold text-foreground">{value}</p>
-      </CardContent>
-    </Card>
   )
 }

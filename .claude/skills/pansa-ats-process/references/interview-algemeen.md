@@ -2,7 +2,7 @@
 
 **Documentcode:** PGC-HR-F-0504-04 · **Datum:** 5 januari 2026
 
-Bronbestand: `docs/process/word/4. Vragenlijst sollicitatiegesprek hps 2026.docx`
+Bronbestand: `hr new/2. Vragenlijst sollicitatiegesprek hps 2026.docx`
 
 Het algemene sollicitatiegesprek — het eerste interview in de selectieprocedure, met een
 scoresysteem. In het datamodel: `interviews.type = 'general'`,
@@ -37,8 +37,12 @@ Naam sollicitant, datum, tijd, handtekening.
 ## Scoring
 
 Elke vraag krijgt een score; het formulier registreert een **totale score** en een
-**gemiddelde score**. In `InterviewForm.tsx` wordt elke vraag 1-5 gescoord en worden
+**gemiddelde score**. In `InterviewForm.tsx` wordt elke vraag gescoord (1–10) en worden
 `totalScore`/`averageScore` automatisch berekend uit de ingevulde scores.
+
+> **Open vraag aan HR:** de scorekolommen op het formulier zijn gelabeld **5 · 6 · 7**; de betekenis
+> (cijferschaal 1–10? beoordelingsniveaus?) staat nergens beschreven. Tot dit duidelijk is accepteert
+> de app 1–10 (een superset van 5/6/7 en van de oude 1–5 schaal) en legt geen betekenis aan scores op.
 
 ## Afsluiting
 

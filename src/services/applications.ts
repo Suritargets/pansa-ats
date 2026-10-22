@@ -27,6 +27,7 @@ import {
   candidates,
   type ApplicationSource,
   type ApplicationStatus,
+  type CommunityOfInterest,
   type DocumentKind,
   type EducationEntry,
   type Gender,
@@ -42,6 +43,8 @@ export interface NewApplicationInput {
   source: ApplicationSource
   coverNote?: string
   candidate: {
+    /** Nummer van het papieren registratieformulier — alleen gebruikt bij digitaliseren door staff. */
+    registrationNumber?: string
     firstName: string
     lastName: string
     email?: string
@@ -63,6 +66,8 @@ export interface NewApplicationInput {
     justiceRecordReason?: string
     hasDriversLicense?: boolean
     driversLicenseCategory?: string
+    policeClearanceDate?: string
+    communityOfInterest?: CommunityOfInterest
     education?: EducationEntry[]
     priorTrainings?: PriorTrainingEntry[]
     workHistory?: WorkHistoryEntry[]
@@ -83,6 +88,12 @@ export interface NewApplicationInput {
   }
 }
 
+/** Postgres unique_violation (23505) — ook wanneer de driver de fout als `cause` inpakt. */
+function isUniqueViolation(error: unknown): boolean {
+  const e = error as { code?: string; cause?: { code?: string } } | null
+  return e?.code === '23505' || e?.cause?.code === '23505'
+}
+
 /**
  * Maakt een candidate + application aan. Publiek toegankelijk (sollicitatieformulier) en
  * gebruikt door het digitaliseer-scherm (staff, sessie vereist).
@@ -97,6 +108,8 @@ export async function submitApplication(
     const [candidate] = await db
       .insert(candidates)
       .values({
+        // Een publieke aanvrager mag zijn eigen registratienummer niet kiezen (uniek, door HR beheerd).
+        registrationNumber: requireStaff ? input.candidate.registrationNumber?.trim() || null : null,
         firstName: input.candidate.firstName,
         lastName: input.candidate.lastName,
         email: input.candidate.email ?? null,
@@ -118,6 +131,8 @@ export async function submitApplication(
         justiceRecordReason: input.candidate.justiceRecordReason ?? null,
         hasDriversLicense: input.candidate.hasDriversLicense ?? null,
         driversLicenseCategory: input.candidate.driversLicenseCategory ?? null,
+        policeClearanceDate: input.candidate.policeClearanceDate ?? null,
+        communityOfInterest: input.candidate.communityOfInterest ?? null,
         education: input.candidate.education ?? [],
         priorTrainings: input.candidate.priorTrainings ?? [],
         workHistory: input.candidate.workHistory ?? [],
@@ -171,6 +186,9 @@ export async function submitApplication(
     }
   } catch (error) {
     console.error('[applications.submitApplication]', error)
+    if (isUniqueViolation(error)) {
+      return { success: false, error: 'Dit registratienummer is al in gebruik bij een andere kandidaat.' }
+    }
     return { success: false, error: 'Aanvraag kon niet worden opgeslagen. Probeer het opnieuw.' }
   }
 }

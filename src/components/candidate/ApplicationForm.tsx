@@ -21,6 +21,7 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { FALLBACK_POSITIONS } from '@/constants/companies'
+import { COI_AREAS, COI_QUESTIONS, coiFromValues } from '@/constants/coi'
 import { submitApplication, uploadApplicationDocument } from '@/services/applications'
 import type { Company, JobCategory } from '@/types/database'
 import { cn } from '@/lib/utils'
@@ -47,7 +48,21 @@ const workHistoryEntrySchema = z.object({
   reasonForLeaving: z.string().optional(),
 })
 
+const coiSchema = z.object({
+  bornInArea: z.boolean().optional(),
+  bornArea: z.string().optional(),
+  spouseFromArea: z.boolean().optional(),
+  spouseArea: z.string().optional(),
+  parentsFromArea: z.boolean().optional(),
+  parentsArea: z.string().optional(),
+  resident: z.boolean().optional(),
+  residentArea: z.string().optional(),
+})
+
 const schema = z.object({
+  registrationNumber: z.string().optional(),
+  policeClearanceDate: z.string().optional(),
+  communityOfInterest: coiSchema.optional(),
   firstName: z.string().min(1, 'Verplicht'),
   lastName: z.string().min(1, 'Verplicht'),
   email: z.string().email('Ongeldig e-mailadres').optional().or(z.literal('')),
@@ -97,7 +112,7 @@ const STEPS: { id: string; title: string; fields: (keyof ApplicationFormValues)[
     id: 'personal',
     title: 'Persoonlijke gegevens',
     fields: [
-      'firstName', 'lastName', 'email', 'phone', 'dateOfBirth', 'birthPlace', 'idNumber',
+      'registrationNumber', 'policeClearanceDate', 'firstName', 'lastName', 'email', 'phone', 'dateOfBirth', 'birthPlace', 'idNumber',
       'originVillage', 'traditionalAuthority', 'address', 'residence', 'district',
       'maritalStatus', 'gender', 'nationality', 'religion', 'ethnicGroup', 'yearsExperience',
     ],
@@ -128,7 +143,7 @@ const STEPS: { id: string; title: string; fields: (keyof ApplicationFormValues)[
     fields: [
       'workedSimilarCompanyBefore', 'workedSimilarCompanyDetails', 'lastJobDescription',
       'lastSupervisorName', 'lastSupervisorContact', 'availabilityDate', 'bankAccountNumber', 'bankName',
-      'relatedToStaffMember', 'relatedToStaffMemberDetails', 'personalCompetencies', 'languageSkills',
+      'relatedToStaffMember', 'relatedToStaffMemberDetails', 'communityOfInterest', 'personalCompetencies', 'languageSkills',
     ],
   },
   {
@@ -154,6 +169,12 @@ const selectClasses =
   'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30'
 
 const DEFAULT_VALUES: ApplicationFormValues = {
+  registrationNumber: '',
+  policeClearanceDate: '',
+  communityOfInterest: {
+    bornInArea: false, bornArea: '', spouseFromArea: false, spouseArea: '',
+    parentsFromArea: false, parentsArea: '', resident: false, residentArea: '',
+  },
   firstName: '',
   lastName: '',
   email: '',
@@ -204,6 +225,7 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
   const [policeClearanceFile, setPoliceClearanceFile] = useState<File | null>(null)
   const [policeClearanceError, setPoliceClearanceError] = useState(false)
   const [diplomaFiles, setDiplomaFiles] = useState<File[]>([])
+  const [certificateFiles, setCertificateFiles] = useState<File[]>([])
   // `initialScanFile`/`ocrData` only need to be read once per mount — DigitizeWorkspace
   // remounts this component (via `key`) whenever new OCR-data arrives, so a plain
   // useState-at-mount is correct here and no effect is needed to "sync" a prop into state.
@@ -251,6 +273,7 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
   const hasDriversLicense = useWatch({ control, name: 'hasDriversLicense' })
   const workedSimilarCompanyBefore = useWatch({ control, name: 'workedSimilarCompanyBefore' })
   const relatedToStaffMember = useWatch({ control, name: 'relatedToStaffMember' })
+  const coiValues = useWatch({ control, name: 'communityOfInterest' })
 
   async function onSubmit(values: ApplicationFormValues) {
     setStatus('submitting')
@@ -266,6 +289,9 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
         source: mode === 'digitize' ? 'digitized_paper' : 'online_form',
         coverNote: values.coverNote,
         candidate: {
+          registrationNumber: values.registrationNumber || undefined,
+          policeClearanceDate: values.policeClearanceDate || undefined,
+          communityOfInterest: coiFromValues(values.communityOfInterest),
           firstName: values.firstName,
           lastName: values.lastName,
           email: values.email || undefined,
@@ -319,7 +345,8 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
     if (scanFile) await uploadApplicationDocument(applicationId, scanFile, 'handwritten_scan', uploadToken)
     if (idDocumentFile) await uploadApplicationDocument(applicationId, idDocumentFile, 'id_document', uploadToken)
     if (policeClearanceFile) await uploadApplicationDocument(applicationId, policeClearanceFile, 'police_clearance', uploadToken)
-    for (const diploma of diplomaFiles) await uploadApplicationDocument(applicationId, diploma, 'certificate', uploadToken)
+    for (const diploma of diplomaFiles) await uploadApplicationDocument(applicationId, diploma, 'diploma', uploadToken)
+    for (const certificate of certificateFiles) await uploadApplicationDocument(applicationId, certificate, 'certificate', uploadToken)
 
     setStatus('done')
     onSaved?.()
@@ -370,6 +397,11 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
       {stepIndex === 0 && (
       <section className="space-y-4">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Persoonlijke gegevens</h3>
+        {mode === 'digitize' && (
+          <FormField label="Registratienummer (papieren formulier)" hint="Leeg laten voor een automatisch nummer (REG-#####)">
+            <Input {...register('registrationNumber')} />
+          </FormField>
+        )}
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField label="Voornaam" error={errors.firstName?.message}>
             <Input {...register('firstName')} />
@@ -442,6 +474,9 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
             <Input {...register('traditionalAuthority')} />
           </FormField>
         </div>
+        <FormField label="Datum bewijs van goed gedrag" hint="Staat op het bewijs — de client eist een geldig goedgedrag">
+          <Input type="date" {...register('policeClearanceDate')} />
+        </FormField>
         <FileInput
           label="Bewijs van goed gedrag (politieverklaring)"
           required={mode === 'public'}
@@ -622,10 +657,34 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
           </FormField>
         </div>
         <div className="space-y-2">
-          <CheckboxField label="Familielid werkzaam bij Pansa Group/HPS" {...register('relatedToStaffMember')} />
+          <CheckboxField label="Familielid werkzaam bij RGM" {...register('relatedToStaffMember')} />
           {relatedToStaffMember && (
             <Input placeholder="Relatie en naam familielid" {...register('relatedToStaffMemberDetails')} />
           )}
+        </div>
+        <div className="space-y-3 rounded-lg border border-border p-4">
+          <div>
+            <p className="text-sm font-medium text-foreground">Local Community of Interest (RGM)</p>
+            <p className="text-xs text-muted-foreground">
+              Vink aan wat van toepassing is en kies het gebied (district Brokopondo / Klein Saramacca).
+            </p>
+          </div>
+          {COI_QUESTIONS.map((q) => (
+            <div key={q.yesKey} className="space-y-1.5">
+              <CheckboxField label={q.label} {...register(`communityOfInterest.${q.yesKey}`)} />
+              {coiValues?.[q.yesKey] && (
+                <select className={cn(selectClasses)} {...register(`communityOfInterest.${q.areaKey}`)}>
+                  <option value="">Kies gebied...</option>
+                  {COI_AREAS.map((area) => (
+                    <option key={area} value={area}>
+                      {area}
+                    </option>
+                  ))}
+                  {q.yesKey === 'resident' && <option value="Other">Other</option>}
+                </select>
+              )}
+            </div>
+          ))}
         </div>
         <FormField label="Persoonlijke competenties" hint="Voor op het CV">
           <Textarea {...register('personalCompetencies')} />
@@ -641,7 +700,8 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Documenten</h3>
         <div className="grid gap-4 sm:grid-cols-2">
           <FileInput label="ID-kaart" onChange={setIdDocumentFile} />
-          <MultiFileInput label="Diploma's / certificaten" files={diplomaFiles} onChange={setDiplomaFiles} />
+          <MultiFileInput label="Diploma's en cijferlijsten" files={diplomaFiles} onChange={setDiplomaFiles} />
+          <MultiFileInput label="Training certificaten" files={certificateFiles} onChange={setCertificateFiles} />
           <FileInput label="CV (optioneel)" onChange={setCvFile} />
           {mode === 'digitize' && (
             <div>

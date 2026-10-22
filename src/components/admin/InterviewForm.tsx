@@ -90,11 +90,11 @@ export function InterviewForm({ applicationId, questions }: { applicationId: str
               </div>
               {q.scored && (
                 <div className="space-y-1 sm:w-20">
-                  <Label className="text-xs text-muted-foreground">Score (1-5)</Label>
+                  <Label className="text-xs text-muted-foreground">Score (1-10)</Label>
                   <Input
                     type="number"
                     min={1}
-                    max={5}
+                    max={10}
                     value={scores[q.id] ?? ''}
                     onChange={(e) => setScores((prev) => ({ ...prev, [q.id]: e.target.value }))}
                   />

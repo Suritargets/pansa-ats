@@ -22,6 +22,8 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf
 const MAX_SIZE_BYTES = 10 * 1024 * 1024
 
 const ocrSchema = z.object({
+  registrationNumber: z.string().optional().describe('Het "REGISTRATIE NR" bovenaan het formulier, indien ingevuld'),
+  policeClearanceDate: z.string().optional().describe('"Datum Goed gedrag" in ISO-formaat yyyy-mm-dd indien te bepalen'),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   email: z.string().optional(),

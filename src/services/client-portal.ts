@@ -84,12 +84,14 @@ export async function createVacancyRequest(formData: FormData): Promise<void> {
   const jobCategoryId = String(formData.get('jobCategoryId') ?? '').trim() || null
   const quantity = Number(formData.get('quantity') ?? 1) || 1
   const notes = String(formData.get('notes') ?? '').trim() || null
+  const referenceNumber = String(formData.get('referenceNumber') ?? '').trim().slice(0, 100) || null
   const jobScope = parseJobScope(formData.get('jobScope'))
 
   await db.insert(clientVacancyRequests).values({
     clientId: session.clientId,
     jobCategoryId,
     quantity,
+    referenceNumber,
     notes,
     jobScope,
     requestedBy: session.userId,

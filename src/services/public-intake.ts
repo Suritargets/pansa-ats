@@ -44,6 +44,7 @@ export async function submitPublicVacancyRequest(formData: FormData): Promise<vo
   const jobCategoryId = String(formData.get('jobCategoryId') ?? '').trim() || null
   const quantity = Number(formData.get('quantity') ?? 1) || 1
   const notes = String(formData.get('notes') ?? '').trim() || null
+  const referenceNumber = String(formData.get('referenceNumber') ?? '').trim().slice(0, 100) || null
   const jobScope = parseJobScope(formData.get('jobScope'))
   const redirectTo = safeRedirectPath(formData.get('redirectTo'))
 
@@ -62,7 +63,7 @@ export async function submitPublicVacancyRequest(formData: FormData): Promise<vo
 
   const [request] = await db
     .insert(clientVacancyRequests)
-    .values({ clientId: client.id, jobCategoryId, quantity, notes, jobScope })
+    .values({ clientId: client.id, jobCategoryId, quantity, referenceNumber, notes, jobScope })
     .returning({ id: clientVacancyRequests.id })
 
   await logAuditEvent(

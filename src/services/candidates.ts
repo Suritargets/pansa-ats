@@ -13,6 +13,7 @@ import { db } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
 import { logAuditEvent } from '@/lib/audit'
+import { coiFromFormData } from '@/constants/coi'
 import {
   applications,
   companies,
@@ -83,7 +84,20 @@ export async function updateCandidate(
     return { success: false, error: 'Voornaam en achternaam zijn verplicht.' }
   }
 
+  const relatedToStaffMember = formData.get('relatedToStaffMember') === 'on'
+
   const values = {
+    // Het nummer van het papieren registratieformulier; leeg = terugvallen op het automatische REG-#####.
+    registrationNumber: String(formData.get('registrationNumber') ?? '').trim() || null,
+    policeClearanceDate: String(formData.get('policeClearanceDate') ?? '').trim() || null,
+    generalPractitioner: String(formData.get('generalPractitioner') ?? '').trim() || null,
+    originVillage: String(formData.get('originVillage') ?? '').trim() || null,
+    traditionalAuthority: String(formData.get('traditionalAuthority') ?? '').trim() || null,
+    relatedToStaffMember,
+    relatedToStaffMemberDetails: relatedToStaffMember
+      ? String(formData.get('relatedToStaffMemberDetails') ?? '').trim() || null
+      : null,
+    communityOfInterest: coiFromFormData(formData),
     firstName,
     lastName,
     email: String(formData.get('email') ?? '').trim() || null,
@@ -103,11 +117,21 @@ export async function updateCandidate(
     notes: String(formData.get('notes') ?? '').trim() || null,
   }
 
-  const [updated] = await db
-    .update(candidates)
-    .set({ ...values, updatedAt: new Date() })
-    .where(eq(candidates.id, id))
-    .returning()
+  let updated: Candidate | undefined
+  try {
+    ;[updated] = await db
+      .update(candidates)
+      .set({ ...values, updatedAt: new Date() })
+      .where(eq(candidates.id, id))
+      .returning()
+  } catch (error) {
+    const e = error as { code?: string; cause?: { code?: string } }
+    if (e.code === '23505' || e.cause?.code === '23505') {
+      return { success: false, error: 'Dit registratienummer is al in gebruik bij een andere kandidaat.' }
+    }
+    console.error('[candidates.updateCandidate]', error)
+    return { success: false, error: 'Kandidaat kon niet worden opgeslagen.' }
+  }
 
   if (!updated) {
     return { success: false, error: 'Kandidaat niet gevonden.' }

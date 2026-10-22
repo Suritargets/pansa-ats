@@ -23,6 +23,9 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { StatusBadge } from '@/components/admin/StatusBadge'
+import { CoiFieldset } from '@/components/admin/CoiFieldset'
+import { coiSummaryLines } from '@/constants/coi'
+import { registrationLabel } from '@/lib/registration'
 import { formatDate } from '@/lib/utils'
 import {
   getApplicationsForCandidate,
@@ -115,6 +118,26 @@ export function CandidateDetailSheet({
               )}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-1.5">
+                  <Label htmlFor="registrationNumber">Registratienummer</Label>
+                  <Input
+                    id="registrationNumber"
+                    name="registrationNumber"
+                    defaultValue={display.registrationNumber ?? ''}
+                    placeholder={registrationLabel({ registrationNumber: null, registrationSeq: display.registrationSeq })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="policeClearanceDate">Datum bewijs van goed gedrag</Label>
+                  <Input
+                    id="policeClearanceDate"
+                    name="policeClearanceDate"
+                    type="date"
+                    defaultValue={display.policeClearanceDate ?? ''}
+                  />
+                </div>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
                   <Label htmlFor="firstName">Voornaam</Label>
                   <Input id="firstName" name="firstName" defaultValue={display.firstName} required />
                 </div>
@@ -186,6 +209,41 @@ export function CandidateDetailSheet({
                 <Label htmlFor="address">Adres</Label>
                 <Textarea id="address" name="address" defaultValue={display.address ?? ''} />
               </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="originVillage">Afkomstig van het dorp</Label>
+                  <Input id="originVillage" name="originVillage" defaultValue={display.originVillage ?? ''} />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="traditionalAuthority">Traditioneel gezag (titel &amp; naam)</Label>
+                  <Input
+                    id="traditionalAuthority"
+                    name="traditionalAuthority"
+                    defaultValue={display.traditionalAuthority ?? ''}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="generalPractitioner">Huisarts</Label>
+                <Input id="generalPractitioner" name="generalPractitioner" defaultValue={display.generalPractitioner ?? ''} />
+              </div>
+              <div className="space-y-1.5">
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    name="relatedToStaffMember"
+                    defaultChecked={display.relatedToStaffMember ?? false}
+                    className="size-4 rounded border-input"
+                  />
+                  Familielid werkzaam bij RGM
+                </label>
+                <Input
+                  name="relatedToStaffMemberDetails"
+                  placeholder="Relatie en naam familielid"
+                  defaultValue={display.relatedToStaffMemberDetails ?? ''}
+                />
+              </div>
+              <CoiFieldset value={display.communityOfInterest} />
               <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
                 <div className="space-y-1.5">
                   <Label htmlFor="driversLicenseCategory">Rijbewijscategorie</Label>
@@ -291,6 +349,8 @@ function ViewFields({ candidate }: { candidate: Candidate }) {
   return (
     <div className="space-y-6">
       <dl className="grid grid-cols-2 gap-4 text-sm">
+        <Field label="Registratienummer" value={registrationLabel(candidate)} />
+        <Field label="Datum bewijs goed gedrag" value={formatDate(candidate.policeClearanceDate)} />
         <Field label="E-mail" value={candidate.email} />
         <Field label="Telefoon" value={candidate.phone} />
         <Field label="Geboortedatum" value={formatDate(candidate.dateOfBirth)} />
@@ -302,6 +362,19 @@ function ViewFields({ candidate }: { candidate: Candidate }) {
         <Field label="Woonplaats" value={candidate.residence} />
         <Field label="District" value={candidate.district} />
         <Field label="Adres" value={candidate.address} />
+        <Field label="Afkomstig van het dorp" value={candidate.originVillage} />
+        <Field label="Traditioneel gezag" value={candidate.traditionalAuthority} />
+        <Field label="Huisarts" value={candidate.generalPractitioner} />
+        <Field
+          label="Familielid werkzaam bij RGM"
+          value={
+            candidate.relatedToStaffMember === null
+              ? undefined
+              : candidate.relatedToStaffMember
+                ? `Ja — ${candidate.relatedToStaffMemberDetails || 'geen toelichting'}`
+                : 'Nee'
+          }
+        />
         <Field
           label="Rijbewijs"
           value={
@@ -313,6 +386,19 @@ function ViewFields({ candidate }: { candidate: Candidate }) {
           }
         />
       </dl>
+
+      {coiSummaryLines(candidate.communityOfInterest).length > 0 && (
+        <div>
+          <h3 className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Local Community of Interest (RGM)
+          </h3>
+          <ul className="list-disc space-y-0.5 pl-5 text-sm text-foreground">
+            {coiSummaryLines(candidate.communityOfInterest).map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {candidate.skills.length > 0 && (
         <div>

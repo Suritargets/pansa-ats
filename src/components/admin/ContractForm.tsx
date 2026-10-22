@@ -38,8 +38,13 @@ export function ContractForm({ applicationId }: { applicationId: string }) {
   const [stage, setStage] = useState<ContractStage>('probation_2m')
   const [status, setStatus] = useState<ContractStatus>('active')
   const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
   const [hourlyWage, setHourlyWage] = useState('')
   const [badgeNumber, setBadgeNumber] = useState('')
+  const [badgeExpiryDate, setBadgeExpiryDate] = useState('')
+  const [department, setDepartment] = useState('')
+  const [jobLevel, setJobLevel] = useState('')
+  const [projectLocation, setProjectLocation] = useState('')
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -48,12 +53,22 @@ export function ContractForm({ applicationId }: { applicationId: string }) {
         stage,
         status,
         startDate: startDate || undefined,
+        endDate: endDate || undefined,
         hourlyWage: hourlyWage ? Number(hourlyWage) : undefined,
         badgeNumber: badgeNumber || undefined,
+        badgeExpiryDate: badgeExpiryDate || undefined,
+        department: department || undefined,
+        jobLevel: jobLevel || undefined,
+        projectLocation: projectLocation || undefined,
       })
       setStartDate('')
+      setEndDate('')
       setHourlyWage('')
       setBadgeNumber('')
+      setBadgeExpiryDate('')
+      setDepartment('')
+      setJobLevel('')
+      setProjectLocation('')
       router.refresh()
     })
   }
@@ -86,12 +101,32 @@ export function ContractForm({ applicationId }: { applicationId: string }) {
           <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
         </div>
         <div className="space-y-1.5">
-          <Label>Uurloon</Label>
+          <Label>Einddatum</Label>
+          <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Uurloon (USD)</Label>
           <Input type="number" step="0.01" value={hourlyWage} onChange={(e) => setHourlyWage(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Afdeling</Label>
+          <Input value={department} onChange={(e) => setDepartment(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Level</Label>
+          <Input value={jobLevel} onChange={(e) => setJobLevel(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Project / locatie</Label>
+          <Input value={projectLocation} onChange={(e) => setProjectLocation(e.target.value)} />
         </div>
         <div className="space-y-1.5">
           <Label>Badgenummer</Label>
           <Input value={badgeNumber} onChange={(e) => setBadgeNumber(e.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Badge vervaldatum</Label>
+          <Input type="date" value={badgeExpiryDate} onChange={(e) => setBadgeExpiryDate(e.target.value)} />
         </div>
       </div>
       <Button type="submit" disabled={isPending}>

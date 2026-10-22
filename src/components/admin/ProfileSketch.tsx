@@ -17,6 +17,13 @@ import { ContractForm } from '@/components/admin/ContractForm'
 import { ContractsList } from '@/components/admin/ContractsList'
 import { OnboardingChecklist } from '@/components/admin/OnboardingChecklist'
 import { ShareWithClient } from '@/components/admin/ShareWithClient'
+import { ReferenceCheckForm, ReferenceChecksList } from '@/components/admin/ReferenceCheckForm'
+import { DossierTab } from '@/components/admin/DossierTab'
+import { WhatsAppActions } from '@/components/admin/WhatsAppActions'
+import { EmergencyContactsCard } from '@/components/admin/EmergencyContactsCard'
+import { coiSummaryLines } from '@/constants/coi'
+import { DOCUMENT_LABELS, type DossierItem, type PreEmploymentItem } from '@/lib/dossier'
+import { registrationLabel } from '@/lib/registration'
 import { formatDate } from '@/lib/utils'
 import {
   APPLICATION_STATUS_LABELS,
@@ -25,11 +32,13 @@ import {
   type ApplicationWithCandidate,
   type Client,
   type ClientCandidateShareRow,
+  type EmergencyContact,
   type EmploymentContract,
   type Interview,
   type InterviewQuestion,
   type OnboardingProgressRow,
   type OnboardingStepTemplate,
+  type ReferenceCheck,
 } from '@/types/database'
 
 const MARITAL_STATUS_LABELS: Record<string, string> = {
@@ -54,35 +63,34 @@ const STATUS_FLOW: ApplicationStatus[] = [
   'active',
 ]
 
-const DOCUMENT_LABELS: Record<ApplicationDocument['kind'], string> = {
-  cv: 'CV',
-  handwritten_scan: 'Scan handgeschreven formulier',
-  id_document: 'ID-document',
-  certificate: 'Diploma/certificaat',
-  police_clearance: 'Bewijs van goed gedrag',
-  other: 'Overig',
-}
-
 export function ProfileSketch({
   application,
   documents,
   interviews,
   interviewQuestions,
+  referenceChecks,
   contracts,
+  emergencyContacts,
   onboardingSteps,
   onboardingProgress,
   shareableClients,
   shares,
+  dossierItems,
+  preEmployment,
 }: {
   application: ApplicationWithCandidate
   documents: ApplicationDocument[]
   interviews: Interview[]
   interviewQuestions: InterviewQuestion[]
+  referenceChecks: ReferenceCheck[]
   contracts: EmploymentContract[]
+  emergencyContacts: EmergencyContact[]
   onboardingSteps: OnboardingStepTemplate[]
   onboardingProgress: OnboardingProgressRow[]
   shareableClients: Client[]
   shares: (ClientCandidateShareRow & { client: Client })[]
+  dossierItems: DossierItem[]
+  preEmployment: { items: PreEmploymentItem[]; ready: boolean }
 }) {
   const currentIndex = STATUS_FLOW.indexOf(application.status)
   const nextStatus = currentIndex >= 0 && currentIndex < STATUS_FLOW.length - 1 && application.status !== 'rejected'
@@ -102,9 +110,12 @@ export function ProfileSketch({
                 <p className="text-sm text-muted-foreground">
                   Solliciteert bij {application.company.name} — {application.positionApplied}
                 </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Registratienr {registrationLabel(application.candidate)}
+                </p>
               </div>
               <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm" render={<a href={`/admin/applications/${application.id}/cv`} target="_blank" rel="noopener noreferrer" />}>
+                <Button variant="outline" size="sm" nativeButton={false} render={<a href={`/admin/applications/${application.id}/cv`} target="_blank" rel="noopener noreferrer" />}>
                   CV bekijken
                 </Button>
                 <StatusBadge status={application.status} />
@@ -117,8 +128,10 @@ export function ProfileSketch({
           <TabsList>
             <TabsTrigger value="profiel">Profiel</TabsTrigger>
             <TabsTrigger value="interviews">Interviews ({interviews.length})</TabsTrigger>
+            <TabsTrigger value="antecedenten">Antecedenten ({referenceChecks.length})</TabsTrigger>
             <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
             <TabsTrigger value="contract">Contract</TabsTrigger>
+            <TabsTrigger value="dossier">Dossier</TabsTrigger>
             <TabsTrigger value="documenten">Documenten ({documents.length})</TabsTrigger>
           </TabsList>
 
@@ -126,6 +139,7 @@ export function ProfileSketch({
             <Card>
               <CardContent>
                 <dl className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3">
+                  <Field label="Registratienummer" value={registrationLabel(application.candidate)} />
                   <Field label="E-mail" value={application.candidate.email} />
                   <Field label="Telefoon" value={application.candidate.phone} />
                   <Field label="Geboortedatum" value={formatDate(application.candidate.dateOfBirth)} />
@@ -142,6 +156,8 @@ export function ProfileSketch({
                   <Field label="District" value={application.candidate.district} />
                   <Field label="Afkomstig van het dorp" value={application.candidate.originVillage} />
                   <Field label="Traditioneel gezag" value={application.candidate.traditionalAuthority} />
+                  <Field label="Huisarts" value={application.candidate.generalPractitioner} />
+                  <Field label="Datum bewijs goed gedrag" value={formatDate(application.candidate.policeClearanceDate)} />
                   <Field
                     label="Justitiecontact"
                     value={
@@ -166,7 +182,7 @@ export function ProfileSketch({
                   <Field label="Bankrekening" value={application.candidate.bankAccountNumber} />
                   <Field label="Bank" value={application.candidate.bankName} />
                   <Field
-                    label="Familielid bij Pansa Group/HPS"
+                    label="Familielid werkzaam bij RGM"
                     value={
                       application.candidate.relatedToStaffMember === null
                         ? undefined
@@ -181,6 +197,19 @@ export function ProfileSketch({
                   />
                   <Field label="Datum binnengekomen" value={formatDate(application.createdAt)} />
                 </dl>
+
+                {coiSummaryLines(application.candidate.communityOfInterest).length > 0 && (
+                  <div className="mt-6">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Local Community of Interest (RGM)
+                    </p>
+                    <ul className="list-disc space-y-0.5 pl-5 text-sm text-foreground">
+                      {coiSummaryLines(application.candidate.communityOfInterest).map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 {application.coverNote && (
                   <div className="mt-6">
@@ -303,6 +332,19 @@ export function ProfileSketch({
             <InterviewForm applicationId={application.id} questions={interviewQuestions} />
           </TabsContent>
 
+          <TabsContent value="antecedenten" className="space-y-4 pt-4">
+            <ReferenceChecksList checks={referenceChecks} applicationId={application.id} />
+            <ReferenceCheckForm
+              applicationId={application.id}
+              candidateName={`${application.candidate.firstName} ${application.candidate.lastName}`}
+              defaults={{
+                refereeName: application.candidate.lastSupervisorName,
+                refereePhone: application.candidate.lastSupervisorContact,
+                refereeCompany: application.candidate.workHistory[0]?.company ?? null,
+              }}
+            />
+          </TabsContent>
+
           <TabsContent value="onboarding" className="pt-4">
             {onboardingSteps.length === 0 ? (
               <p className="text-sm text-muted-foreground">Geen onboarding-stappen ingesteld.</p>
@@ -312,12 +354,25 @@ export function ProfileSketch({
           </TabsContent>
 
           <TabsContent value="contract" className="space-y-4 pt-4">
-            <ContractsList contracts={contracts} />
+            <ContractsList contracts={contracts} applicationId={application.id} />
             <ContractForm applicationId={application.id} />
+            <EmergencyContactsCard
+              candidateId={application.candidateId}
+              applicationId={application.id}
+              contacts={emergencyContacts}
+            />
+          </TabsContent>
+
+          <TabsContent value="dossier" className="pt-4">
+            <DossierTab applicationId={application.id} items={dossierItems} preEmployment={preEmployment} />
           </TabsContent>
 
           <TabsContent value="documenten" className="pt-4">
-            {documents.length === 0 && <p className="text-sm text-muted-foreground">Geen documenten geüpload.</p>}
+            {documents.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Geen documenten geüpload. Voeg stukken toe via het tabblad Dossier.
+              </p>
+            )}
             <ul className="space-y-2">
               {documents.map((doc) => (
                 <li key={doc.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
@@ -325,7 +380,7 @@ export function ProfileSketch({
                     <p className="text-sm font-medium text-foreground">{DOCUMENT_LABELS[doc.kind]}</p>
                     <p className="text-xs text-muted-foreground">{doc.fileName}</p>
                   </div>
-                  <Button variant="secondary" render={<a href={`/api/documents/${doc.id}`} target="_blank" rel="noreferrer" />}>
+                  <Button variant="secondary" nativeButton={false} render={<a href={`/api/documents/${doc.id}`} target="_blank" rel="noreferrer" />}>
                     Bekijken
                   </Button>
                 </li>
@@ -355,6 +410,15 @@ export function ProfileSketch({
             <StatusActions applicationId={application.id} currentStatus={application.status} nextStatus={nextStatus} />
           </CardContent>
         </Card>
+
+        <WhatsAppActions
+          phone={application.candidate.phone}
+          context={{
+            firstName: application.candidate.firstName,
+            companyName: application.company.name,
+            positionApplied: application.positionApplied,
+          }}
+        />
       </div>
     </div>
   )

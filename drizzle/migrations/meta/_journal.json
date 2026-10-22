@@ -71,6 +71,13 @@
       "when": 1784815193517,
       "tag": "0009_chat_kb_entries",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792154018281,
+      "tag": "0010_hr_docs_sept_2026",
+      "breakpoints": true
     }
   ]
 }

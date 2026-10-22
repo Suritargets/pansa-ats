@@ -18,7 +18,7 @@ const SECTIONS: Section[] = [
     body: [
       {
         heading: 'Dashboard',
-        text: 'KPI-overzicht: aantal sollicitaties per status, actief geplaatste kandidaten, aantal clienten/kandidaten en openstaande vacature-aanvragen.',
+        text: 'KPI-overzicht: aantal sollicitaties per status, actief geplaatste kandidaten, aantal clienten/kandidaten en openstaande vacature-aanvragen. Onder "Aandachtspunten" staan de contracten die aflopen, RGM-badges die vervallen en proeftijdevaluaties (week 4/8) die aan de beurt zijn.',
       },
       {
         heading: 'Rapportages',
@@ -48,7 +48,19 @@ const SECTIONS: Section[] = [
     body: [
       {
         heading: 'Sollicitaties',
-        text: 'De volledige pipeline, filterbaar op status en doorzoekbaar op kandidaatnaam/functie. Klik een rij open voor het volledige profiel: tabs Profiel, Interviews, Onboarding, Contract, Documenten. Vanuit Profiel kun je ook de CV bekijken/printen en het profiel delen met een client.',
+        text: 'De volledige pipeline, filterbaar op status en doorzoekbaar op kandidaatnaam/functie. Klik een rij open voor het volledige profiel: tabs Profiel, Interviews, Antecedenten, Onboarding, Contract, Dossier, Documenten. Vanuit Profiel kun je ook de CV bekijken/printen en het profiel delen met een client.',
+      },
+      {
+        heading: 'Antecedentenonderzoek',
+        text: 'Tab Antecedenten: bel de referent uit de sollicitatie en leg de antwoorden vast volgens de Vragenlijst antecedentenonderzoek (PGC-HR-F-0507-04). De referent wordt voorgevuld uit de laatste supervisor/werkgever. Per sollicitatie kunnen meerdere referenties worden vastgelegd.',
+      },
+      {
+        heading: 'WhatsApp-berichten',
+        text: 'Rechts op de sollicitatie staan zes knoppen voor de contactmomenten uit het proces (stukken aanleveren, uitnodiging gesprek, medische keuring, client start-/inductiedatum, interne inductie, PPE ophalen). De knop opent WhatsApp met een voorgevuld bericht; vul de [haakjes] aan voordat je verstuurt. Er wordt niets automatisch verzonden.',
+      },
+      {
+        heading: 'Registratienummer & Community of Interest',
+        text: 'Elke kandidaat krijgt automatisch een registratienummer (REG-#####). Bij het digitaliseren van een papieren formulier kun je het nummer van het formulier overnemen. De vier Community-of-Interest-vragen (district Brokopondo / Klein Saramacca, voor RGM) staan in het sollicitatieformulier en het kandidaatpaneel, en komen op het CV en in de algemene export.',
       },
       {
         heading: 'Digitaliseren',
@@ -74,7 +86,15 @@ const SECTIONS: Section[] = [
     body: [
       {
         heading: 'Onboarding',
-        text: 'Checklist per sollicitatie (beleid/contract/personeelsdossier/PPE/rondleiding), aan te vinken op de detailpagina van de sollicitatie.',
+        text: 'Checklist per sollicitatie volgens de aanstellingsprocedure (beleid, basisgegevens, contract, personeelsdossier, medische verzekering, client pre-employment, HR-/OHSEQ-/afdelings-/client-inductie, PPE, begeleiding, proeftijdevaluaties), aan te vinken op de detailpagina van de sollicitatie.',
+      },
+      {
+        heading: 'Dossier',
+        text: 'Tab Dossier op de sollicitatie: de Index Personeelsdossier (PGC-HR-F-0508-04) met 11 onderdelen en status/datum per onderdeel, plus het client pre-employment pakket (medical certificate, SOR, valid police clearance, valid identification). Ontbrekende stukken upload je direct onder de lijst. "Index afdrukken" geeft het papieren formulier.',
+      },
+      {
+        heading: 'Contracten & badges',
+        text: 'Overzicht van alle lopende arbeidsovereenkomsten met einddatum, RGM-badge-vervaldatum en de proeftijdevaluaties op week 4 en 8, met waarschuwingen binnen 30 dagen. Op het tabblad Contract van een sollicitatie leg je stadia vast, wijzig je de status (actief/beëindigd/ontbonden), vul je de proeftijdbeoordelingen in en druk je de vooringevulde arbeidsovereenkomst (PGC-HR-F-0513-05) af. Controleer artikel 2 voor stadia na de eerste proeftijd.',
       },
       {
         heading: 'Trainingen',

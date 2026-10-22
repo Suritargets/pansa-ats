@@ -46,3 +46,6 @@ docs/process/
 
 .vercel
 .env*
+
+# bedrijfsinterne HR-brondocumenten (Word) — de skill-referenties zijn de committed kopie
+hr new/

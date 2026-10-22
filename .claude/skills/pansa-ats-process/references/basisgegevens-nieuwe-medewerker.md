@@ -1,8 +1,9 @@
 # Basisgegevens Nieuwe Medewerker
 
-**Bedrijf:** Commercial Contracting Company H. Pansa & Sons N.V. · K.K.F. Dossier no. 30028
+**Documentcode:** PGC-HR-F-0509-06 (print 2026-07-17)
+**Bedrijf:** Commercial Contracting Company H. Pansa & Sons N.V. · K.K.F. Dossier no. 30028 · humanresource@hpsnv.com
 
-Bronbestand: `docs/process/word/9. Basisgegevens nieuwe medewerker hps RGM 2026.docx`
+Bronbestand: `hr new/7. Basisgegevens nieuwe medewerker hps RGM 2026.docx`
 
 Het intakeformulier voor de aanstellingsprocedure (na aanname) — de brug tussen
 "kandidaat" en "medewerker". In het datamodel: velden op `employment_contracts` en
@@ -11,8 +12,8 @@ Het intakeformulier voor de aanstellingsprocedure (na aanname) — de brug tusse
 ## Basisgegevens
 
 - Familienaam, voornamen
-- Functie, project/locatie, department
-- Badgenummer
+- Functie, project/locatie, department (`employment_contracts.project_location`, `department`)
+- Badgenummer (`employment_contracts.badge_number`; het procesdocument houdt daarnaast een **RGM-badge-overzicht met vervaldatum** bij → `badge_expiry_date`)
 - Girorekeningnummer, bankinstelling
 - Uurloon
 - Datum van indiensttreding

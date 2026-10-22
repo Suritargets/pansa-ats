@@ -94,6 +94,10 @@ export function PublicVacancyRequestForm({
         </select>
       </div>
       <div className="space-y-1.5">
+        <Label htmlFor="referenceNumber">Req# / RFP-ID#</Label>
+        <Input id="referenceNumber" name="referenceNumber" placeholder="Referentienummer van jullie aanvraag (optioneel)" />
+      </div>
+      <div className="space-y-1.5">
         <Label htmlFor="quantity">Aantal medewerkers</Label>
         <Input id="quantity" name="quantity" type="number" min={1} defaultValue={1} required />
       </div>

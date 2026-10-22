@@ -7,10 +7,24 @@
  */
 
 import { formatDate } from '@/lib/utils'
+import { coiSummaryLines } from '@/constants/coi'
 import type { ApplicationWithCandidate } from '@/types/database'
 
-export function CandidateCv({ application }: { application: ApplicationWithCandidate }) {
+/** Plaatsing van de kandidaat (CV-sjabloon: Job title / Project / Department). */
+export interface CvPlacement {
+  project?: string | null
+  department?: string | null
+}
+
+export function CandidateCv({
+  application,
+  placement = {},
+}: {
+  application: ApplicationWithCandidate
+  placement?: CvPlacement
+}) {
   const { candidate } = application
+  const coiLines = coiSummaryLines(candidate.communityOfInterest)
 
   return (
     <div className="mx-auto max-w-3xl overflow-hidden rounded-xl border border-border bg-card print:border-0 print:shadow-none">
@@ -29,7 +43,9 @@ export function CandidateCv({ application }: { application: ApplicationWithCandi
         <section>
           <SectionTitle>Persoonsgegevens</SectionTitle>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
-            <CvField label="Functie" value={application.positionApplied} />
+            <CvField label="Functie (job title)" value={application.positionApplied} />
+            <CvField label="Project" value={placement.project} />
+            <CvField label="Afdeling (department)" value={placement.department} />
             <CvField label="Bedrijf" value={application.company.name} />
             <CvField label="ID-nummer" value={candidate.idNumber} />
             <CvField label="Geslacht" value={GENDER_LABELS[candidate.gender ?? '']} />
@@ -42,7 +58,7 @@ export function CandidateCv({ application }: { application: ApplicationWithCandi
             <CvField label="Categorie rijbewijs" value={candidate.driversLicenseCategory} />
             <CvField label="Datum bewijs goed gedrag" value={formatDate(candidate.policeClearanceDate)} />
             <CvField
-              label="Familielid bij Pansa Group/HPS"
+              label="Familielid werkzaam bij RGM"
               value={
                 candidate.relatedToStaffMember === null
                   ? undefined
@@ -125,6 +141,23 @@ export function CandidateCv({ application }: { application: ApplicationWithCandi
           <section>
             <SectionTitle>Taalvaardigheid</SectionTitle>
             <p className="text-sm text-foreground">{candidate.languageSkills}</p>
+          </section>
+        )}
+
+        {coiLines.length > 0 && (
+          <section>
+            <SectionTitle>Local Community of Interest (COI)</SectionTitle>
+            <ul className="list-disc space-y-0.5 pl-5 text-sm text-foreground">
+              {coiLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+            {(candidate.originVillage || candidate.traditionalAuthority) && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Traditioneel gezag: {candidate.traditionalAuthority || '—'}
+                {candidate.originVillage ? ` · dorp: ${candidate.originVillage}` : ''}
+              </p>
+            )}
           </section>
         )}
       </div>

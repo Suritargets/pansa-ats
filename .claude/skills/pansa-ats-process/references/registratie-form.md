@@ -1,8 +1,10 @@
 # Registratieformulier (sollicitatie-intake)
 
+**Documentcode:** PGC-HR-F-0501-05 (print 2025-12-12) · bijgewerkt voor `hr new/1. Registratie form hps 2026.docx`
 **Bedrijf:** Commercial Contracting Company H. Pansa & Sons N.V. · K.K.F. Dossier no. 30028
 
-Bronbestand: `docs/process/word/1. Registratie form hps 2026.docx`
+Bronbestand: `hr new/1. Registratie form hps 2026.docx`  
+Formuliercontact: recruitment@hpsnv.com · Martin Luther Kingweg km 23, Para
 
 Dit is het fysieke/papieren intakeformulier dat kandidaten invullen (in blokletters). Het
 publieke sollicitatieformulier (`/apply`) en het digitaliseer-scherm (`/admin/digitize`)
@@ -10,10 +12,10 @@ dekken een subset hiervan — dit document is de volledige, autoritatieve velden
 
 ## Persoonsgegevens
 
-- Registratienummer
+- **Registratienummer** (staat bovenaan het papieren formulier; in de ATS `candidates.registration_number`, automatisch `REG-#####` uit `registration_seq` als er geen papieren nummer wordt ingevoerd)
 - Familienaam, voornamen
 - ID-nummer
-- Datum bewijs van goed gedrag
+- Datum bewijs van goed gedrag (`candidates.police_clearance_date` — bepaalt of het goedgedrag voor de client geldig is)
 - Geboortedatum, geboorteplaats
 - Afkomstig van het dorp (naam) + traditioneel gezag van het dorp (titel & naam) —
   relevant voor kandidaten uit het Surinaamse binnenland

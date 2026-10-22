@@ -44,6 +44,7 @@ export default async function ClientRequestsAdminPage({ searchParams }: { search
           <TableHeader>
             <TableRow>
               <TableHead>Client</TableHead>
+              <TableHead>Req# / RFP-ID#</TableHead>
               <TableHead>Functie</TableHead>
               <TableHead>Aantal</TableHead>
               <TableHead>Status</TableHead>
@@ -54,7 +55,7 @@ export default async function ClientRequestsAdminPage({ searchParams }: { search
           <TableBody>
             {requests.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="py-6 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="py-6 text-center text-muted-foreground">
                   Geen vacature-aanvragen.
                 </TableCell>
               </TableRow>
@@ -62,6 +63,7 @@ export default async function ClientRequestsAdminPage({ searchParams }: { search
             {requests.map((req) => (
               <TableRow key={req.id}>
                 <TableCell className="font-medium text-foreground">{req.client.name}</TableCell>
+                <TableCell className="text-muted-foreground">{req.referenceNumber ?? '—'}</TableCell>
                 <TableCell className="text-muted-foreground">
                   {req.jobCategory?.name ?? '—'}
                   {req.jobScope.length > 0 && (

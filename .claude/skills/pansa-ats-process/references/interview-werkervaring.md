@@ -2,7 +2,7 @@
 
 **Documentcode:** PGC-HR-F-0520-01 · **Datum:** 5 januari 2026
 
-Bronbestand: `docs/process/word/20. Vragenlijst job interview hps 2026.docx`
+Bronbestand: `hr new/3. Vragenlijst job interview hps 2026.docx`
 
 Het technische/werkervaring-interview — één van de twee interviewtypes in de
 selectieprocedure (naast het algemene sollicitatiegesprek). In het datamodel:

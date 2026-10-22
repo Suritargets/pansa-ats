@@ -12,6 +12,7 @@ import {
   ClipboardList,
   Code2,
   Download,
+  FileSignature,
   GraduationCap,
   History,
   Inbox,
@@ -75,6 +76,7 @@ export const ADMIN_NAV: NavGroup[] = [
     label: 'Onboarding & Training',
     items: [
       { label: 'Onboarding', href: '/admin/onboarding', icon: ListChecks },
+      { label: 'Contracten & badges', href: '/admin/contracts', icon: FileSignature },
       { label: 'Trainingen', href: '/admin/trainings', icon: GraduationCap },
     ],
   },
