@@ -1,5 +1,9 @@
 # Afbeeldingen voorpagina
 
+Status 2026-10-22: alle foto's staan erin (AI-gegenereerd via ElevenLabs/Canva, geen logo-bestand).
+`beheer`, `contract`, `kandidaten`, `onboarding`, `rapportages` en `vacature-plaatsen` hergebruiken foto's uit de
+kandidaat-set; vervang ze door een eigen foto met dezelfde bestandsnaam.
+
 Zet hier de foto's uit het Pansa-ontwerp. Ontbreekt een bestand, dan toont de pagina een
 donkergroene gradient op die plek — er verschijnt nooit een kapot plaatje. Aanbevolen: JPG,
 ≤ 300 KB, 1600 px breed voor de hero, 600×500 px voor de kaarten.
