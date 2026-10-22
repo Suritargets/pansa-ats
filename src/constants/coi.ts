@@ -53,13 +53,35 @@ export const COI_QUESTIONS: { yesKey: YesKey; areaKey: AreaKey; label: string; s
   },
 ]
 
+const MAX_AREA_LENGTH = 60
+
+/**
+ * Server-side opschoning van een COI-object uit een formulier of API-aanroep: alleen de bekende
+ * sleutels, booleans als booleans, gebieden als korte tekst. `null` als er niets is aangevinkt.
+ */
+export function sanitizeCoi(raw: unknown): CommunityOfInterest | null {
+  if (!raw || typeof raw !== 'object') return null
+  const input = raw as Record<string, unknown>
+  const coi: CommunityOfInterest = {}
+  let touched = false
+  for (const q of COI_QUESTIONS) {
+    if (input[q.yesKey] !== true) continue
+    coi[q.yesKey] = true
+    const rawArea = input[q.areaKey]
+    const area = typeof rawArea === 'string' ? rawArea.trim().slice(0, MAX_AREA_LENGTH) : ''
+    if (area) coi[q.areaKey] = area
+    touched = true
+  }
+  return touched ? coi : null
+}
+
 /** Leest de plat-benoemde formuliervelden (`coi_<yesKey>` / `coi_<areaKey>`) van een native FormData. */
 export function coiFromFormData(formData: FormData): CommunityOfInterest | null {
   const coi: CommunityOfInterest = {}
   let touched = false
   for (const q of COI_QUESTIONS) {
     const yes = formData.get(`coi_${q.yesKey}`) === 'on'
-    const area = String(formData.get(`coi_${q.areaKey}`) ?? '').trim()
+    const area = String(formData.get(`coi_${q.areaKey}`) ?? '').trim().slice(0, MAX_AREA_LENGTH)
     if (yes) {
       coi[q.yesKey] = true
       if (area) coi[q.areaKey] = area

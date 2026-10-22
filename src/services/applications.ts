@@ -16,10 +16,24 @@ import { uploadDocument } from '@/lib/blob'
 import { logAuditEvent } from '@/lib/audit'
 import { dispatchWebhookEvent } from '@/lib/webhooks'
 import { STAFF_ROLES } from '@/lib/roles'
+import { sanitizeCoi } from '@/constants/coi'
 import type { ServiceResult } from '@/lib/service-result'
 
 const ALLOWED_DOCUMENT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 const MAX_DOCUMENT_SIZE_BYTES = 8 * 1024 * 1024
+// Wat een sollicitant zelf mag uploaden (met uploadToken). Dossierstukken die HR verifieert of
+// aanmaakt (medische keuring, SOR, getekend contract, ...) kunnen alleen met een staff-sessie.
+const APPLICANT_DOCUMENT_KINDS: DocumentKind[] = [
+  'cv',
+  'handwritten_scan',
+  'id_document',
+  'certificate',
+  'diploma',
+  'police_clearance',
+  'drivers_license',
+  'photo_family_docs',
+  'other',
+]
 import {
   applicationDocuments,
   applications,
@@ -132,7 +146,7 @@ export async function submitApplication(
         hasDriversLicense: input.candidate.hasDriversLicense ?? null,
         driversLicenseCategory: input.candidate.driversLicenseCategory ?? null,
         policeClearanceDate: input.candidate.policeClearanceDate ?? null,
-        communityOfInterest: input.candidate.communityOfInterest ?? null,
+        communityOfInterest: sanitizeCoi(input.candidate.communityOfInterest),
         education: input.candidate.education ?? [],
         priorTrainings: input.candidate.priorTrainings ?? [],
         workHistory: input.candidate.workHistory ?? [],
@@ -212,6 +226,9 @@ export async function uploadApplicationDocument(
     if (!isStaff && !verifyUploadToken(applicationId, uploadToken)) {
       return { success: false, error: 'Niet geautoriseerd.' }
     }
+    if (!isStaff && !APPLICANT_DOCUMENT_KINDS.includes(kind)) {
+      return { success: false, error: 'Dit documenttype kan alleen door HR worden toegevoegd.' }
+    }
 
     if (!ALLOWED_DOCUMENT_TYPES.includes(file.type)) {
       return { success: false, error: 'Bestandstype niet toegestaan. Gebruik JPG, PNG, WEBP of PDF.' }
@@ -227,6 +244,7 @@ export async function uploadApplicationDocument(
       kind,
       storagePath: pathname,
       fileName,
+      uploadedBy: isStaff ? session!.userId : null,
     })
 
     return { success: true, data: { path: pathname } }

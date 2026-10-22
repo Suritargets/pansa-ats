@@ -5,8 +5,11 @@
  */
 
 function escapeCsvValue(value: unknown): string {
-  const str = value === null || value === undefined ? '' : String(value)
-  if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`
+  let str = value === null || value === undefined ? '' : String(value)
+  // Formule-injectie: een cel die met =, +, -, @, tab of CR begint voert Excel/Sheets als formule uit.
+  // Een voorloop-apostrof maakt er tekst van; de waarde komt uit vrije invoer (kandidaten, clients).
+  if (/^[=+\-@\t\r]/.test(str)) str = `'${str}`
+  if (/[",\n\r']/.test(str)) return `"${str.replace(/"/g, '""')}"`
   return str
 }
 
