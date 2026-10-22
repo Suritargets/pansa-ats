@@ -78,7 +78,8 @@ export function probationDeadlines(
 
 /** Open evaluaties waarvan de deadline verstreken is of binnen `PROBATION_LOOKAHEAD_DAYS` valt. */
 export function probationAttention(
-  contract: Parameters<typeof probationDeadlines>[0]
+  contract: Parameters<typeof probationDeadlines>[0],
+  today: Date = new Date()
 ): ProbationDeadline[] {
-  return probationDeadlines(contract).filter((d) => !d.done && d.daysLeft <= PROBATION_LOOKAHEAD_DAYS)
+  return probationDeadlines(contract, today).filter((d) => !d.done && d.daysLeft <= PROBATION_LOOKAHEAD_DAYS)
 }
