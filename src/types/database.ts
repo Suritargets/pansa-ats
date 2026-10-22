@@ -30,6 +30,7 @@ export type {
   DocumentKind,
   Application,
   ApplicationDocument,
+  ApplicationStatusHistoryRow,
   EducationEntry,
   EmergencyContact,
   EmploymentContract,

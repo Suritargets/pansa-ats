@@ -18,6 +18,7 @@ import {
   listOnboardingStepTemplates,
   listReferenceChecks,
   listShareableClientsForApplication,
+  listStatusHistory,
 } from '@/services/queries'
 import { buildDossierIndex, buildPreEmploymentChecklist } from '@/lib/dossier'
 import { AdminShell } from '@/components/admin/AdminShell'
@@ -41,6 +42,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
     onboardingProgress,
     shareableClients,
     shares,
+    statusHistory,
   ] = await Promise.all([
     listApplicationDocuments(id),
     listInterviews(id),
@@ -52,6 +54,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
     listOnboardingProgress(id),
     listShareableClientsForApplication(id),
     listApplicationShares(id),
+    listStatusHistory(id),
   ])
 
   const dossierItems = buildDossierIndex({
@@ -80,6 +83,7 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
         onboardingProgress={onboardingProgress}
         shareableClients={shareableClients}
         shares={shares}
+        statusHistory={statusHistory}
         dossierItems={dossierItems}
         preEmployment={preEmployment}
       />

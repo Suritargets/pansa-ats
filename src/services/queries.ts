@@ -42,6 +42,7 @@ import {
   type ApiKey,
   type ApplicationDocument,
   type ApplicationStatus,
+  type ApplicationStatusHistoryRow,
   type AuditLogRow,
   type Candidate,
   type ChatKbEntry,
@@ -487,6 +488,17 @@ export async function listEmergencyContacts(candidateId: string) {
       .from(emergencyContacts)
       .where(eq(emergencyContacts.candidateId, candidateId))
       .orderBy(emergencyContacts.priority)
+  )
+}
+
+/** Statusgeschiedenis van één sollicitatie, oudste eerst — voor de processtappen-tijdlijn. */
+export async function listStatusHistory(applicationId: string) {
+  return guarded<ApplicationStatusHistoryRow[]>([], () =>
+    db
+      .select()
+      .from(applicationStatusHistory)
+      .where(eq(applicationStatusHistory.applicationId, applicationId))
+      .orderBy(applicationStatusHistory.createdAt)
   )
 }
 
