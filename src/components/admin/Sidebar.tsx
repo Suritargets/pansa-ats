@@ -87,14 +87,16 @@ export function Sidebar({
                           href={item.href}
                           title={collapsed ? item.label : undefined}
                           className={cn(
-                            'flex items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors',
+                            'relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors',
                             active
-                              ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground'
+                              ? 'bg-primary font-medium text-primary-foreground before:absolute before:inset-y-1.5 before:-left-2 before:w-1 before:rounded-full before:bg-[var(--color-brand-yellow)]'
+                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                           )}
+                          aria-current={active ? 'page' : undefined}
                         >
-                          <item.icon className="size-4 shrink-0" />
-                          {!collapsed && <span className="truncate">{item.label}</span>}
+                          <item.icon className="size-[18px] shrink-0" />
+                          {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+                          {!collapsed && active && <ChevronRight className="size-4 shrink-0 opacity-80" />}
                         </Link>
                       </li>
                     )

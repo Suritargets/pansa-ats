@@ -17,6 +17,7 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+  --color-canvas: var(--canvas);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -52,6 +53,16 @@
   --color-brand-yellow: #f8cc39;
   --color-brand-dark-green: #32592d;
   --color-brand-light-gray: #f5f5f5;
+  --color-brand-deep: #0d4726; /* sidebar + donkerste vlak in de rapportage-ontwerpen */
+  --color-brand-lime: #8cc63f;
+  --canvas: #f4f7f4; /* pagina-achtergrond achter de witte kaarten */
+
+  /* Kandidaten per status (donut) — van donker naar licht groen, geel voor geplaatst, rood voor afgewezen */
+  --status-new: #0d4726;
+  --status-review: #1c9848;
+  --status-interview: #8cc63f;
+  --status-placed: #f8cc39;
+  --status-closed: #ef5350;
 
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -77,17 +88,18 @@
   --chart-4: oklch(0.556 0 0);
   --chart-5: oklch(0.371 0 0);
   --radius: 0.625rem;
-  --sidebar: var(--color-brand-dark-green);
+  --sidebar: var(--color-brand-deep);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: var(--color-brand-green);
   --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(1 0 0 / 12%);
+  --sidebar-accent: oklch(1 0 0 / 10%);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 12%);
   --sidebar-ring: var(--color-brand-yellow);
 }
 
 .dark {
+  --canvas: oklch(0.17 0 0);
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -135,4 +147,15 @@
     font-family: var(--font-heading);
     @apply font-semibold tracking-wide;
   }
+}
+
+/* Landingspagina: afgeschuinde "tech"-hoeken uit het Pansa-ontwerp. */
+@utility clip-tech {
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 18px 100%, 0 calc(100% - 18px));
+}
+@utility clip-tech-sm {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+}
+@utility clip-tab {
+  clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
 }
