@@ -119,10 +119,10 @@ export function CommandPalette({ role }: { role: UserRole }) {
       <button
         type="button"
         onClick={openPalette}
-        className="flex w-64 items-center gap-2 rounded-lg border border-input bg-background px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-muted"
+        className="flex h-10 w-full max-w-xl items-center gap-2 rounded-xl border border-input bg-background px-3 text-sm text-muted-foreground hover:bg-muted"
       >
         <Search className="size-3.5" />
-        <span className="flex-1 text-left">Zoeken...</span>
+        <span className="flex-1 truncate text-left">Zoeken naar kandidaten, vacatures, bedrijven…</span>
         <kbd className="rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem]">Ctrl K</kbd>
       </button>
 
@@ -144,7 +144,7 @@ export function CommandPalette({ role }: { role: UserRole }) {
                   if (next.trim().length < 2) setDataResults([])
                 }}
                 onKeyDown={onKeyDown}
-                placeholder="Zoek instellingen, kandidaten, clienten, sollicitaties..."
+                placeholder="Zoeken naar kandidaten, vacatures, bedrijven…"
                 className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
             </div>

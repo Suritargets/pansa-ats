@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Code2 } from 'lucide-react'
+import { Code2, Plus } from 'lucide-react'
+import { PageHeader } from '@/components/admin/PageHeader'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES, SUPER_ADMIN_ROLES } from '@/lib/roles'
 import { listVacancyRequests } from '@/services/queries'
@@ -27,18 +28,19 @@ export default async function ClientRequestsAdminPage({ searchParams }: { search
 
   return (
     <AdminShell session={session}>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-lg font-semibold text-foreground">Vacature-aanvragen ({requests.length})</h1>
-        <div className="flex items-center gap-3">
-          <ListSearchBox placeholder="Zoek op client..." />
-          {SUPER_ADMIN_ROLES.includes(session.role as (typeof SUPER_ADMIN_ROLES)[number]) && (
-            <Button variant="outline" size="sm" render={<Link href="/admin/settings/embed" />}>
-              <Code2 className="size-4" />
-              Aanvraagformulier embedden
-            </Button>
-          )}
-        </div>
-      </div>
+      <PageHeader title="Vacatures" subtitle="Beheer alle openstaande personeelsaanvragen van clients" count={requests.length}>
+        <ListSearchBox placeholder="Zoek op client..." />
+        {SUPER_ADMIN_ROLES.includes(session.role as (typeof SUPER_ADMIN_ROLES)[number]) && (
+          <Button variant="outline" nativeButton={false} render={<Link href="/admin/settings/embed" />}>
+            <Code2 className="size-4" />
+            Aanvraagformulier embedden
+          </Button>
+        )}
+        <Button nativeButton={false} render={<Link href="/request-staffing" target="_blank" />}>
+          <Plus className="size-4" />
+          Nieuwe vacature
+        </Button>
+      </PageHeader>
       <div className="overflow-hidden rounded-xl border border-border bg-card">
         <Table>
           <TableHeader>

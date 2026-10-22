@@ -7,7 +7,7 @@
 
 import type { LucideIcon } from 'lucide-react'
 import { ArrowDownRight, ArrowUpRight, Minus } from 'lucide-react'
-import { Sparkline } from '@/components/admin/charts'
+import { MiniBars, Sparkline } from '@/components/admin/charts'
 import { cn } from '@/lib/utils'
 
 export function KpiCard({
@@ -16,6 +16,7 @@ export function KpiCard({
   label,
   trend,
   sparkline,
+  bars,
   warn = false,
 }: {
   icon: LucideIcon
@@ -24,6 +25,8 @@ export function KpiCard({
   /** Verandering t.o.v. de vorige maand; `null` toont een streepje (niet te berekenen). Weglaten = geen trendregel. */
   trend?: { delta: number | null; unit: '%' | 'pt' }
   sparkline?: number[]
+  /** Zoals `sparkline`, maar als mini-staafjes (dashboard-ontwerp). */
+  bars?: number[]
   /** Kleurt de waarde rood als er aandacht nodig is (bv. verlopende contracten). */
   warn?: boolean
 }) {
@@ -61,6 +64,7 @@ export function KpiCard({
             <span className="ml-1 text-xs font-normal text-muted-foreground">vs vorige maand</span>
           </div>
           {sparkline && <Sparkline values={sparkline} className="text-primary" />}
+          {bars && <MiniBars values={bars} className="text-primary" />}
         </div>
       )}
     </div>

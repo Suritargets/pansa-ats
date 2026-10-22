@@ -14,6 +14,7 @@ import { getReportingStats, getReportsOverview } from '@/services/queries'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { BarChart, DonutChart } from '@/components/admin/charts'
 import { KpiCard } from '@/components/admin/KpiCard'
+import { PageHero } from '@/components/admin/PageHero'
 import { YearSelect } from '@/components/admin/YearSelect'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -40,19 +41,20 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
 
   return (
     <AdminShell session={session}>
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-4xl font-semibold text-foreground">Rapportages</h1>
-          <p className="mt-1 text-muted-foreground">Inzicht in prestaties en statistieken</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <YearSelect years={overview.years} value={overview.year} />
-          <Button className="h-10 rounded-xl px-4" nativeButton={false} render={<a href="/api/export/general" download />}>
-            <Download className="size-4" />
-            Exporteren
-          </Button>
-        </div>
-      </div>
+      <PageHero
+        title="Rapportages"
+        subtitle="Inzicht in prestaties en statistieken"
+        image="nieuws"
+        action={
+          <div className="flex items-center gap-3">
+            <YearSelect years={overview.years} value={overview.year} />
+            <Button className="h-10 rounded-xl px-4" nativeButton={false} render={<a href="/api/export/general" download />}>
+              <Download className="size-4" />
+              Exporteren
+            </Button>
+          </div>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard

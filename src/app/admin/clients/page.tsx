@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { Plus } from 'lucide-react'
+import { PageHeader } from '@/components/admin/PageHeader'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
 import { listClients } from '@/services/queries'
@@ -14,13 +16,13 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
 
   return (
     <AdminShell session={session}>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-lg font-semibold text-foreground">Clienten ({clients.length})</h1>
-        <div className="flex items-center gap-3">
-          <ListSearchBox placeholder="Zoek op naam..." />
-          <Button render={<Link href="/admin/clients/new" />}>Nieuwe client</Button>
-        </div>
-      </div>
+      <PageHeader title="Clienten" subtitle="Beheer uw klanten en relaties" count={clients.length}>
+        <ListSearchBox placeholder="Zoek naar bedrijven..." />
+        <Button nativeButton={false} render={<Link href="/admin/clients/new" />}>
+          <Plus className="size-4" />
+          Nieuwe client
+        </Button>
+      </PageHeader>
       <ClientsTable clients={clients} />
     </AdminShell>
   )

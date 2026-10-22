@@ -12,6 +12,7 @@ import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
 import { listContractsForMonitoring } from '@/services/queries'
 import { AdminShell } from '@/components/admin/AdminShell'
+import { PageHeader } from '@/components/admin/PageHeader'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -64,11 +65,11 @@ export default async function ContractsMonitorPage() {
 
   return (
     <AdminShell session={session}>
-      <h1 className="mb-1 text-lg font-semibold text-foreground">Contracten &amp; badges ({sorted.length})</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        Lopende (concept en actieve) arbeidsovereenkomsten. Waarschuwing bij einddatum of badge-vervaldatum binnen{' '}
-        {EXPIRY_WARNING_DAYS} dagen; proeftijdevaluatie binnen {PROBATION_LOOKAHEAD_DAYS} dagen of te laat.
-      </p>
+      <PageHeader
+        title="Contracten & badges"
+        count={sorted.length}
+        subtitle={`Lopende arbeidsovereenkomsten — waarschuwing bij einddatum of badge-vervaldatum binnen ${EXPIRY_WARNING_DAYS} dagen; proeftijdevaluatie binnen ${PROBATION_LOOKAHEAD_DAYS} dagen of te laat.`}
+      />
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <Summary label="Contract loopt af / verlopen" value={ending} />

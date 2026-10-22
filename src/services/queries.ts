@@ -1042,3 +1042,117 @@ export async function getLandingData(): Promise<LandingData> {
     }
   })
 }
+
+// --- Dashboard-overzicht (ontwerp "Pansa ATS Dashboard") ---
+
+export interface DashboardOverview {
+  year: number
+  years: number[]
+  monthLabels: string[]
+  kpis: { applications: Kpi; placed: Kpi; clients: Kpi; candidates: Kpi }
+  applicationsPerMonth: number[]
+  statusBreakdown: { status: ApplicationStatus; label: string; count: number }[]
+  topPositions: { position: string; count: number }[]
+  alerts: { contractsEndingSoon: number; badgesExpiringSoon: number; probationEvaluationsDue: number }
+}
+
+const DASHBOARD_STATUSES: ApplicationStatus[] = ['new', 'in_review', 'shortlisted', 'interview', 'offer', 'onboarding', 'active', 'rejected']
+
+export async function getDashboardOverview(requestedYear?: number): Promise<DashboardOverview> {
+  const now = new Date()
+  const emptyKpi: Kpi = { value: 0, deltaPct: null, deltaUnit: '%', series: [0, 0, 0, 0, 0, 0] }
+  return guarded<DashboardOverview>(
+    {
+      year: now.getFullYear(),
+      years: [now.getFullYear()],
+      monthLabels: MONTH_LABELS,
+      kpis: { applications: emptyKpi, placed: emptyKpi, clients: emptyKpi, candidates: emptyKpi },
+      applicationsPerMonth: Array(12).fill(0),
+      statusBreakdown: DASHBOARD_STATUSES.map((status) => ({ status, label: APPLICATION_STATUS_LABELS[status], count: 0 })),
+      topPositions: [],
+      alerts: { contractsEndingSoon: 0, badgesExpiringSoon: 0, probationEvaluationsDue: 0 },
+    },
+    async () => {
+      const [appRows, candidateRows, clientRows, activeHistory, running] = await Promise.all([
+        db
+          .select({ createdAt: applications.createdAt, status: applications.status, position: applications.positionApplied })
+          .from(applications),
+        db.select({ createdAt: candidates.createdAt }).from(candidates),
+        db.select({ createdAt: clients.createdAt }).from(clients),
+        db
+          .select({ applicationId: applicationStatusHistory.applicationId, createdAt: applicationStatusHistory.createdAt })
+          .from(applicationStatusHistory)
+          .where(eq(applicationStatusHistory.toStatus, 'active'))
+          .orderBy(applicationStatusHistory.createdAt),
+        listContractsForMonitoring(),
+      ])
+
+      const firstYear = appRows.length ? Math.min(...appRows.map((r) => r.createdAt.getFullYear())) : now.getFullYear()
+      const years: number[] = []
+      for (let y = now.getFullYear(); y >= firstYear; y--) years.push(y)
+      const year = requestedYear && years.includes(requestedYear) ? requestedYear : now.getFullYear()
+      const selMonth = year === now.getFullYear() ? now.getMonth() : 11
+      const endOf = (offset: number) => new Date(year, selMonth - offset + 1, 1)
+      const offsets = [5, 4, 3, 2, 1, 0]
+      const cumulative = (dates: Date[], offset: number) => dates.filter((d) => d < endOf(offset)).length
+      const kpiFrom = (dates: Date[], valueNow?: number): Kpi => ({
+        value: valueNow ?? cumulative(dates, 0),
+        deltaPct: pctChange(cumulative(dates, 0), cumulative(dates, 1)),
+        deltaUnit: '%',
+        series: offsets.map((o) => cumulative(dates, o)),
+      })
+
+      // Eerste overgang naar "actief geplaatst" per sollicitatie.
+      const firstActive = new Map<string, Date>()
+      for (const row of activeHistory) if (!firstActive.has(row.applicationId)) firstActive.set(row.applicationId, row.createdAt)
+
+      const appDates = appRows.map((r) => r.createdAt)
+      const byStatus = new Map<ApplicationStatus, number>()
+      const byPosition = new Map<string, number>()
+      for (const row of appRows) {
+        byStatus.set(row.status, (byStatus.get(row.status) ?? 0) + 1)
+        byPosition.set(row.position, (byPosition.get(row.position) ?? 0) + 1)
+      }
+
+      return {
+        year,
+        years,
+        monthLabels: MONTH_LABELS,
+        kpis: {
+          applications: kpiFrom(appDates),
+          placed: kpiFrom([...firstActive.values()], byStatus.get('active') ?? 0),
+          clients: kpiFrom(clientRows.map((r) => r.createdAt)),
+          candidates: kpiFrom(candidateRows.map((r) => r.createdAt)),
+        },
+        applicationsPerMonth: MONTH_LABELS.map(
+          (_, m) => appDates.filter((d) => d.getFullYear() === year && d.getMonth() === m).length
+        ),
+        statusBreakdown: DASHBOARD_STATUSES.map((status) => ({
+          status,
+          label: APPLICATION_STATUS_LABELS[status],
+          count: (byStatus.get(status) ?? 0) + (status === 'rejected' ? (byStatus.get('withdrawn') ?? 0) : 0),
+        })),
+        topPositions: [...byPosition.entries()]
+          .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+          .slice(0, 5)
+          .map(([position, count]) => ({ position, count })),
+        alerts: {
+          contractsEndingSoon: running.filter(({ contract }) => contract.status === 'active' && needsAttention(contract.endDate)).length,
+          badgesExpiringSoon: running.filter(({ contract }) => contract.status === 'active' && needsAttention(contract.badgeExpiryDate)).length,
+          probationEvaluationsDue: running.filter(({ contract }) => contract.status === 'active' && probationAttention(contract).length > 0).length,
+        },
+      }
+    }
+  )
+}
+
+/** Aantal aandachtspunten voor het belletje in de topbar (contracten/badges/proeftijd). */
+export async function countAttentionItems(): Promise<number> {
+  return guarded<number>(0, async () => {
+    const running = (await listContractsForMonitoring()).filter(({ contract }) => contract.status === 'active')
+    return running.filter(
+      ({ contract }) =>
+        needsAttention(contract.endDate) || needsAttention(contract.badgeExpiryDate) || probationAttention(contract).length > 0
+    ).length
+  })
+}

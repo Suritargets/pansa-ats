@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Upload } from 'lucide-react'
+import { Plus, Upload } from 'lucide-react'
+import { PageHeader } from '@/components/admin/PageHeader'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
 import { listCandidates, listJobCategories } from '@/services/queries'
@@ -30,22 +31,23 @@ export default async function CandidatesPage({
 
   return (
     <AdminShell session={session}>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-lg font-semibold text-foreground">Kandidaten ({candidates.length})</h1>
-        <div className="flex items-center gap-3">
-          <ListSearchBox placeholder="Zoek op naam..." />
-          <CandidateFilters
-            branche={branche ?? ''}
-            level={level ?? ''}
-            jobCategoryId={jobCategoryId ?? ''}
-            jobCategories={jobCategories}
-          />
-          <Button variant="outline" size="sm" render={<Link href="/admin/candidates/import" />}>
-            <Upload className="size-4" />
-            Importeren
-          </Button>
-        </div>
-      </div>
+      <PageHeader title="Kandidaten" subtitle="Beheer alle kandidaten in één overzicht" count={candidates.length}>
+        <CandidateFilters
+          branche={branche ?? ''}
+          level={level ?? ''}
+          jobCategoryId={jobCategoryId ?? ''}
+          jobCategories={jobCategories}
+        />
+        <ListSearchBox placeholder="Zoek naar kandidaten..." />
+        <Button variant="outline" nativeButton={false} render={<Link href="/admin/candidates/import" />}>
+          <Upload className="size-4" />
+          Importeren
+        </Button>
+        <Button nativeButton={false} render={<Link href="/admin/digitize" />}>
+          <Plus className="size-4" />
+          Nieuwe kandidaat
+        </Button>
+      </PageHeader>
       <CandidatesTable candidates={candidates} />
     </AdminShell>
   )

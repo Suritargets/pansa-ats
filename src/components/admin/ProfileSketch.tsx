@@ -21,6 +21,7 @@ import { ReferenceCheckForm, ReferenceChecksList } from '@/components/admin/Refe
 import { DossierTab } from '@/components/admin/DossierTab'
 import { WhatsAppActions } from '@/components/admin/WhatsAppActions'
 import { EmergencyContactsCard } from '@/components/admin/EmergencyContactsCard'
+import { Avatar } from '@/components/admin/Avatar'
 import { coiSummaryLines } from '@/constants/coi'
 import { DOCUMENT_LABELS, type DossierItem, type PreEmploymentItem } from '@/lib/dossier'
 import { registrationLabel } from '@/lib/registration'
@@ -102,9 +103,11 @@ export function ProfileSketch({
       <div className="space-y-6 lg:col-span-2">
         <Card>
           <CardHeader>
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <Avatar name={`${application.candidate.firstName} ${application.candidate.lastName}`} size="lg" />
+                <div>
+                <CardTitle className="text-3xl">
                   {application.candidate.firstName} {application.candidate.lastName}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
@@ -112,7 +115,10 @@ export function ProfileSketch({
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   Registratienr {registrationLabel(application.candidate)}
+                  {application.candidate.phone ? ` · ${application.candidate.phone}` : ''}
+                  {application.candidate.email ? ` · ${application.candidate.email}` : ''}
                 </p>
+                </div>
               </div>
               <div className="flex items-center gap-3">
                 <Button variant="outline" size="sm" nativeButton={false} render={<a href={`/admin/applications/${application.id}/cv`} target="_blank" rel="noopener noreferrer" />}>

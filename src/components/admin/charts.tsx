@@ -28,10 +28,10 @@ export function Sparkline({ values, className }: { values: number[]; className?:
   )
 }
 
-function niceMax(value: number): number {
-  if (value <= 5) return 5
-  const step = value <= 20 ? 5 : value <= 50 ? 10 : 20
-  return Math.ceil(value / step) * step
+/** As-schaal met hele getallen: stapgrootte 1/2/5/10/20 en een bovengrens die daar een veelvoud van is. */
+function niceScale(value: number): { max: number; step: number } {
+  const step = value <= 4 ? 1 : value <= 10 ? 2 : value <= 25 ? 5 : value <= 50 ? 10 : 20
+  return { max: Math.max(step, Math.ceil(value / step) * step), step }
 }
 
 export function BarChart({
@@ -48,8 +48,8 @@ export function BarChart({
   const pad = { top: 12, right: 8, bottom: 28, left: 32 }
   const innerW = width - pad.left - pad.right
   const innerH = height - pad.top - pad.bottom
-  const max = niceMax(Math.max(...values, 0))
-  const ticks = 4
+  const { max, step } = niceScale(Math.max(...values, 0))
+  const ticks = max / step
   const slot = innerW / values.length
   const barW = slot * 0.62
 
@@ -178,5 +178,45 @@ export function DonutChart({ slices, totalLabel = 'totaal' }: { slices: DonutSli
         ))}
       </ul>
     </div>
+  )
+}
+
+/** Mini-staafjes voor in een KPI-kaart (zelfde rol als Sparkline, maar als staven zoals in het ontwerp). */
+export function MiniBars({ values, className }: { values: number[]; className?: string }) {
+  const max = Math.max(...values, 1)
+  return (
+    <div className={cn('flex h-9 items-end gap-1', className)} aria-hidden="true">
+      {values.map((v, i) => (
+        <span
+          key={i}
+          className="w-2.5 rounded-sm bg-current"
+          style={{ height: `${Math.max(12, (v / max) * 100)}%`, opacity: 0.45 + (i / Math.max(values.length - 1, 1)) * 0.55 }}
+        />
+      ))}
+    </div>
+  )
+}
+
+/** Horizontale balkjes met label en aantal (bv. top functies). */
+export function HorizontalBars({ rows }: { rows: { label: string; value: number }[] }) {
+  const max = Math.max(...rows.map((r) => r.value), 1)
+  return (
+    <ul className="space-y-3">
+      {rows.map((row, i) => (
+        <li key={row.label} className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 text-sm">
+          <span className="truncate text-foreground">{row.label}</span>
+          <span className="font-semibold tabular-nums text-foreground">{row.value}</span>
+          <div className="col-span-2 h-2.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${(row.value / max) * 100}%`,
+                background: i === 0 ? 'var(--color-brand-green)' : i < 3 ? 'var(--color-brand-lime)' : '#c6d93f',
+              }}
+            />
+          </div>
+        </li>
+      ))}
+    </ul>
   )
 }

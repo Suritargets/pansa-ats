@@ -5,7 +5,11 @@
  *         geen client-side auth-fetch nodig.
  */
 
-import { LogOut } from 'lucide-react'
+import Link from 'next/link'
+import { Bell, Globe, LogOut } from 'lucide-react'
+import { LogoMark } from '@/components/landing/LogoMark'
+import { logoSrc } from '@/components/landing/PublicShell'
+import { countAttentionItems } from '@/services/queries'
 import { Button } from '@/components/ui/button'
 import { Sidebar } from '@/components/admin/Sidebar'
 import { CommandPalette } from '@/components/admin/CommandPalette'
@@ -25,15 +29,47 @@ function initials(fullName: string): string {
 }
 
 export async function AdminShell({ session, children }: { session: SessionData; children: React.ReactNode }) {
-  const collapsed = await getSidebarCollapsed()
+  const [collapsed, attention] = await Promise.all([getSidebarCollapsed(), countAttentionItems()])
+  const logo = logoSrc()
 
   return (
     <div className="flex min-h-screen bg-canvas">
       <Sidebar role={session.role} initialCollapsed={collapsed} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-4 border-b border-border bg-card px-6 py-3">
-          <CommandPalette role={session.role} />
+        <header className="flex items-center gap-4 border-b border-border bg-card px-6 py-3">
+          <Link href="/admin/dashboard" className="hidden shrink-0 items-center gap-3 lg:flex">
+            <LogoMark src={logo} size={44} />
+            <span className="font-heading text-xl leading-none font-semibold tracking-wide text-foreground">
+              PANSA GROUP
+              <span className="block text-sm font-normal tracking-wider text-muted-foreground">OF COMPANIES N.V.</span>
+            </span>
+            <span className="hidden border-l border-border pl-3 text-[11px] leading-tight font-bold tracking-wider text-[var(--color-brand-dark-green)] uppercase xl:block">
+              The moving force
+              <br />
+              of the industries
+            </span>
+          </Link>
+          <div className="min-w-0 flex-1">
+            <CommandPalette role={session.role} />
+          </div>
           <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href="/admin/contracts"
+              className="relative flex size-10 items-center justify-center rounded-xl border border-border bg-background text-foreground hover:bg-muted"
+              aria-label={attention > 0 ? `${attention} aandachtspunten` : 'Geen aandachtspunten'}
+              title="Contracten & badges"
+            >
+              <Bell className="size-4" />
+              {attention > 0 && (
+                <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[11px] font-bold text-white">
+                  {attention}
+                </span>
+              )}
+            </Link>
+            <span className="hidden h-10 items-center gap-1.5 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground md:flex">
+              <Globe className="size-4 text-muted-foreground" />
+              NL
+            </span>
             <div className="flex items-center gap-3">
               <span
                 className="flex size-10 items-center justify-center rounded-full bg-[var(--color-brand-deep)] text-sm font-semibold text-white"

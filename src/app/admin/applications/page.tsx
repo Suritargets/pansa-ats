@@ -4,6 +4,10 @@
  * WAAROM: Was voorheen /admin/dashboard — die route is nu de KPI-overzichtspagina.
  */
 
+import Link from 'next/link'
+import { Plus } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/admin/PageHeader'
 import { requireSession } from '@/lib/auth'
 import { listApplications } from '@/services/queries'
 import { STAFF_ROLES } from '@/lib/roles'
@@ -24,13 +28,14 @@ export default async function ApplicationsPage({
 
   return (
     <AdminShell session={session}>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-foreground">Sollicitaties ({applications.length})</h2>
-        <div className="flex items-center gap-3">
-          <ListSearchBox placeholder="Zoek op naam/functie..." />
-          <StatusFilter value={status ?? ''} />
-        </div>
-      </div>
+      <PageHeader title="Sollicitaties" subtitle="Volg elke sollicitatie van registratie tot plaatsing" count={applications.length}>
+        <StatusFilter value={status ?? ''} />
+        <ListSearchBox placeholder="Zoek op naam/functie..." />
+        <Button nativeButton={false} render={<Link href="/admin/digitize" />}>
+          <Plus className="size-4" />
+          Nieuwe sollicitatie
+        </Button>
+      </PageHeader>
       <ApplicationsTable applications={applications} />
     </AdminShell>
   )
