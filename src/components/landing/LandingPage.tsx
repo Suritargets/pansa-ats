@@ -66,6 +66,14 @@ const TILES: Record<LandingMode, Tile[]> = {
   ],
 }
 
+/** Seconden per hero-foto; de totale cyclus is 3 × dit getal (moet gelijk zijn aan de 18s in globals.css). */
+const HERO_SLIDE_SECONDS = 6
+
+const HERO_SLIDES: Record<LandingMode, string[]> = {
+  werkzoeken: ['hero', 'nieuws', 'bedrijven'],
+  bedrijven: ['hero', 'trainingen', 'vacatures'],
+}
+
 const COMPANIES = [
   { name: 'CCC H. Pansa & Sons N.V.', tagline: 'Manpower, outsourcing & HR-diensten voor industriële mijnbouw' },
   { name: 'Pansa Machine Shop N.V.', tagline: 'Machinediensten' },
@@ -91,14 +99,20 @@ export function LandingPage({
     >
       {/* Hero-achtergrond: foto (indien aanwezig) over een industriële gradient */}
       <div className="relative overflow-hidden">
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-cover bg-center opacity-90"
-          style={{
-            backgroundImage:
-              'linear-gradient(180deg, rgba(11,16,12,.55) 0%, rgba(11,16,12,.35) 45%, #0b100c 100%), url(/landing/hero.jpg), radial-gradient(90% 60% at 60% 35%, #3b3a1f 0%, #1a2416 45%, #0b100c 100%)',
-          }}
-        />
+        {/* Drie foto's die elke 6 s in elkaar overvloeien (zie .hero-slide in globals.css); daarboven de donkere gradient. */}
+        <div aria-hidden="true" className="absolute inset-0 overflow-hidden">
+          {HERO_SLIDES[mode].map((image, i) => (
+            <div
+              key={image}
+              className="hero-slide"
+              style={{
+                animationDelay: `${-i * HERO_SLIDE_SECONDS}s`,
+                backgroundImage: `url(/landing/${image}.jpg), radial-gradient(90% 60% at 60% 35%, #3b3a1f 0%, #1a2416 45%, #0b100c 100%)`,
+              }}
+            />
+          ))}
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,16,12,.55)_0%,rgba(11,16,12,.35)_45%,#0b100c_100%)]" />
+        </div>
         <div
           aria-hidden="true"
           className="pointer-events-none absolute top-24 right-6 hidden rotate-[-8deg] opacity-[0.07] lg:block"

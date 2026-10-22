@@ -159,3 +159,22 @@
 @utility clip-tab {
   clip-path: polygon(14px 0, 100% 0, calc(100% - 14px) 100%, 0 100%);
 }
+
+/* Hero-slideshow voorpagina: drie lagen, elk 6 s zichtbaar met een zachte overgang (cyclus 18 s). */
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0;
+  animation: hero-slide 18s linear infinite;
+}
+@keyframes hero-slide {
+  0%, 28% { opacity: 1; }
+  33.34%, 94% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-slide { animation: none; }
+  .hero-slide:first-child { opacity: 1; }
+}
