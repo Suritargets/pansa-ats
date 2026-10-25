@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
 import { getPayrollBatchById, listPayrollBatchItems } from '@/services/queries'
+import { markPayrollBatchExported } from '@/services/payroll'
 import { toCsv } from '@/lib/csv'
 import { formatDate } from '@/lib/utils'
 
@@ -18,6 +19,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ bat
   if (!batch) return NextResponse.json({ error: 'Batch niet gevonden.' }, { status: 404 })
 
   const items = await listPayrollBatchItems(batchId)
+
+  if (batch.status === 'pending') {
+    await markPayrollBatchExported(batchId)
+  }
 
   const csv = toCsv(
     ['Voornaam', 'Achternaam', 'ID-nummer', 'Bedrijf', 'Functie', 'Status', 'Datum binnengekomen', 'Extern ID'],
