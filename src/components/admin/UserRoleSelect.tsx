@@ -17,9 +17,14 @@ const ROLE_LABELS: Record<UserRole, string> = {
 const selectClasses =
   'h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30'
 
+// "Client" en "Kandidaat" hebben een verplichte koppeling (clientId/candidateId) die alleen
+// het aanmaakformulier kan zetten — hiernaartoe wisselen kan dus alleen via een nieuw account.
+const ASSIGNABLE_VIA_TABLE: UserRole[] = ['super_admin', 'hr_staff', 'recruiter']
+
 export function UserRoleSelect({ id, role, disabled }: { id: string; role: UserRole; disabled?: boolean }) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const roleOptions = ASSIGNABLE_VIA_TABLE.includes(role) ? ASSIGNABLE_VIA_TABLE : [role, ...ASSIGNABLE_VIA_TABLE]
 
   return (
     <select
@@ -33,9 +38,9 @@ export function UserRoleSelect({ id, role, disabled }: { id: string; role: UserR
         })
       }
     >
-      {(Object.entries(ROLE_LABELS) as [UserRole, string][]).map(([value, label]) => (
+      {roleOptions.map((value) => (
         <option key={value} value={value}>
-          {label}
+          {ROLE_LABELS[value]}
         </option>
       ))}
     </select>

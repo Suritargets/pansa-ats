@@ -5,7 +5,7 @@
 
 import { requireSession } from '@/lib/auth'
 import { SUPER_ADMIN_ROLES } from '@/lib/roles'
-import { listClients, listProfiles } from '@/services/queries'
+import { listCandidates, listClients, listProfiles } from '@/services/queries'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { UserForm } from '@/components/admin/UserForm'
 import { UserRoleSelect } from '@/components/admin/UserRoleSelect'
@@ -16,7 +16,9 @@ import { formatDate } from '@/lib/utils'
 
 export default async function UsersSettingsPage() {
   const session = await requireSession([...SUPER_ADMIN_ROLES])
-  const [profiles, clients] = await Promise.all([listProfiles(), listClients()])
+  const [profiles, clients, allCandidates] = await Promise.all([listProfiles(), listClients(), listCandidates()])
+  const linkedCandidateIds = new Set(profiles.map((p) => p.candidateId).filter((id): id is string => id !== null))
+  const unlinkedCandidates = allCandidates.filter((c) => !linkedCandidateIds.has(c.id))
 
   return (
     <AdminShell session={session}>
@@ -62,7 +64,7 @@ export default async function UsersSettingsPage() {
           </Table>
         </div>
 
-        <UserForm clients={clients} />
+        <UserForm clients={clients} candidates={unlinkedCandidates} />
       </div>
     </AdminShell>
   )
