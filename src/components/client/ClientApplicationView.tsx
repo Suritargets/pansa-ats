@@ -1,4 +1,7 @@
+import Link from 'next/link'
+import { FileText } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/admin/StatusBadge'
 import { ClientFeedbackForm } from '@/components/client/ClientFeedbackForm'
 import { formatDate } from '@/lib/utils'
@@ -16,7 +19,13 @@ export function ClientApplicationView({ application }: { application: SharedAppl
               </CardTitle>
               <p className="text-sm text-muted-foreground">{application.positionApplied}</p>
             </div>
-            <StatusBadge status={application.status} />
+            <div className="flex items-center gap-3">
+              <Button variant="secondary" size="sm" render={<Link href={`/client/applications/${application.id}/cv`} />}>
+                <FileText className="size-4" />
+                CV bekijken
+              </Button>
+              <StatusBadge status={application.status} />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
