@@ -179,6 +179,12 @@ export async function submitApplication(
       })
       .returning({ id: applications.id })
 
+    await db.insert(applicationStatusHistory).values({
+      applicationId: application.id,
+      fromStatus: null,
+      toStatus: 'new',
+    })
+
     if (requireStaff) revalidatePath('/admin/applications')
 
     dispatchWebhookEvent('application.created', {
