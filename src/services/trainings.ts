@@ -49,6 +49,7 @@ export async function setCandidateTrainingProgress(
       set: {
         status,
         score: score?.toString() ?? null,
+        startedAt: status === 'in_progress' ? new Date() : undefined,
         completedAt: status === 'completed' ? new Date() : null,
       },
     })
