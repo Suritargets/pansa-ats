@@ -6,6 +6,7 @@
  */
 
 import { revalidatePath } from 'next/cache'
+import { and, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
@@ -46,12 +47,26 @@ export async function setCandidateTrainingProgress(
     })
     .onConflictDoUpdate({
       target: [candidateTrainingProgress.applicationId, candidateTrainingProgress.trainingId],
+      // `score` is omitted when not passed so cycling the status doesn't wipe a score set earlier.
       set: {
         status,
-        score: score?.toString() ?? null,
         completedAt: status === 'completed' ? new Date() : null,
+        ...(score !== undefined ? { score: score.toString() } : {}),
       },
     })
+
+  revalidatePath(`/admin/applications/${applicationId}`)
+  revalidatePath('/admin/trainings')
+}
+
+export async function removeCandidateTraining(applicationId: string, trainingId: string): Promise<void> {
+  await requireSession([...STAFF_ROLES])
+
+  await db
+    .delete(candidateTrainingProgress)
+    .where(
+      and(eq(candidateTrainingProgress.applicationId, applicationId), eq(candidateTrainingProgress.trainingId, trainingId))
+    )
 
   revalidatePath(`/admin/applications/${applicationId}`)
   revalidatePath('/admin/trainings')
