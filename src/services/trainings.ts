@@ -31,7 +31,8 @@ export async function setCandidateTrainingProgress(
   applicationId: string,
   trainingId: string,
   status: TrainingProgressStatus,
-  score?: number
+  // undefined = leave the existing score untouched (e.g. a status-only cycle); null = clear it explicitly.
+  score?: number | null
 ): Promise<void> {
   await requireSession([...STAFF_ROLES])
 
@@ -41,17 +42,16 @@ export async function setCandidateTrainingProgress(
       applicationId,
       trainingId,
       status,
-      score: score?.toString() ?? null,
+      score: score == null ? null : score.toString(),
       startedAt: status === 'in_progress' ? new Date() : null,
       completedAt: status === 'completed' ? new Date() : null,
     })
     .onConflictDoUpdate({
       target: [candidateTrainingProgress.applicationId, candidateTrainingProgress.trainingId],
-      // `score` is omitted when not passed so cycling the status doesn't wipe a score set earlier.
       set: {
         status,
         completedAt: status === 'completed' ? new Date() : null,
-        ...(score !== undefined ? { score: score.toString() } : {}),
+        ...(score !== undefined ? { score: score === null ? null : score.toString() } : {}),
       },
     })
 

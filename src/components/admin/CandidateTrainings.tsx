@@ -56,8 +56,8 @@ export function CandidateTrainings({
 
   function saveScore(trainingId: string, status: TrainingProgressStatus, value: string) {
     const trimmed = value.trim()
-    const score = trimmed === '' ? undefined : Number(trimmed)
-    if (trimmed !== '' && Number.isNaN(score)) return
+    const score = trimmed === '' ? null : Number(trimmed)
+    if (score !== null && Number.isNaN(score)) return
     startTransition(async () => {
       await setCandidateTrainingProgress(applicationId, trainingId, status, score)
       router.refresh()
