@@ -90,7 +90,8 @@ export function Sidebar({
                     groupHasActiveItem ? 'text-sidebar-foreground' : 'text-sidebar-foreground/75'
                   )}
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-2.5">
+                    {group.icon && <group.icon className="size-[18px] shrink-0" />}
                     {group.label}
                     {groupHasActiveItem && !isOpen && (
                       <span aria-hidden="true" className="size-1.5 rounded-full bg-[var(--color-brand-yellow)]" />

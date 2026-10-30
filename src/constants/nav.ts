@@ -8,12 +8,15 @@ import {
   Banknote,
   BarChart3,
   BookOpen,
+  Briefcase,
   Building2,
   ClipboardList,
   Code2,
   Download,
+  FileOutput,
   FileSignature,
   GraduationCap,
+  Handshake,
   History,
   Inbox,
   KeyRound,
@@ -21,10 +24,14 @@ import {
   ListChecks,
   MessageCircleQuestion,
   MessagesSquare,
+  Plug,
   ScanLine,
+  Settings,
   Share2,
   Tags,
   Truck,
+  UserCheck,
+  UserSearch,
   Users,
   Webhook,
 } from 'lucide-react'
@@ -37,6 +44,8 @@ export interface NavItem {
 
 export interface NavGroup {
   label?: string
+  /** Icoon naast de groepskop in de sidebar. */
+  icon?: LucideIcon
   items: NavItem[]
   /** Alleen tonen als de sessie-rol in deze lijst zit; ontbreekt = voor alle staff-rollen. */
   roles?: string[]
@@ -51,6 +60,7 @@ export const ADMIN_NAV: NavGroup[] = [
   },
   {
     label: 'CRM',
+    icon: Handshake,
     items: [
       { label: 'Kandidaten', href: '/admin/candidates', icon: Users },
       { label: 'Clienten', href: '/admin/clients', icon: Building2 },
@@ -59,6 +69,7 @@ export const ADMIN_NAV: NavGroup[] = [
   },
   {
     label: 'Werving & Selectie',
+    icon: UserSearch,
     items: [
       { label: 'Sollicitaties', href: '/admin/applications', icon: ClipboardList },
       { label: 'Digitaliseren', href: '/admin/digitize', icon: ScanLine },
@@ -66,6 +77,7 @@ export const ADMIN_NAV: NavGroup[] = [
   },
   {
     label: 'Clientzone',
+    icon: Briefcase,
     items: [
       { label: 'Vacature-aanvragen', href: '/admin/client-requests', icon: Inbox },
       { label: 'Gedeelde profielen', href: '/admin/client-shares', icon: Share2 },
@@ -73,6 +85,7 @@ export const ADMIN_NAV: NavGroup[] = [
   },
   {
     label: 'Onboarding & Training',
+    icon: UserCheck,
     items: [
       { label: 'Onboarding', href: '/admin/onboarding', icon: ListChecks },
       { label: 'Contracten & badges', href: '/admin/contracts', icon: FileSignature },
@@ -81,6 +94,7 @@ export const ADMIN_NAV: NavGroup[] = [
   },
   {
     label: 'Export',
+    icon: FileOutput,
     items: [
       { label: 'Payroll export', href: '/admin/export/payroll', icon: Banknote },
       { label: 'Algemene export', href: '/admin/export', icon: Download },
@@ -88,6 +102,7 @@ export const ADMIN_NAV: NavGroup[] = [
   },
   {
     label: 'Instellingen',
+    icon: Settings,
     roles: ['super_admin'],
     items: [
       { label: 'Functiecategorieën', href: '/admin/settings/job-categories', icon: Tags },
@@ -99,6 +114,7 @@ export const ADMIN_NAV: NavGroup[] = [
   },
   {
     label: 'Integraties',
+    icon: Plug,
     roles: ['super_admin'],
     items: [
       { label: 'Formulier embedden', href: '/admin/settings/embed', icon: Code2 },
