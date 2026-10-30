@@ -24,7 +24,7 @@ export function UserRoleSelect({ id, role, disabled }: { id: string; role: UserR
   return (
     <select
       defaultValue={role}
-      disabled={isPending || disabled}
+      disabled={isPending || disabled || role === 'candidate'}
       className={cn(selectClasses, 'w-44')}
       onChange={(e) =>
         startTransition(async () => {
@@ -33,11 +33,13 @@ export function UserRoleSelect({ id, role, disabled }: { id: string; role: UserR
         })
       }
     >
-      {(Object.entries(ROLE_LABELS) as [UserRole, string][]).map(([value, label]) => (
-        <option key={value} value={value}>
-          {label}
-        </option>
-      ))}
+      {(Object.entries(ROLE_LABELS) as [UserRole, string][])
+        .filter(([value]) => value !== 'candidate' || role === 'candidate')
+        .map(([value, label]) => (
+          <option key={value} value={value}>
+            {label}
+          </option>
+        ))}
     </select>
   )
 }

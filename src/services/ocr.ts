@@ -15,10 +15,10 @@ import { generateObject } from 'ai'
 import { z } from 'zod'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
+import { SNIFFED_MIME, sniffFile, sniffFileType } from '@/lib/file-sniff'
 import { isAllowedDriveHost, resolveDriveShareLink } from '@/lib/drive-link'
 import type { ServiceResult } from '@/lib/service-result'
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 const MAX_SIZE_BYTES = 10 * 1024 * 1024
 
 const ocrSchema = z.object({
@@ -133,15 +133,16 @@ export async function extractRegistrationForm(file: File): Promise<ServiceResult
   try {
     await requireSession([...STAFF_ROLES])
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return { success: false, error: 'Upload een JPG, PNG, WEBP of PDF van het formulier.' }
-    }
     if (file.size > MAX_SIZE_BYTES) {
       return { success: false, error: 'Bestand is te groot (max 10MB).' }
     }
+    const sniffed = await sniffFile(file)
+    if (!sniffed) {
+      return { success: false, error: 'Upload een JPG, PNG, WEBP of PDF van het formulier.' }
+    }
 
     const bytes = new Uint8Array(await file.arrayBuffer())
-    return { success: true, data: await extractFromBytes(bytes, file.type) }
+    return { success: true, data: await extractFromBytes(bytes, SNIFFED_MIME[sniffed]) }
   } catch (error) {
     console.error('[ocr.extractRegistrationForm]', error)
     return { success: false, error: 'Kon het formulier niet automatisch uitlezen. Vul handmatig in.' }
@@ -203,17 +204,18 @@ export async function extractRegistrationFormFromUrl(url: string): Promise<Servi
       return { success: false, error: 'Kon het bestand niet ophalen. Controleer of de link publiek deelbaar is.' }
     }
 
-    const mediaType = response.headers.get('content-type')?.split(';')[0] ?? ''
-    if (!ALLOWED_TYPES.includes(mediaType)) {
-      return { success: false, error: 'De link wijst niet naar een JPG, PNG, WEBP of PDF.' }
-    }
-
     const arrayBuffer = await response.arrayBuffer()
     if (arrayBuffer.byteLength > MAX_SIZE_BYTES) {
       return { success: false, error: 'Bestand is te groot (max 10MB).' }
     }
+    // Het content-type van een externe server zegt niets zeker: bepaal het type uit de inhoud.
+    const bytes = new Uint8Array(arrayBuffer)
+    const sniffed = sniffFileType(bytes)
+    if (!sniffed) {
+      return { success: false, error: 'De link wijst niet naar een JPG, PNG, WEBP of PDF.' }
+    }
 
-    return { success: true, data: await extractFromBytes(new Uint8Array(arrayBuffer), mediaType) }
+    return { success: true, data: await extractFromBytes(bytes, SNIFFED_MIME[sniffed]) }
   } catch (error) {
     console.error('[ocr.extractRegistrationFormFromUrl]', error)
     return { success: false, error: 'Kon het formulier niet automatisch uitlezen vanaf de link. Vul handmatig in.' }

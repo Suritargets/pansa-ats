@@ -266,8 +266,50 @@ export const profiles = pgTable('profiles', {
   clientId: uuid('client_id').references(() => clients.id), // voor role='client'
   candidateId: uuid('candidate_id').references(() => candidates.id), // voor role='candidate'
   active: boolean('active').notNull().default(true),
+  // Sessies intrekken: staat ook in het JWT (`sv`); wijkt hij af, dan is de sessie ongeldig.
+  sessionVersion: integer('session_version').notNull().default(1),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+  passwordChangedAt: timestamp('password_changed_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+// --- Uitnodigings- en reset-tokens: alleen de sha256-hash wordt bewaard, het token zelf nooit ---
+
+export const authTokenPurposeEnum = pgEnum('auth_token_purpose', ['invite', 'password_reset'])
+
+export const authTokens = pgTable(
+  'auth_tokens',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    purpose: authTokenPurposeEnum('purpose').notNull(),
+    tokenHash: text('token_hash').notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdBy: uuid('created_by').references(() => profiles.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('idx_auth_tokens_profile').on(table.profileId, table.purpose)]
+)
+
+// --- Inlogpogingen: voor lockout per e-mail en per IP (ook voor onbekende e-mailadressen) ---
+
+export const loginAttempts = pgTable(
+  'login_attempts',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    email: text('email').notNull(), // genormaliseerd (lowercase/trim); ook als het account niet bestaat
+    ip: text('ip'),
+    success: boolean('success').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('idx_login_attempts_email').on(table.email, table.createdAt),
+    index('idx_login_attempts_ip').on(table.ip, table.createdAt),
+  ]
+)
 
 // --- Candidates ---
 
@@ -897,3 +939,7 @@ export type WebhookEvent = (typeof webhookEventEnum.enumValues)[number]
 
 export type ChatKbEntry = typeof chatKbEntries.$inferSelect
 export type NewChatKbEntry = typeof chatKbEntries.$inferInsert
+
+export type AuthToken = typeof authTokens.$inferSelect
+export type AuthTokenPurpose = (typeof authTokenPurposeEnum.enumValues)[number]
+export type LoginAttempt = typeof loginAttempts.$inferSelect

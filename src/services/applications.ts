@@ -17,9 +17,9 @@ import { logAuditEvent } from '@/lib/audit'
 import { dispatchWebhookEvent } from '@/lib/webhooks'
 import { STAFF_ROLES } from '@/lib/roles'
 import { sanitizeCoi } from '@/constants/coi'
+import { SNIFFED_MIME, sanitizeFileName, sniffFile } from '@/lib/file-sniff'
 import type { ServiceResult } from '@/lib/service-result'
 
-const ALLOWED_DOCUMENT_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
 const MAX_DOCUMENT_SIZE_BYTES = 8 * 1024 * 1024
 // Wat een sollicitant zelf mag uploaden (met uploadToken). Dossierstukken die HR verifieert of
 // aanmaakt (medische keuring, SOR, getekend contract, ...) kunnen alleen met een staff-sessie.
@@ -230,14 +230,17 @@ export async function uploadApplicationDocument(
       return { success: false, error: 'Dit documenttype kan alleen door HR worden toegevoegd.' }
     }
 
-    if (!ALLOWED_DOCUMENT_TYPES.includes(file.type)) {
-      return { success: false, error: 'Bestandstype niet toegestaan. Gebruik JPG, PNG, WEBP of PDF.' }
-    }
     if (file.size > MAX_DOCUMENT_SIZE_BYTES) {
       return { success: false, error: 'Bestand is te groot (max 8MB).' }
     }
+    // `file.type` komt van de browser en is te vervalsen: we vertrouwen alleen de echte inhoud.
+    const sniffed = await sniffFile(file)
+    if (!sniffed) {
+      return { success: false, error: 'Bestandstype niet toegestaan. Gebruik JPG, PNG, WEBP of PDF.' }
+    }
+    const safeFile = new File([file], sanitizeFileName(file.name), { type: SNIFFED_MIME[sniffed] })
 
-    const { pathname, fileName } = await uploadDocument(applicationId, file)
+    const { pathname, fileName } = await uploadDocument(applicationId, safeFile)
 
     await db.insert(applicationDocuments).values({
       applicationId,

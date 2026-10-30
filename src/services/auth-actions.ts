@@ -10,15 +10,7 @@
 import { redirect } from 'next/navigation'
 import { destroySession, login } from '@/lib/auth'
 import { logAuditEvent } from '@/lib/audit'
-import type { UserRole } from '../../drizzle/schema'
-
-const ROLE_HOME: Record<UserRole, string> = {
-  super_admin: '/admin/dashboard',
-  hr_staff: '/admin/dashboard',
-  recruiter: '/admin/dashboard',
-  client: '/client/dashboard',
-  candidate: '/candidate/dashboard',
-}
+import { ROLE_HOME } from '@/lib/roles'
 
 export async function loginAction(
   _prevState: { error: string | null },
@@ -31,13 +23,18 @@ export async function loginAction(
     return { error: 'Vul e-mail en wachtwoord in.' }
   }
 
-  const session = await login(email, password)
-  if (!session) {
-    return { error: 'Inloggen mislukt. Controleer je e-mail en wachtwoord.' }
+  const result = await login(email, password)
+  if (!result.ok) {
+    return {
+      error:
+        result.reason === 'locked'
+          ? 'Te veel mislukte pogingen. Probeer het over 15 minuten opnieuw.'
+          : 'Inloggen mislukt. Controleer je e-mail en wachtwoord.',
+    }
   }
 
-  await logAuditEvent(session, 'login', { entityType: 'profile', entityId: session.userId })
-  redirect(ROLE_HOME[session.role])
+  await logAuditEvent(result.session, 'login', { entityType: 'profile', entityId: result.session.userId })
+  redirect(ROLE_HOME[result.session.role])
 }
 
 /**

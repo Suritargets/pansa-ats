@@ -10,6 +10,7 @@ import { AdminShell } from '@/components/admin/AdminShell'
 import { UserForm } from '@/components/admin/UserForm'
 import { UserRoleSelect } from '@/components/admin/UserRoleSelect'
 import { UserActiveToggle } from '@/components/admin/UserActiveToggle'
+import { UserAccessLink } from '@/components/admin/UserAccessLink'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { formatDate } from '@/lib/utils'
@@ -53,7 +54,10 @@ export default async function UsersSettingsPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground">{formatDate(p.createdAt)}</TableCell>
                     <TableCell>
-                      <UserActiveToggle id={p.id} active={p.active} disabled={isSelf} />
+                      <div className="flex flex-wrap items-start gap-1">
+                        <UserActiveToggle id={p.id} active={p.active} disabled={isSelf} />
+                        {p.active && !isSelf && <UserAccessLink id={p.id} />}
+                      </div>
                     </TableCell>
                   </TableRow>
                 )

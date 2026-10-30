@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import Link from 'next/link'
 import { loginAction } from '@/services/auth-actions'
 
 export function LoginForm() {
@@ -28,6 +29,11 @@ export function LoginForm() {
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? 'Bezig...' : 'Inloggen'}
       </Button>
+      <p className="text-center text-sm">
+        <Link href="/wachtwoord-vergeten" className="text-muted-foreground underline-offset-4 hover:underline">
+          Wachtwoord vergeten?
+        </Link>
+      </p>
     </form>
   )
 }
