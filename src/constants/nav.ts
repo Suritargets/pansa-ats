@@ -22,7 +22,6 @@ import {
   MessageCircleQuestion,
   MessagesSquare,
   ScanLine,
-  Settings,
   Share2,
   Tags,
   Truck,
@@ -110,12 +109,27 @@ export const ADMIN_NAV: NavGroup[] = [
   },
 ]
 
-export const CLIENT_NAV: NavItem[] = [
-  { label: 'Dashboard', href: '/client/dashboard', icon: LayoutDashboard },
-  { label: 'Vacature-aanvragen', href: '/client/requests', icon: Inbox },
+/** Iconsleutels voor de mobiele onderbalk (client component kan geen icoon-functies als props ontvangen). */
+export type TabIcon = 'home' | 'jobs' | 'applications' | 'profile' | 'dashboard' | 'candidates' | 'more'
+
+export interface PortalTab {
+  label: string
+  href: string
+  icon: TabIcon
+  /** Vereist een ingelogde sessie; anders verwijst de tab naar de loginpagina van het portaal. */
+  protected: boolean
+}
+
+export const CANDIDATE_TABS: PortalTab[] = [
+  { label: 'Home', href: '/candidate/home', icon: 'home', protected: true },
+  { label: 'Vacatures', href: '/vacatures', icon: 'jobs', protected: false },
+  { label: 'Sollicitaties', href: '/candidate/dashboard', icon: 'applications', protected: true },
+  { label: 'Profiel', href: '/candidate/profile', icon: 'profile', protected: true },
 ]
 
-export const CANDIDATE_NAV: NavItem[] = [
-  { label: 'Mijn sollicitatie', href: '/candidate/dashboard', icon: ClipboardList },
-  { label: 'Mijn profiel', href: '/candidate/profile', icon: Settings },
+export const CLIENT_TABS: PortalTab[] = [
+  { label: 'Dashboard', href: '/client/dashboard', icon: 'dashboard', protected: true },
+  { label: 'Vacatures', href: '/client/requests', icon: 'jobs', protected: true },
+  { label: 'Kandidaten', href: '/client/candidates', icon: 'candidates', protected: true },
+  { label: 'Meer', href: '/client/more', icon: 'more', protected: true },
 ]

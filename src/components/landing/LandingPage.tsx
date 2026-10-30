@@ -111,7 +111,7 @@ export function LandingPage({
               }}
             />
           ))}
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,16,12,.55)_0%,rgba(11,16,12,.35)_45%,#0b100c_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,16,12,.3)_0%,rgba(11,16,12,.12)_45%,#0b100c_100%)]" />
         </div>
         <div
           aria-hidden="true"
@@ -161,7 +161,7 @@ export function LandingPage({
           {/* Hero */}
           <section className="max-w-2xl pt-14 pb-10 sm:pt-20">
             <p className="text-sm font-bold tracking-[0.2em] text-white/80 uppercase">Pansa Group</p>
-            <h1 className="mt-3 font-sans text-[2.75rem] leading-[0.95] font-black tracking-tight uppercase italic sm:text-6xl lg:text-7xl">
+            <h1 className="mt-3 font-sans text-[2.75rem] leading-[0.95] font-black tracking-tight uppercase italic [text-shadow:0_2px_16px_rgba(0,0,0,.5)] sm:text-6xl lg:text-7xl">
               {isCandidate ? (
                 <>
                   Jouw
@@ -183,7 +183,7 @@ export function LandingPage({
           </section>
 
           {/* Zes kaarten */}
-          <section aria-label={isCandidate ? 'Voor kandidaten' : 'Voor bedrijven'} className="grid gap-4 pb-8 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+          <section aria-label={isCandidate ? 'Voor kandidaten' : 'Voor bedrijven'} className="grid grid-cols-2 gap-3 pb-8 sm:gap-4 lg:grid-cols-3 2xl:grid-cols-6">
             {TILES[mode].map((tile, i) => (
               <TileCard key={tile.title} tile={tile} index={i + 1} highlighted={i === 0} />
             ))}
@@ -307,7 +307,7 @@ function TileCard({ tile, index, highlighted }: { tile: Tile; index: number; hig
   const Icon = tile.icon
   const className = cn(
     // Geen ring/box-shadow: die wordt door de clip-path afgesneden. Een echte border blijft wél zichtbaar.
-    'group clip-tech relative flex min-h-72 flex-col justify-end overflow-hidden border bg-[#121812] focus-visible:border-white focus-visible:outline-none',
+    'group clip-tech relative flex min-h-52 flex-col justify-end sm:min-h-72 overflow-hidden border bg-[#121812] focus-visible:border-white focus-visible:outline-none',
     highlighted ? 'border-2 border-[var(--mode)]' : 'border-white/10'
   )
   const body = (
@@ -316,7 +316,7 @@ function TileCard({ tile, index, highlighted }: { tile: Tile; index: number; hig
         aria-hidden="true"
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `linear-gradient(180deg, rgba(11,16,12,0) 20%, rgba(11,16,12,.92) 72%), url(/landing/${tile.image}.jpg), linear-gradient(160deg, #2a3324 0%, #15201a 55%, #0f1510 100%)`,
+          backgroundImage: `linear-gradient(180deg, rgba(11,16,12,0) 30%, rgba(11,16,12,.86) 82%), url(/landing/${tile.image}.jpg), linear-gradient(160deg, #2a3324 0%, #15201a 55%, #0f1510 100%)`,
         }}
       />
       <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-3">
@@ -336,7 +336,7 @@ function TileCard({ tile, index, highlighted }: { tile: Tile; index: number; hig
         >
           <Icon className="size-7" />
         </span>
-        <p className="font-heading text-[1.6rem] leading-none font-semibold tracking-wide uppercase">{tile.title}</p>
+        <p className="font-heading text-xl leading-none sm:text-[1.6rem] font-semibold tracking-wide uppercase">{tile.title}</p>
         <p className="mt-1.5 pr-8 text-sm leading-snug text-white/80">{tile.description}</p>
         <ChevronRight className="absolute right-4 bottom-5 size-6 text-white/80" />
       </div>

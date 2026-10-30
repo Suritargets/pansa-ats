@@ -1,9 +1,15 @@
+/**
+ * client/requests/page.tsx
+ * WAT:    Vacatures van de client: eigen aanvragen met status + inklapbaar formulier "Nieuwe aanvraag"
+ *         (functie, aantal, Req#/RFP-ID#, functie-eisen).
+ */
+
 import { redirect } from 'next/navigation'
+import { Plus } from 'lucide-react'
 import { requireSession } from '@/lib/auth'
 import { listInterviewQuestions, listJobCategories, listOwnVacancyRequestsForClient } from '@/services/queries'
-import { ClientShell } from '@/components/client/ClientShell'
+import { PortalShell, WhiteCard } from '@/components/portal/PortalShell'
 import { VacancyRequestForm } from '@/components/client/VacancyRequestForm'
-import { Badge } from '@/components/ui/badge'
 import { formatDate } from '@/lib/utils'
 import type { VacancyRequestStatus } from '@/types/database'
 
@@ -15,11 +21,15 @@ const STATUS_LABELS: Record<VacancyRequestStatus, string> = {
   rejected: 'Afgewezen',
 }
 
-export default async function ClientRequestsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ saved?: string }>
-}) {
+const STATUS_CLASSES: Record<VacancyRequestStatus, string> = {
+  submitted: 'bg-[#f8cc39]/25 text-[#7a5d00]',
+  reviewing: 'bg-[#1976d2]/12 text-[#0d4f8f]',
+  approved: 'bg-[#1c9848]/12 text-[#146d34]',
+  fulfilled: 'bg-[#1c9848] text-white',
+  rejected: 'bg-[#e53935]/12 text-[#9c1f1c]',
+}
+
+export default async function ClientRequestsPage({ searchParams }: { searchParams: Promise<{ saved?: string }> }) {
   const session = await requireSession(['client'], '/client')
   if (!session.clientId) redirect('/client')
 
@@ -32,30 +42,49 @@ export default async function ClientRequestsPage({
   const scopeCategories = [...new Set(workExperienceQuestions.map((q) => q.category ?? q.text))]
 
   return (
-    <ClientShell session={session}>
-      <h1 className="mb-6 text-lg font-semibold text-foreground">Vacature aanvragen</h1>
-
-      <div className="grid gap-8 lg:grid-cols-2">
-        <VacancyRequestForm jobCategories={jobCategories} scopeCategories={scopeCategories} saved={saved === '1'} />
+    <PortalShell variant="client" session={session} wide title="Vacatures" back="/client/dashboard">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div>
+          <details className="group rounded-2xl bg-white/10 open:bg-transparent" open={saved === '1' ? false : undefined}>
+            <summary className="flex cursor-pointer list-none items-center justify-center gap-2 rounded-2xl bg-[var(--color-brand-yellow)] px-5 py-4 text-base font-bold text-[#0b100c] marker:content-none">
+              <Plus className="size-5" />
+              Nieuwe aanvraag
+            </summary>
+            <div className="mt-3 rounded-2xl bg-white p-4 text-[#10150f]">
+              <VacancyRequestForm jobCategories={jobCategories} scopeCategories={scopeCategories} saved={false} />
+            </div>
+          </details>
+          {saved === '1' && (
+            <p className="mt-3 rounded-xl bg-[var(--color-brand-green)]/25 px-4 py-3 text-sm font-semibold text-[var(--color-brand-lime)]">
+              Aanvraag verstuurd — Pansa HR neemt hem in behandeling.
+            </p>
+          )}
+        </div>
 
         <div>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Mijn aanvragen
-          </h2>
-          <ul className="space-y-2">
-            {requests.length === 0 && <p className="text-sm text-muted-foreground">Nog geen aanvragen.</p>}
-            {requests.map((req) => (
-              <li key={req.id} className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2 text-sm">
-                <div>
-                  <p className="font-medium text-foreground">{req.jobCategory?.name ?? 'Onbekende functie'} × {req.quantity}</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(req.createdAt)}</p>
-                </div>
-                <Badge variant="outline">{STATUS_LABELS[req.status]}</Badge>
-              </li>
-            ))}
-          </ul>
+          <h2 className="mb-3 font-sans text-lg font-bold">Mijn aanvragen ({requests.length})</h2>
+          {requests.length === 0 ? (
+            <WhiteCard className="text-sm text-[#5b6558]">Nog geen aanvragen.</WhiteCard>
+          ) : (
+            <ul className="space-y-2.5">
+              {requests.map((req) => (
+                <li key={req.id} className="flex items-center gap-3 rounded-2xl bg-white p-3 text-[#10150f] shadow-sm">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-bold">
+                      {req.jobCategory?.name ?? 'Onbekende functie'} × {req.quantity}
+                    </span>
+                    <span className="block text-xs text-[#5b6558]">
+                      {formatDate(req.createdAt)}
+                      {req.referenceNumber ? ` · ${req.referenceNumber}` : ''}
+                    </span>
+                  </span>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_CLASSES[req.status]}`}>{STATUS_LABELS[req.status]}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
-    </ClientShell>
+    </PortalShell>
   )
 }

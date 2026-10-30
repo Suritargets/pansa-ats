@@ -8,13 +8,20 @@
 import { NextResponse } from 'next/server'
 import { requireSession } from '@/lib/auth'
 import { readDocument } from '@/lib/blob'
-import { getDocumentById } from '@/services/queries'
+import { getDocumentById, getDocumentByIdScoped } from '@/services/queries'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  await requireSession(['super_admin', 'hr_staff', 'recruiter'])
+  // Staff leest elk document; een kandidaat alleen documenten van zijn eigen sollicitaties
+  // (scope komt uit de sessie, nooit uit de URL).
+  const session = await requireSession(['super_admin', 'hr_staff', 'recruiter', 'candidate'])
 
   const { id } = await params
-  const doc = await getDocumentById(id)
+  const doc =
+    session.role === 'candidate'
+      ? session.candidateId
+        ? await getDocumentByIdScoped(id, { candidateId: session.candidateId })
+        : null
+      : await getDocumentById(id)
   if (!doc) return NextResponse.json({ error: 'Document niet gevonden.' }, { status: 404 })
 
   const result = await readDocument(doc.storagePath)

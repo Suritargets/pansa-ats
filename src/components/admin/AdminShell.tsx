@@ -12,6 +12,7 @@ import { logoSrc } from '@/components/landing/PublicShell'
 import { countAttentionItems } from '@/services/queries'
 import { Button } from '@/components/ui/button'
 import { Sidebar } from '@/components/admin/Sidebar'
+import { MobileAdminNav } from '@/components/admin/MobileAdminNav'
 import { CommandPalette } from '@/components/admin/CommandPalette'
 import { getSidebarCollapsed, getSidebarOpenGroups } from '@/lib/sidebar'
 import { logoutAction } from '@/services/auth-actions'
@@ -34,9 +35,12 @@ export async function AdminShell({ session, children }: { session: SessionData; 
 
   return (
     <div className="flex min-h-screen bg-canvas">
-      <Sidebar role={session.role} initialCollapsed={collapsed} initialOpenGroups={openGroups} />
+      <div className="hidden lg:flex">
+        <Sidebar role={session.role} initialCollapsed={collapsed} initialOpenGroups={openGroups} />
+      </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center gap-4 border-b border-border bg-card px-6 py-3">
+        <header className="flex items-center gap-2 border-b border-border bg-card px-3 py-3 sm:gap-4 sm:px-6">
+          <MobileAdminNav role={session.role} openGroups={openGroups} />
           <Link href="/admin/dashboard" className="hidden shrink-0 items-center gap-3 lg:flex">
             <LogoMark src={logo} size={44} />
             <span className="font-heading text-xl leading-none font-semibold tracking-wide text-foreground">
@@ -70,7 +74,7 @@ export async function AdminShell({ session, children }: { session: SessionData; 
               <Globe className="size-4 text-muted-foreground" />
               NL
             </span>
-            <div className="flex items-center gap-3">
+            <Link href="/admin/settings/account" className="flex items-center gap-3 rounded-xl" title="Mijn account" aria-label="Mijn account">
               <span
                 className="flex size-10 items-center justify-center rounded-full bg-[var(--color-brand-deep)] text-sm font-semibold text-white"
                 aria-hidden="true"
@@ -81,7 +85,7 @@ export async function AdminShell({ session, children }: { session: SessionData; 
                 <p className="text-sm font-semibold text-foreground">{session.fullName}</p>
                 <p className="text-xs text-muted-foreground">{ROLE_LABELS[session.role] ?? session.role}</p>
               </div>
-            </div>
+            </Link>
             <form action={logoutAction.bind(null, '/admin')}>
               <Button type="submit" variant="ghost" size="icon" aria-label="Uitloggen" title="Uitloggen">
                 <LogOut className="size-4" />
@@ -89,7 +93,7 @@ export async function AdminShell({ session, children }: { session: SessionData; 
             </form>
           </div>
         </header>
-        <main className="flex-1 px-6 py-8">{children}</main>
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8">{children}</main>
       </div>
     </div>
   )

@@ -22,12 +22,16 @@ export function Sidebar({
   role,
   initialCollapsed,
   initialOpenGroups,
+  embedded = false,
 }: {
   role: UserRole
   initialCollapsed: boolean
   initialOpenGroups: string[]
+  /** In het mobiele menu (Sheet): altijd uitgeklapt, zonder inklapknop en zonder eigen breedte. */
+  embedded?: boolean
 }) {
-  const [collapsed, setCollapsed] = useState(initialCollapsed)
+  const [collapsedState, setCollapsed] = useState(initialCollapsed)
+  const collapsed = embedded ? false : collapsedState
   const [openGroups, setOpenGroups] = useState<string[]>(initialOpenGroups)
   const [, startTransition] = useTransition()
   const pathname = usePathname()
@@ -53,15 +57,17 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        'flex shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-150',
-        collapsed ? 'w-16' : 'w-64'
+        'flex shrink-0 flex-col bg-sidebar text-sidebar-foreground',
+        embedded ? 'h-full w-full' : cn('border-r border-sidebar-border transition-[width] duration-150', collapsed ? 'w-16' : 'w-64')
       )}
     >
       <div className="flex items-center justify-between px-3 py-4">
         {!collapsed && <span className="font-heading text-lg font-semibold">Pansa ATS</span>}
-        <Button variant="ghost" size="icon" onClick={toggle} aria-label={collapsed ? 'Uitklappen' : 'Inklappen'}>
-          {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
-        </Button>
+        {!embedded && (
+          <Button variant="ghost" size="icon" onClick={toggle} aria-label={collapsed ? 'Uitklappen' : 'Inklappen'}>
+            {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}
+          </Button>
+        )}
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
