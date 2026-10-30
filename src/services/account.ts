@@ -28,6 +28,14 @@ const LINK_INVALID = 'Deze link is verlopen of al gebruikt. Vraag een nieuwe lin
 // Zonder deze rem zou iemand een mailbox kunnen volspammen met reset-verzoeken (zodra er mail wordt verstuurd).
 const RESET_COOLDOWN_MS = 2 * 60 * 1000
 
+/** Na een wachtwoordwijziging mag geen eerder uitgegeven link (invite of reset) nog werken. */
+async function revokeOpenTokens(profileId: string) {
+  await db
+    .update(authTokens)
+    .set({ usedAt: new Date() })
+    .where(and(eq(authTokens.profileId, profileId), isNull(authTokens.usedAt)))
+}
+
 export async function requestPasswordReset(_prev: FormState, formData: FormData): Promise<FormState> {
   const email = String(formData.get('email') ?? '').trim().toLowerCase()
   if (!email) return { error: 'Vul je e-mailadres in.' }
@@ -82,6 +90,7 @@ export async function completeTokenFlow(_prev: FormState, formData: FormData): P
       sessionVersion: sql`${profiles.sessionVersion} + 1`,
     })
     .where(eq(profiles.id, row.profileId))
+  await revokeOpenTokens(row.profileId)
   await logAuditEvent(
     { userId: row.profileId, email: row.email },
     row.purpose === 'invite' ? 'invite_accepted' : 'password_reset_completed',
@@ -116,6 +125,7 @@ export async function changeOwnPassword(_prev: FormState, formData: FormData): P
       sessionVersion: sql`${profiles.sessionVersion} + 1`,
     })
     .where(eq(profiles.id, profile.id))
+  await revokeOpenTokens(profile.id)
   await logAuditEvent(session, 'password_changed', { entityType: 'profile', entityId: profile.id })
 
   // Alle oude sessies zijn nu ongeldig; houd de huidige gebruiker ingelogd met een nieuwe.
