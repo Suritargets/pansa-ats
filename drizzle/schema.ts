@@ -311,6 +311,39 @@ export const loginAttempts = pgTable(
   ]
 )
 
+// --- Mail-outbox ---
+
+export const mailStatusEnum = pgEnum('mail_status', ['pending', 'sending', 'sent', 'failed', 'skipped'])
+
+/**
+ * Elke uitgaande systeemmail komt eerst hier terecht en wordt daarna verzonden (direct via after(), met een
+ * cron als vangnet). `sensitive` = bevat een eenmalige link: de inhoud wordt na verzenden/overslaan leeggemaakt.
+ */
+export const mailOutbox = pgTable(
+  'mail_outbox',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    template: text('template').notNull(), // sleutel uit src/constants/mail-templates.ts
+    toEmail: text('to_email').notNull(),
+    subject: text('subject').notNull(),
+    bodyText: text('body_text').notNull().default(''),
+    bodyHtml: text('body_html').notNull().default(''),
+    sensitive: boolean('sensitive').notNull().default(false),
+    status: mailStatusEnum('status').notNull().default('pending'),
+    attempts: integer('attempts').notNull().default(0),
+    lastError: text('last_error'),
+    nextAttemptAt: timestamp('next_attempt_at', { withTimezone: true }).notNull().defaultNow(),
+    lockedAt: timestamp('locked_at', { withTimezone: true }), // gezet zolang status = sending (herstel na time-out)
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+    createdBy: uuid('created_by').references(() => profiles.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('idx_mail_outbox_status').on(table.status, table.nextAttemptAt),
+    index('idx_mail_outbox_created').on(table.createdAt),
+  ]
+)
+
 // --- Candidates ---
 
 export const candidates = pgTable(
@@ -943,3 +976,6 @@ export type NewChatKbEntry = typeof chatKbEntries.$inferInsert
 export type AuthToken = typeof authTokens.$inferSelect
 export type AuthTokenPurpose = (typeof authTokenPurposeEnum.enumValues)[number]
 export type LoginAttempt = typeof loginAttempts.$inferSelect
+
+export type MailOutboxRow = typeof mailOutbox.$inferSelect
+export type MailStatus = (typeof mailStatusEnum.enumValues)[number]

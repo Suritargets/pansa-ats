@@ -68,6 +68,18 @@ export async function getAppUrl(): Promise<string> {
   return `${proto}://${host}`
 }
 
+/**
+ * Basis-URL voor links die per mail naar anderen gaan: alleen een ingestelde waarde (APP_URL of de
+ * Vercel-productiedomeinnaam), nooit de Host-header — anders kan iemand met een vervalste Host een
+ * resetlink laten wijzen naar een eigen domein. Null als geen van beide bekend is.
+ */
+export function getTrustedAppUrl(): string | null {
+  const explicit = process.env.APP_URL?.trim()
+  if (explicit) return explicit.replace(/\/+$/, '')
+  const vercelHost = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim()
+  return vercelHost ? `https://${vercelHost}` : null
+}
+
 export async function buildSetPasswordLink(token: string): Promise<string> {
   return `${await getAppUrl()}/wachtwoord-instellen/${token}`
 }

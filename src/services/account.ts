@@ -10,10 +10,12 @@
  */
 
 import { redirect } from 'next/navigation'
+import { after } from 'next/server'
 import { and, eq, gt, gte, isNull, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { hashPassword, refreshSession, requireSession, verifyPassword } from '@/lib/auth'
 import { findUsableToken, issueAuthToken } from '@/lib/auth-links'
+import { sendAuthLinkMail } from '@/lib/auth-mail'
 import { hashToken } from '@/lib/auth-tokens'
 import { logAuditEvent } from '@/lib/audit'
 import { validatePassword } from '@/lib/password-policy'
@@ -54,8 +56,16 @@ export async function requestPasswordReset(_prev: FormState, formData: FormData)
       )
       .limit(1)
     if (!recent) {
-      await issueAuthToken(profile.id, 'password_reset', null)
-      await logAuditEvent({ userId: null, email }, 'password_reset_requested', { entityType: 'profile', entityId: profile.id })
+      // Na de response: zo verschilt de reactietijd niet tussen bekende en onbekende adressen.
+      after(async () => {
+        try {
+          const token = await issueAuthToken(profile.id, 'password_reset', null)
+          await sendAuthLinkMail(profile, token, 'password_reset', null)
+          await logAuditEvent({ userId: null, email }, 'password_reset_requested', { entityType: 'profile', entityId: profile.id })
+        } catch (error) {
+          console.error('[account.requestPasswordReset]', error)
+        }
+      })
     }
   }
   // Altijd dezelfde melding, ook voor onbekende adressen.

@@ -10,7 +10,7 @@
  */
 
 import 'server-only'
-import { and, count, desc, eq, ilike, inArray, isNull, or } from 'drizzle-orm'
+import { and, count, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm'
 import { db, DB_MODE } from '@/lib/db'
 import {
   apiKeys,
@@ -30,6 +30,7 @@ import {
   interviewQuestions,
   interviews,
   jobCategories,
+  mailOutbox,
   onboardingProgress,
   onboardingStepTemplates,
   payrollExportBatches,
@@ -52,6 +53,7 @@ import {
   type InterviewType,
   type JobBranche,
   type JobLevel,
+  type MailStatus,
   type Profile,
   type ReferenceCheck,
   type Supplier,
@@ -203,6 +205,51 @@ export async function listApiKeys() {
 
 export async function listWebhookEndpoints() {
   return guarded<WebhookEndpoint[]>([], () => db.select().from(webhookEndpoints).orderBy(desc(webhookEndpoints.createdAt)))
+}
+
+export interface MailOutboxListRow {
+  id: string
+  template: string
+  toEmail: string
+  subject: string
+  status: MailStatus
+  attempts: number
+  lastError: string | null
+  sensitive: boolean
+  hasBody: boolean
+  createdAt: Date
+  sentAt: Date | null
+}
+
+/** Recente mails voor het beheeroverzicht — bewust zonder de inhoud (die kan een eenmalige link bevatten). */
+export async function listMailOutbox(limit = 50) {
+  return guarded<MailOutboxListRow[]>([], async () => {
+    const rows = await db
+      .select({
+        id: mailOutbox.id,
+        template: mailOutbox.template,
+        toEmail: mailOutbox.toEmail,
+        subject: mailOutbox.subject,
+        status: mailOutbox.status,
+        attempts: mailOutbox.attempts,
+        lastError: mailOutbox.lastError,
+        sensitive: mailOutbox.sensitive,
+        hasBody: sql<boolean>`${mailOutbox.bodyText} <> ''`,
+        createdAt: mailOutbox.createdAt,
+        sentAt: mailOutbox.sentAt,
+      })
+      .from(mailOutbox)
+      .orderBy(desc(mailOutbox.createdAt))
+      .limit(limit)
+    return rows
+  })
+}
+
+export async function getMailStatusCounts() {
+  return guarded<Partial<Record<MailStatus, number>>>({}, async () => {
+    const rows = await db.select({ status: mailOutbox.status, n: count() }).from(mailOutbox).groupBy(mailOutbox.status)
+    return Object.fromEntries(rows.map((r) => [r.status, r.n]))
+  })
 }
 
 export async function listChatKbEntries() {

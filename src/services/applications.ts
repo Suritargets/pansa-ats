@@ -15,6 +15,7 @@ import { createUploadToken, getSession, requireSession, verifyUploadToken } from
 import { uploadDocument } from '@/lib/blob'
 import { logAuditEvent } from '@/lib/audit'
 import { dispatchWebhookEvent } from '@/lib/webhooks'
+import { enqueueMail } from '@/lib/mail'
 import { STAFF_ROLES } from '@/lib/roles'
 import { sanitizeCoi } from '@/constants/coi'
 import { SNIFFED_MIME, sanitizeFileName, sniffFile } from '@/lib/file-sniff'
@@ -189,6 +190,15 @@ export async function submitApplication(
       positionApplied: input.positionApplied,
       source: input.source,
     })
+
+    // Bevestiging alleen bij een publieke inzending; staff die een papieren formulier digitaliseert stuurt er geen.
+    if (!requireStaff && input.candidate.email) {
+      await enqueueMail(input.candidate.email, {
+        template: 'application_received',
+        name: input.candidate.firstName,
+        position: input.positionApplied,
+      })
+    }
 
     return {
       success: true,

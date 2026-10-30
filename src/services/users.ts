@@ -5,7 +5,8 @@
  * WAT:    Server Actions voor gebruikersbeheer (staff/client-accounts) — alleen super_admin.
  * WAAROM: Een beheerder kiest nooit meer een wachtwoord voor iemand anders: een nieuw account krijgt
  *         een onbruikbaar wachtwoord plus een eenmalige uitnodigingslink waarmee de gebruiker zelf
- *         een wachtwoord instelt. De link wordt één keer getoond (tot de e-mailkoppeling er is).
+ *         een wachtwoord instelt. De link gaat per mail naar de gebruiker en wordt ook één keer aan de
+ *         beheerder getoond, als de mail niet verstuurd kan worden.
  *         Deactiveren en rolwijzigingen verhogen `session_version`, zodat lopende sessies direct stoppen.
  */
 
@@ -14,6 +15,7 @@ import { eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { hashPassword, requireSession } from '@/lib/auth'
 import { buildSetPasswordLink, issueAuthToken } from '@/lib/auth-links'
+import { sendAuthLinkMail } from '@/lib/auth-mail'
 import { generateToken } from '@/lib/auth-tokens'
 import { logAuditEvent } from '@/lib/audit'
 import { SUPER_ADMIN_ROLES } from '@/lib/roles'
@@ -57,6 +59,7 @@ export async function createUser(_prev: CreateUserState, formData: FormData): Pr
     .returning({ id: profiles.id })
 
   const token = await issueAuthToken(created.id, 'invite', session.userId)
+  await sendAuthLinkMail({ email, fullName }, token, 'invite', session.userId)
   await logAuditEvent(session, 'user_created', { entityType: 'profile', entityId: created.id, metadata: { email, role } })
   await logAuditEvent(session, 'invite_issued', { entityType: 'profile', entityId: created.id })
   revalidatePath('/admin/settings/users')
@@ -66,11 +69,15 @@ export async function createUser(_prev: CreateUserState, formData: FormData): Pr
 /** Nieuwe eenmalige link (72 uur geldig) voor een bestaand account, bv. bij een vergeten wachtwoord. */
 export async function createAccessLink(id: string): Promise<{ error: string | null; link?: string }> {
   const session = await requireSession([...SUPER_ADMIN_ROLES])
-  const [profile] = await db.select({ id: profiles.id, active: profiles.active }).from(profiles).where(eq(profiles.id, id))
+  const [profile] = await db
+    .select({ id: profiles.id, active: profiles.active, email: profiles.email, fullName: profiles.fullName })
+    .from(profiles)
+    .where(eq(profiles.id, id))
   if (!profile) return { error: 'Account niet gevonden.' }
   if (!profile.active) return { error: 'Dit account is gedeactiveerd.' }
 
   const token = await issueAuthToken(id, 'invite', session.userId)
+  await sendAuthLinkMail(profile, token, 'invite', session.userId)
   await logAuditEvent(session, 'invite_issued', { entityType: 'profile', entityId: id })
   return { error: null, link: await buildSetPasswordLink(token) }
 }
