@@ -6,7 +6,7 @@
  *         (en bij afronding het cijfer) bijhouden. Mirrort het cyclus-patroon van OnboardingChecklist.
  */
 
-import { useState, useTransition } from 'react'
+import { useRef, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, Circle, CircleDashed, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -49,7 +49,7 @@ export function TrainingAssignment({
   const [isPending, startTransition] = useTransition()
   const assignedIds = new Set(assigned.map((a) => a.trainingId))
   const available = catalog.filter((t) => !assignedIds.has(t.id))
-  const [toAssign, setToAssign] = useState(available[0]?.id ?? '')
+  const selectRef = useRef<HTMLSelectElement>(null)
 
   function cycleStatus(row: AssignedTraining) {
     const next = STATUS_ORDER[(STATUS_ORDER.indexOf(row.status) + 1) % STATUS_ORDER.length]
@@ -67,9 +67,10 @@ export function TrainingAssignment({
   }
 
   function assignTraining() {
-    if (!toAssign) return
+    const trainingId = selectRef.current?.value
+    if (!trainingId) return
     startTransition(async () => {
-      await setCandidateTrainingProgress(applicationId, toAssign, 'not_started')
+      await setCandidateTrainingProgress(applicationId, trainingId, 'not_started')
       router.refresh()
     })
   }
@@ -121,7 +122,7 @@ export function TrainingAssignment({
         <div className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-4">
           <div className="min-w-48 flex-1 space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">Training toewijzen</label>
-            <select value={toAssign} onChange={(e) => setToAssign(e.target.value)} className={selectClasses}>
+            <select ref={selectRef} defaultValue={available[0]?.id ?? ''} className={selectClasses}>
               {available.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.title}
