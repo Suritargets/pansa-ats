@@ -50,9 +50,11 @@ export async function setCandidateTrainingProgress(
       set: {
         status,
         score: score?.toString() ?? null,
-        // coalesce zodat een al bestaande startedAt niet wordt overschreven bij een herhaalde update
+        // coalesce zodat een al bestaande startedAt/completedAt niet wordt overschreven bij een
+        // herhaalde update (bv. alleen de score aanpassen nadat de training al voltooid is)
         startedAt: status === 'not_started' ? null : sql`coalesce(${candidateTrainingProgress.startedAt}, now())`,
-        completedAt: status === 'completed' ? new Date() : null,
+        completedAt:
+          status === 'completed' ? sql`coalesce(${candidateTrainingProgress.completedAt}, now())` : null,
       },
     })
 
