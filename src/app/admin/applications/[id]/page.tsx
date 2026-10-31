@@ -10,6 +10,7 @@ import {
   getApplicationById,
   listApplicationDocuments,
   listApplicationShares,
+  listCandidateTrainingProgress,
   listContracts,
   listEmergencyContacts,
   listInterviewQuestions,
@@ -19,6 +20,7 @@ import {
   listReferenceChecks,
   listShareableClientsForApplication,
   listStatusHistory,
+  listTrainings,
 } from '@/services/queries'
 import { buildDossierIndex, buildPreEmploymentChecklist } from '@/lib/dossier'
 import { AdminShell } from '@/components/admin/AdminShell'
@@ -43,6 +45,8 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
     shareableClients,
     shares,
     statusHistory,
+    trainingCatalog,
+    trainingProgress,
   ] = await Promise.all([
     listApplicationDocuments(id),
     listInterviews(id),
@@ -55,6 +59,8 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
     listShareableClientsForApplication(id),
     listApplicationShares(id),
     listStatusHistory(id),
+    listTrainings(),
+    listCandidateTrainingProgress(id),
   ])
 
   const dossierItems = buildDossierIndex({
@@ -86,6 +92,8 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
         statusHistory={statusHistory}
         dossierItems={dossierItems}
         preEmployment={preEmployment}
+        trainingCatalog={trainingCatalog}
+        trainingProgress={trainingProgress}
       />
     </AdminShell>
   )

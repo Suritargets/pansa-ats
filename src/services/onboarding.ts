@@ -53,4 +53,5 @@ export async function clearOnboardingStep(applicationId: string, stepTemplateId:
       and(eq(onboardingProgress.applicationId, applicationId), eq(onboardingProgress.stepTemplateId, stepTemplateId))
     )
   revalidatePath(`/admin/applications/${applicationId}`)
+  revalidatePath('/admin/onboarding')
 }
