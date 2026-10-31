@@ -3,7 +3,7 @@
  * WAT:    Detailweergave van één sollicitatie in het Pansa-ontwerp "Sollicitatie Details": kopkaart
  *         (avatar, naam, functie, contact, status, "Volgende stap"), tabs met als eerste Overzicht
  *         (sollicitatie-informatie, processtappen-tijdlijn, persoonsgegevens, vaardigheden) en daarna
- *         Profiel, Interviews, Antecedenten, Onboarding, Contract, Dossier en Documenten.
+ *         Profiel, Interviews, Antecedenten, Onboarding, Trainingen, Contract, Dossier en Documenten.
  * WAAROM: Server component — alle data komt al binnen als props; alleen de interactieve stukken
  *         (status-knoppen, formulieren, delen) zijn client components.
  */
@@ -19,6 +19,7 @@ import { InterviewsList } from '@/components/admin/InterviewsList'
 import { ContractForm } from '@/components/admin/ContractForm'
 import { ContractsList } from '@/components/admin/ContractsList'
 import { OnboardingChecklist } from '@/components/admin/OnboardingChecklist'
+import { TrainingAssignment } from '@/components/admin/TrainingAssignment'
 import { ShareWithClient } from '@/components/admin/ShareWithClient'
 import { ReferenceCheckForm, ReferenceChecksList } from '@/components/admin/ReferenceCheckForm'
 import { DossierTab } from '@/components/admin/DossierTab'
@@ -42,9 +43,11 @@ import {
   type Interview,
   type InterviewQuestion,
   type InterviewType,
+  type CandidateTrainingProgressRow,
   type OnboardingProgressRow,
   type OnboardingStepTemplate,
   type ReferenceCheck,
+  type Training,
 } from '@/types/database'
 
 const MARITAL_STATUS_LABELS: Record<string, string> = {
@@ -94,6 +97,8 @@ export function ProfileSketch({
   statusHistory,
   dossierItems,
   preEmployment,
+  trainingCatalog,
+  trainingProgress,
 }: {
   application: ApplicationWithCandidate
   documents: ApplicationDocument[]
@@ -109,6 +114,8 @@ export function ProfileSketch({
   statusHistory: ApplicationStatusHistoryRow[]
   dossierItems: DossierItem[]
   preEmployment: { items: PreEmploymentItem[]; ready: boolean }
+  trainingCatalog: Training[]
+  trainingProgress: (CandidateTrainingProgressRow & { training: Training })[]
 }) {
   const { candidate } = application
   const fullName = `${candidate.firstName} ${candidate.lastName}`
@@ -167,6 +174,7 @@ export function ProfileSketch({
             <TabsTrigger value="interviews">Interviews ({interviews.length})</TabsTrigger>
             <TabsTrigger value="antecedenten">Antecedenten ({referenceChecks.length})</TabsTrigger>
             <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
+            <TabsTrigger value="trainingen">Trainingen ({trainingProgress.length})</TabsTrigger>
             <TabsTrigger value="contract">Contract</TabsTrigger>
             <TabsTrigger value="dossier">Dossier</TabsTrigger>
             <TabsTrigger value="documenten">Documenten ({documents.length})</TabsTrigger>
@@ -462,6 +470,10 @@ export function ProfileSketch({
             ) : (
               <OnboardingChecklist applicationId={application.id} steps={onboardingSteps} progress={onboardingProgress} />
             )}
+          </TabsContent>
+
+          <TabsContent value="trainingen" className="pt-4">
+            <TrainingAssignment applicationId={application.id} catalog={trainingCatalog} progress={trainingProgress} />
           </TabsContent>
 
           <TabsContent value="contract" className="space-y-4 pt-4">
