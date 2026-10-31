@@ -19,7 +19,7 @@ import { InterviewsList } from '@/components/admin/InterviewsList'
 import { ContractForm } from '@/components/admin/ContractForm'
 import { ContractsList } from '@/components/admin/ContractsList'
 import { OnboardingChecklist } from '@/components/admin/OnboardingChecklist'
-import { TrainingAssignment } from '@/components/admin/TrainingAssignment'
+import { TrainingProgress } from '@/components/admin/TrainingProgress'
 import { ShareWithClient } from '@/components/admin/ShareWithClient'
 import { ReferenceCheckForm, ReferenceChecksList } from '@/components/admin/ReferenceCheckForm'
 import { DossierTab } from '@/components/admin/DossierTab'
@@ -473,7 +473,7 @@ export function ProfileSketch({
           </TabsContent>
 
           <TabsContent value="trainingen" className="pt-4">
-            <TrainingAssignment applicationId={application.id} catalog={trainingCatalog} progress={trainingProgress} />
+            <TrainingProgress applicationId={application.id} trainings={trainingCatalog} progress={trainingProgress} />
           </TabsContent>
 
           <TabsContent value="contract" className="space-y-4 pt-4">
