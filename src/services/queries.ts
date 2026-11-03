@@ -63,7 +63,8 @@ import {
   type WebhookEndpoint,
 } from '../../drizzle/schema'
 import { APPLICATION_STATUS_LABELS, type ApplicationWithCandidate } from '@/types/database'
-import { needsAttention, probationAttention } from '@/lib/contract-monitor'
+import { daysUntil, describeDays, needsAttention, probationAttention } from '@/lib/contract-monitor'
+import { agreementState, currentPeriodEnd, noticeDeadline } from '@/lib/service-agreements'
 import { BRANCHE_SHORT_LABELS } from '@/constants/branche'
 
 async function guarded<T>(empty: T, fn: () => Promise<T>): Promise<T> {
@@ -1269,5 +1270,105 @@ export async function getServiceAgreement(id: string) {
       .innerJoin(clients, eq(clients.id, serviceAgreements.clientId))
       .where(eq(serviceAgreements.id, id))
     return row ? { ...row.agreement, clientName: row.clientName } : null
+  })
+}
+
+// --- Notificaties (bel in de topbalk): alles wat nu aandacht vraagt, berekend uit de bestaande gegevens ---
+
+export interface AdminNotification {
+  key: string
+  level: 'error' | 'warn' | 'info'
+  group: 'Contracten' | 'Overeenkomsten' | 'Sollicitaties' | 'Klantaanvragen' | 'Systeem'
+  title: string
+  detail: string
+  href: string
+  /** ISO-datum of tijdstip waarop het speelt (voor sortering binnen een niveau). */
+  at: string
+}
+
+export async function listAdminNotifications(role: string, today: Date = new Date()): Promise<AdminNotification[]> {
+  return guarded<AdminNotification[]>([], async () => {
+    const out: AdminNotification[] = []
+    const staleBefore = new Date(today.getTime() - 14 * 86400000)
+    const recentSince = new Date(today.getTime() - 3 * 86400000)
+
+    const [contracts, agreements, newApps, requests, failedMails] = await Promise.all([
+      listContractsForMonitoring(),
+      db
+        .select({ agreement: serviceAgreements, clientName: clients.name })
+        .from(serviceAgreements)
+        .innerJoin(clients, eq(clients.id, serviceAgreements.clientId))
+        .where(eq(serviceAgreements.status, 'active')),
+      db
+        .select({ id: applications.id, createdAt: applications.createdAt, position: applications.positionApplied, firstName: candidates.firstName, lastName: candidates.lastName })
+        .from(applications)
+        .innerJoin(candidates, eq(candidates.id, applications.candidateId))
+        .where(eq(applications.status, 'new'))
+        .orderBy(desc(applications.createdAt))
+        .limit(50),
+      db
+        .select({ id: clientVacancyRequests.id, createdAt: clientVacancyRequests.createdAt, quantity: clientVacancyRequests.quantity, clientName: clients.name })
+        .from(clientVacancyRequests)
+        .innerJoin(clients, eq(clients.id, clientVacancyRequests.clientId))
+        .where(eq(clientVacancyRequests.status, 'submitted'))
+        .orderBy(desc(clientVacancyRequests.createdAt))
+        .limit(20),
+      role === 'super_admin'
+        ? db.select({ n: count() }).from(mailOutbox).where(eq(mailOutbox.status, 'failed'))
+        : Promise.resolve([{ n: 0 }]),
+    ])
+
+    for (const { contract, application } of contracts) {
+      if (contract.status !== 'active') continue
+      const name = `${application.candidate.firstName} ${application.candidate.lastName}`
+      const href = `/admin/applications/${application.id}/contract`
+      const endDays = daysUntil(contract.endDate, today)
+      if (contract.endDate && needsAttention(contract.endDate, today)) {
+        out.push({ key: `end-${contract.id}`, level: endDays! < 0 ? 'error' : 'warn', group: 'Contracten', title: `Contract ${name}`, detail: `Einddatum ${describeDays(endDays)}`, href, at: contract.endDate })
+      }
+      const badgeDays = daysUntil(contract.badgeExpiryDate, today)
+      if (contract.badgeExpiryDate && needsAttention(contract.badgeExpiryDate, today)) {
+        out.push({ key: `badge-${contract.id}`, level: badgeDays! < 0 ? 'error' : 'warn', group: 'Contracten', title: `RGM-badge ${name}`, detail: `Vervalt ${describeDays(badgeDays)}`, href, at: contract.badgeExpiryDate })
+      }
+      for (const p of probationAttention(contract, today)) {
+        out.push({ key: `prob-${contract.id}-${p.week}`, level: p.daysLeft < 0 ? 'error' : 'warn', group: 'Contracten', title: `Proeftijdevaluatie week ${p.week}: ${name}`, detail: describeDays(p.daysLeft), href, at: p.dueDate.toISOString() })
+      }
+    }
+
+    for (const { agreement: a, clientName } of agreements) {
+      const state = agreementState(a, today)
+      if (state !== 'notice' && state !== 'expired') continue
+      const end = currentPeriodEnd(a, today)
+      out.push({
+        key: `agr-${a.id}`,
+        level: state === 'expired' ? 'error' : 'warn',
+        group: 'Overeenkomsten',
+        title: `${a.title} (${clientName})`,
+        detail: state === 'expired' ? `Verlopen ${describeDays(daysUntil(end, today))}` : `Opzeggen of verlengen vóór ${noticeDeadline(a, today)}`,
+        href: `/admin/agreements/${a.id}`,
+        at: end ?? '',
+      })
+    }
+
+    for (const app of newApps) {
+      const name = `${app.firstName} ${app.lastName}`
+      if (app.createdAt < staleBefore) {
+        out.push({ key: `stale-${app.id}`, level: 'warn', group: 'Sollicitaties', title: `${name} wacht op beoordeling`, detail: `${app.position} · al meer dan 14 dagen nieuw`, href: `/admin/applications/${app.id}`, at: app.createdAt.toISOString() })
+      } else if (app.createdAt >= recentSince) {
+        out.push({ key: `new-${app.id}`, level: 'info', group: 'Sollicitaties', title: `Nieuwe sollicitatie: ${name}`, detail: app.position, href: `/admin/applications/${app.id}`, at: app.createdAt.toISOString() })
+      }
+    }
+
+    for (const r of requests) {
+      out.push({ key: `req-${r.id}`, level: 'info', group: 'Klantaanvragen', title: `Personeelsaanvraag van ${r.clientName}`, detail: `${r.quantity} ${r.quantity === 1 ? 'persoon' : 'personen'} · nog niet in behandeling`, href: '/admin/client-requests', at: r.createdAt.toISOString() })
+    }
+
+    const failed = failedMails[0]?.n ?? 0
+    if (failed > 0) {
+      out.push({ key: 'mail-failed', level: 'warn', group: 'Systeem', title: `${failed} mail${failed === 1 ? '' : 's'} mislukt`, detail: 'Bekijk de mail-outbox', href: '/admin/settings/mail', at: today.toISOString() })
+    }
+
+    const rank = { error: 0, warn: 1, info: 2 }
+    return out.sort((a, b) => rank[a.level] - rank[b.level] || a.at.localeCompare(b.at))
   })
 }

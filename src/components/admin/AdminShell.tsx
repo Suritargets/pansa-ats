@@ -6,10 +6,11 @@
  */
 
 import Link from 'next/link'
-import { Bell, Globe, LogOut } from 'lucide-react'
+import { Globe, LogOut } from 'lucide-react'
 import { LogoMark } from '@/components/landing/LogoMark'
 import { logoSrc } from '@/components/landing/PublicShell'
-import { countAttentionItems } from '@/services/queries'
+import { listAdminNotifications } from '@/services/queries'
+import { NotificationDrawer } from '@/components/admin/NotificationDrawer'
 import { Button } from '@/components/ui/button'
 import { Sidebar } from '@/components/admin/Sidebar'
 import { MobileAdminNav } from '@/components/admin/MobileAdminNav'
@@ -30,7 +31,11 @@ function initials(fullName: string): string {
 }
 
 export async function AdminShell({ session, children }: { session: SessionData; children: React.ReactNode }) {
-  const [collapsed, openGroups, attention] = await Promise.all([getSidebarCollapsed(), getSidebarOpenGroups(), countAttentionItems()])
+  const [collapsed, openGroups, notifications] = await Promise.all([
+    getSidebarCollapsed(),
+    getSidebarOpenGroups(),
+    listAdminNotifications(session.role),
+  ])
   const logo = logoSrc()
 
   return (
@@ -57,19 +62,7 @@ export async function AdminShell({ session, children }: { session: SessionData; 
             <CommandPalette role={session.role} />
           </div>
           <div className="flex shrink-0 items-center gap-3">
-            <Link
-              href="/admin/contracts"
-              className="relative flex size-10 items-center justify-center rounded-xl border border-border bg-background text-foreground hover:bg-muted"
-              aria-label={attention > 0 ? `${attention} aandachtspunten` : 'Geen aandachtspunten'}
-              title="Contracten & badges"
-            >
-              <Bell className="size-4" />
-              {attention > 0 && (
-                <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[11px] font-bold text-white">
-                  {attention}
-                </span>
-              )}
-            </Link>
+            <NotificationDrawer items={notifications} />
             <span className="hidden h-10 items-center gap-1.5 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground md:flex">
               <Globe className="size-4 text-muted-foreground" />
               NL
