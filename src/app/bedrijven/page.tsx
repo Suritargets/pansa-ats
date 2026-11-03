@@ -27,8 +27,8 @@ export default function BedrijvenPage() {
             <Panel className="flex h-full flex-col gap-3">
               <Building2 className="size-7 text-[var(--mode)]" />
               <h2 className="font-heading text-2xl leading-none font-semibold tracking-wide uppercase">{c.name}</h2>
-              <p className="text-sm font-medium text-white/85">{c.tagline}</p>
-              <p className="text-sm text-white/70">{DETAILS[c.slug]}</p>
+              <p className="text-sm font-medium text-[#10150f]/85">{c.tagline}</p>
+              <p className="text-sm text-[#10150f]/70">{DETAILS[c.slug]}</p>
             </Panel>
           </li>
         ))}
@@ -38,12 +38,12 @@ export default function BedrijvenPage() {
         <Panel>
           <PanelTitle>Contact</PanelTitle>
           <dl className="mt-3 space-y-1.5 text-sm">
-            <div className="flex gap-3"><dt className="w-28 text-white/60">Adres</dt><dd>Martin Luther Kingweg km 23, Para, Suriname</dd></div>
-            <div className="flex gap-3"><dt className="w-28 text-white/60">Telefoon</dt><dd>+597 323451 · mobiel +597 7698051</dd></div>
-            <div className="flex gap-3"><dt className="w-28 text-white/60">Sollicitaties</dt><dd>recruitment@hpsnv.com</dd></div>
-            <div className="flex gap-3"><dt className="w-28 text-white/60">HR</dt><dd>humanresource@hpsnv.com</dd></div>
-            <div className="flex gap-3"><dt className="w-28 text-white/60">Website</dt><dd>www.hpsnv.com · @pansaholding</dd></div>
-            <div className="flex gap-3"><dt className="w-28 text-white/60">K.K.F.</dt><dd>dossier 30028</dd></div>
+            <div className="flex gap-3"><dt className="w-28 text-[#10150f]/60">Adres</dt><dd>Martin Luther Kingweg km 23, Para, Suriname</dd></div>
+            <div className="flex gap-3"><dt className="w-28 text-[#10150f]/60">Telefoon</dt><dd>+597 323451 · mobiel +597 7698051</dd></div>
+            <div className="flex gap-3"><dt className="w-28 text-[#10150f]/60">Sollicitaties</dt><dd>recruitment@hpsnv.com</dd></div>
+            <div className="flex gap-3"><dt className="w-28 text-[#10150f]/60">HR</dt><dd>humanresource@hpsnv.com</dd></div>
+            <div className="flex gap-3"><dt className="w-28 text-[#10150f]/60">Website</dt><dd>www.hpsnv.com · @pansaholding</dd></div>
+            <div className="flex gap-3"><dt className="w-28 text-[#10150f]/60">K.K.F.</dt><dd>dossier 30028</dd></div>
           </dl>
         </Panel>
         <Panel className="flex flex-col justify-center gap-4">

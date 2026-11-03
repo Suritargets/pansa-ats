@@ -52,8 +52,8 @@ export function PublicShell({
 
   return (
     <div
-      className="min-h-screen bg-[#0b100c] text-white"
-      style={{ ['--mode' as string]: isCandidate ? 'var(--color-brand-lime)' : 'var(--color-brand-yellow)' }}
+      className="min-h-screen bg-[#f4f6f2] text-[#10150f]"
+      style={{ ['--mode' as string]: isCandidate ? 'var(--color-brand-green)' : 'var(--color-brand-dark-green)' }}
     >
       <header className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 pt-5 sm:px-8">
         <Link href={`/?mode=${mode}`} className="flex items-center gap-3">
@@ -61,20 +61,20 @@ export function PublicShell({
           {!logo && (
             <span className="font-heading text-xl leading-none font-semibold tracking-wide">
               PANSA GROUP
-              <span className="block text-sm font-normal tracking-wider text-white/80">OF COMPANIES N.V.</span>
+              <span className="block text-sm font-normal tracking-wider text-[#10150f]/80">OF COMPANIES N.V.</span>
             </span>
           )}
         </Link>
         <nav className="flex flex-wrap gap-1 text-sm font-medium md:mx-auto">
           {NAV[mode].map((item) => (
-            <Link key={item.href} href={item.href} className="rounded-lg px-3 py-2 text-white/80 hover:bg-white/10 hover:text-white">
+            <Link key={item.href} href={item.href} className="rounded-lg px-3 py-2 text-[#10150f]/80 hover:bg-black/5 hover:text-[#10150f]">
               {item.label}
             </Link>
           ))}
         </nav>
         <Link
           href={isCandidate ? '/candidate' : '/client'}
-          className="ml-auto flex items-center gap-2 rounded-lg border border-white/15 bg-black/40 px-4 py-2 text-sm font-semibold hover:bg-white/10"
+          className="ml-auto flex items-center gap-2 rounded-lg border border-black/15 bg-white px-4 py-2 text-sm font-semibold hover:bg-black/5"
         >
           <LogIn className="size-4" />
           Inloggen
@@ -82,19 +82,19 @@ export function PublicShell({
       </header>
 
       <main className="mx-auto max-w-6xl px-4 pt-10 pb-16 sm:px-8">
-        <Link href={`/?mode=${mode}`} className="mb-6 inline-flex items-center gap-1 text-sm text-white/60 hover:text-white">
+        <Link href={`/?mode=${mode}`} className="mb-6 inline-flex items-center gap-1 text-sm text-[#10150f]/60 hover:text-[#10150f]">
           <ChevronLeft className="size-4" />
           Terug naar de voorpagina
         </Link>
-        <p className="text-sm font-bold tracking-[0.2em] text-white/80 uppercase">{eyebrow}</p>
+        <p className="text-sm font-bold tracking-[0.2em] text-[#10150f]/80 uppercase">{eyebrow}</p>
         <h1 className="mt-2 font-sans text-4xl leading-none font-black tracking-tight uppercase italic sm:text-5xl">
           <span className="text-[var(--mode)]">{title}</span>
         </h1>
-        {intro && <p className="mt-4 max-w-2xl text-lg text-white/85">{intro}</p>}
+        {intro && <p className="mt-4 max-w-2xl text-lg text-[#10150f]/85">{intro}</p>}
         <div className="mt-10">{children}</div>
       </main>
 
-      <footer className="mx-auto max-w-6xl px-4 pb-10 text-sm text-white/50 sm:px-8">
+      <footer className="mx-auto max-w-6xl px-4 pb-10 text-sm text-[#10150f]/60 sm:px-8">
         © Pansa Group of Companies N.V. · Martin Luther Kingweg km 23, Para, Suriname · recruitment@hpsnv.com
       </footer>
     </div>
@@ -104,7 +104,7 @@ export function PublicShell({
 /** Donker paneel met afgeschuinde hoeken — de bouwsteen van alle publieke pagina's. */
 export function Panel({ className, children, id }: { className?: string; children: React.ReactNode; id?: string }) {
   return (
-    <section id={id} className={cn('clip-tech-sm scroll-mt-24 border border-white/10 bg-[#121812] p-5', className)}>
+    <section id={id} className={cn('clip-tech-sm scroll-mt-24 border border-black/10 bg-white shadow-sm p-5', className)}>
       {children}
     </section>
   )
@@ -119,8 +119,8 @@ export function Tag({ children, tone = 'outline' }: { children: React.ReactNode;
     <span
       className={cn(
         'rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase',
-        tone === 'outline' && 'border border-white/20 text-white/80',
-        tone === 'mode' && 'bg-[var(--mode)] text-[#0b100c]',
+        tone === 'outline' && 'border border-black/15 text-[#10150f]/80',
+        tone === 'mode' && 'bg-[var(--mode)] text-white',
         tone === 'green' && 'bg-[var(--color-brand-green)] text-white'
       )}
     >
@@ -134,7 +134,7 @@ export function CtaLink({ href, children }: { href: string; children: React.Reac
   return (
     <Link
       href={href}
-      className="clip-tech-sm inline-flex items-center gap-2 self-start bg-[var(--color-brand-yellow)] px-5 py-3 font-heading text-xl font-semibold tracking-wide text-[#0b100c] uppercase hover:bg-[#ffd94d] focus-visible:ring-4 focus-visible:ring-white/60 focus-visible:outline-none"
+      className="clip-tech-sm inline-flex items-center gap-2 self-start bg-[var(--color-brand-yellow)] px-5 py-3 font-heading text-xl font-semibold tracking-wide text-[#0b100c] uppercase hover:bg-[#ffd94d] focus-visible:ring-4 focus-visible:ring-black/20 focus-visible:outline-none"
     >
       {children}
     </Link>
@@ -142,5 +142,5 @@ export function CtaLink({ href, children }: { href: string; children: React.Reac
 }
 
 export function EmptyState({ children }: { children: React.ReactNode }) {
-  return <p className="rounded-lg border border-dashed border-white/15 px-4 py-8 text-center text-white/70">{children}</p>
+  return <p className="rounded-lg border border-dashed border-black/15 px-4 py-8 text-center text-[#10150f]/70">{children}</p>
 }

@@ -62,7 +62,7 @@ export default async function CandidateDashboardPage({ searchParams }: { searchP
         </WhiteCard>
       ) : (
         <ul className="mt-4 space-y-3">
-          {shown.length === 0 && <li className="text-sm text-white/65">Geen sollicitaties in deze groep.</li>}
+          {shown.length === 0 && <li className="text-sm text-[#10150f]/65">Geen sollicitaties in deze groep.</li>}
           {shown.map((app) => (
             <li key={app.id}>
               <ApplicationRow app={app} />

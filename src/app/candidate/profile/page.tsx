@@ -39,8 +39,8 @@ export default async function CandidateProfilePage({ searchParams }: { searchPar
   const fullName = `${candidate.firstName} ${candidate.lastName}`
   const row = (Icon: typeof Mail, value: string | null, empty: string) => (
     <li className="flex items-center gap-3 text-sm">
-      <Icon className="size-4 shrink-0 text-[var(--color-brand-lime)]" />
-      <span className={value ? 'text-white/90' : 'text-white/50'}>{value || empty}</span>
+      <Icon className="size-4 shrink-0 text-[var(--color-brand-green)]" />
+      <span className={value ? 'text-[#10150f]/90' : 'text-[#10150f]/60'}>{value || empty}</span>
     </li>
   )
 
@@ -49,7 +49,7 @@ export default async function CandidateProfilePage({ searchParams }: { searchPar
       <div className="flex flex-col items-center text-center">
         <Avatar name={fullName} size="lg" className="size-24 text-3xl" />
         <h2 className="mt-3 font-sans text-2xl font-black">{fullName}</h2>
-        <p className="text-white/70">{applications[0]?.positionApplied ?? 'Kandidaat'}</p>
+        <p className="text-[#10150f]/70">{applications[0]?.positionApplied ?? 'Kandidaat'}</p>
       </div>
 
       <ul className="mx-auto mt-5 max-w-sm space-y-2.5">
@@ -58,8 +58,8 @@ export default async function CandidateProfilePage({ searchParams }: { searchPar
         {row(MapPin, [candidate.residence, candidate.district].filter(Boolean).join(', ') || candidate.address, 'Geen adres')}
       </ul>
 
-      <details className="group mt-5 rounded-xl bg-white/10 open:bg-white/5">
-        <summary className="flex cursor-pointer list-none items-center justify-center gap-2 rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold marker:content-none hover:bg-white/15">
+      <details className="group mt-5 rounded-xl bg-black/5 open:bg-black/[0.03]">
+        <summary className="flex cursor-pointer list-none items-center justify-center gap-2 rounded-xl bg-black/5 px-4 py-3 text-sm font-semibold marker:content-none hover:bg-black/10">
           <Pencil className="size-4" />
           Profiel bewerken
         </summary>
@@ -118,13 +118,13 @@ export default async function CandidateProfilePage({ searchParams }: { searchPar
       )}
 
       <form action={logoutAction.bind(null, '/candidate')} className="mt-8">
-        <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold text-white/80 hover:bg-white/10">
+        <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-xl border border-black/15 px-4 py-3 text-sm font-semibold text-[#10150f]/80 hover:bg-black/5">
           <LogOut className="size-4" />
           Uitloggen
         </button>
       </form>
 
-      <p className="mt-4 text-center text-xs text-white/40">
+      <p className="mt-4 text-center text-xs text-[#10150f]/60">
         <Link href="/" className="hover:underline">
           Naar de voorpagina
         </Link>

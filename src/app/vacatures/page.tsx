@@ -45,7 +45,7 @@ export default async function VacaturesPage({
       title="Vacatures"
       back={candidateSession ? '/candidate/home' : '/'}
       action={
-        <Link href="#zoek" aria-label="Zoeken" className="flex size-10 items-center justify-center rounded-full hover:bg-white/10">
+        <Link href="#zoek" aria-label="Zoeken" className="flex size-10 items-center justify-center rounded-full hover:bg-black/5">
           <Search className="size-5" />
         </Link>
       }
@@ -72,12 +72,12 @@ export default async function VacaturesPage({
       />
 
       <div className="mt-4 mb-3 flex items-center justify-between">
-        <p className="text-sm text-white/75">
+        <p className="text-sm text-[#10150f]/75">
           {vacancies.length} {vacancies.length === 1 ? 'vacature' : 'vacatures'} gevonden
         </p>
         <Link
           href={href({ sort: sort === 'az' ? undefined : 'az' })}
-          className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-sm font-medium hover:bg-white/15"
+          className="flex items-center gap-1.5 rounded-lg bg-black/5 px-3 py-1.5 text-sm font-medium hover:bg-black/10"
         >
           <ArrowDownUp className="size-3.5" />
           {sort === 'az' ? 'Nieuwste eerst' : 'A–Z'}
@@ -85,9 +85,9 @@ export default async function VacaturesPage({
       </div>
 
       {vacancies.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/20 p-6 text-center">
-          <p className="text-white/85">Geen vacatures gevonden{branche || query ? ' met deze filters' : ''}.</p>
-          <p className="mt-1 text-sm text-white/60">Solliciteer open — we nemen contact op zodra er een passende plek is.</p>
+        <div className="rounded-2xl border border-dashed border-black/15 p-6 text-center">
+          <p className="text-[#10150f]/85">Geen vacatures gevonden{branche || query ? ' met deze filters' : ''}.</p>
+          <p className="mt-1 text-sm text-[#10150f]/60">Solliciteer open — we nemen contact op zodra er een passende plek is.</p>
           <Link
             href="/apply"
             className="mt-4 inline-flex items-center gap-1 rounded-xl bg-[var(--color-brand-lime)] px-4 py-2.5 text-sm font-bold text-[#0b100c]"

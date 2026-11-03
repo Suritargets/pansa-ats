@@ -41,7 +41,7 @@ export default function DienstenPage() {
       <div className="space-y-6">
         <Panel id="onboarding">
           <PanelTitle>Plaatsing & onboarding</PanelTitle>
-          <p className="mt-2 text-sm text-white/80">
+          <p className="mt-2 text-sm text-[#10150f]/80">
             Ons doel: minimaal 90% van de nieuwe krachten voldoet aan uw eisen en minimaal 90% presteert naar
             uw tevredenheid. Daarvoor doorloopt elke kandidaat drie fasen.
           </p>
@@ -52,7 +52,7 @@ export default function DienstenPage() {
                   <span className="mr-2 text-[var(--mode)]">{String(i + 1).padStart(2, '0')}</span>
                   {phase.title}
                 </p>
-                <ul className="mt-2 space-y-1.5 text-sm text-white/80">
+                <ul className="mt-2 space-y-1.5 text-sm text-[#10150f]/80">
                   {phase.steps.map((s) => (
                     <li key={s}>{s}</li>
                   ))}
@@ -64,7 +64,7 @@ export default function DienstenPage() {
 
         <Panel id="rapportages">
           <PanelTitle>Rapportages & klantportaal</PanelTitle>
-          <div className="mt-3 grid gap-4 text-sm text-white/80 md:grid-cols-2">
+          <div className="mt-3 grid gap-4 text-sm text-[#10150f]/80 md:grid-cols-2">
             <ul className="list-disc space-y-1.5 pl-5">
               <li>Gedeelde kandidaatprofielen met CV in het Pansa-sjabloon, inclusief Community-of-Interest-gegevens</li>
               <li>Feedback per kandidaat en status van elke aanvraag</li>
@@ -86,7 +86,7 @@ export default function DienstenPage() {
 
         <Panel id="hr-support">
           <PanelTitle>Contract & HR support</PanelTitle>
-          <div className="mt-3 grid gap-4 text-sm text-white/80 md:grid-cols-2">
+          <div className="mt-3 grid gap-4 text-sm text-[#10150f]/80 md:grid-cols-2">
             <ul className="list-disc space-y-1.5 pl-5">
               <li>Arbeidsovereenkomsten in stadia: proeftijd 2 maanden, termijn 4 maanden, verlenging 6 en 12 maanden</li>
               <li>Salarisadministratie, benefits, SOR-ongevallenverzekering en medische verzekering</li>
@@ -98,7 +98,7 @@ export default function DienstenPage() {
               <li>Niet-presterende of veel verzuimende medewerkers tijdig vervangen</li>
             </ul>
           </div>
-          <p className="mt-5 text-sm text-white/70">
+          <p className="mt-5 text-sm text-[#10150f]/70">
             HR-afdeling: humanresource@hpsnv.com · +597 323451 · mobiel +597 7698051
           </p>
           <div className="mt-4">

@@ -33,7 +33,7 @@ export default async function NieuwsPage() {
             <ul className="space-y-3">
               {items.map((item) => (
                 <li key={item.id}>
-                  <Link href={item.href} className="clip-tech-sm flex items-center gap-4 border border-white/10 bg-[#121812] p-4 hover:bg-white/5">
+                  <Link href={item.href} className="clip-tech-sm flex items-center gap-4 border border-black/10 bg-white shadow-sm p-4 hover:bg-black/[0.03]">
                     {item.kind === 'vacature' ? (
                       <Briefcase className="size-6 shrink-0 text-[var(--mode)]" />
                     ) : (
@@ -41,12 +41,12 @@ export default async function NieuwsPage() {
                     )}
                     <span className="min-w-0 flex-1">
                       <span className="block font-semibold">{item.title}</span>
-                      <span className="block text-sm text-white/65">
+                      <span className="block text-sm text-[#10150f]/65">
                         {item.text && `${item.text} · `}
                         {formatDate(item.date)}
                       </span>
                     </span>
-                    <ChevronRight className="size-5 shrink-0 text-white/60" />
+                    <ChevronRight className="size-5 shrink-0 text-[#10150f]/60" />
                   </Link>
                 </li>
               ))}
@@ -57,16 +57,16 @@ export default async function NieuwsPage() {
         <div className="space-y-4">
           <PanelTitle>Solliciteren bij Pansa</PanelTitle>
           <Panel>
-            <p className="text-sm text-white/80">
+            <p className="text-sm text-[#10150f]/80">
               Na je sollicitatie ontvang je via WhatsApp bericht over de stukken die we nodig hebben en over
               je gesprek. Neem mee:
             </p>
-            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-white/80">
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-[#10150f]/80">
               {REQUIRED_DOCUMENTS.map((d) => (
                 <li key={d}>{d}</li>
               ))}
             </ul>
-            <p className="mt-4 text-sm text-white/60">
+            <p className="mt-4 text-sm text-[#10150f]/60">
               Hoofdkantoor: Martin Luther Kingweg km 23, Para · +597 323451 · recruitment@hpsnv.com
             </p>
           </Panel>

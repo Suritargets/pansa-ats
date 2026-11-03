@@ -40,20 +40,20 @@ export default async function CandidateHomePage() {
       hero={
         <header
           className="relative px-4 pt-4 pb-5"
-          style={{ backgroundImage: 'linear-gradient(180deg,rgba(11,16,12,.25),#0b100c),url(/landing/hero.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
+          style={{ backgroundImage: 'linear-gradient(180deg,rgba(255,255,255,.72),#f4f6f2),url(/landing/hero.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2 font-heading text-lg font-semibold tracking-wide">
               <LogoMark src={logoSrc()} size={34} />
-              PANSA GROUP <span className="font-normal text-white/70">ATS</span>
+              PANSA GROUP <span className="font-normal text-[#10150f]/70">ATS</span>
             </span>
             <Link href="/candidate/profile" aria-label="Mijn profiel">
               <Avatar name={`${candidate.firstName} ${candidate.lastName}`} size="sm" />
             </Link>
           </div>
-          <p className="mt-6 text-white/80">Hallo,</p>
+          <p className="mt-6 text-[#10150f]/80">Hallo,</p>
           <p className="font-sans text-4xl font-black">{candidate.firstName}</p>
-          <p className="mt-1 text-white/85">Vind jouw volgende baan bij Pansa Group.</p>
+          <p className="mt-1 text-[#10150f]/85">Vind jouw volgende baan bij Pansa Group.</p>
         </header>
       }
     >
@@ -82,7 +82,7 @@ export default async function CandidateHomePage() {
 
       <SectionTitle title="Populaire categorieën" href="/vacatures" />
       {categories.length === 0 ? (
-        <p className="text-sm text-white/65">Er staan op dit moment geen vacatures open.</p>
+        <p className="text-sm text-[#10150f]/65">Er staan op dit moment geen vacatures open.</p>
       ) : (
         <ul className="grid grid-cols-2 gap-3">
           {categories.map((c) => (
@@ -93,7 +93,7 @@ export default async function CandidateHomePage() {
                 style={{ backgroundImage: `linear-gradient(180deg,rgba(11,16,12,.1),rgba(11,16,12,.85)),url(${branchePhoto(c.brancheKey)})` }}
               >
                 <span className="font-bold">{c.branche}</span>
-                <span className="text-xs text-[var(--color-brand-lime)]">
+                <span className="text-xs text-[var(--color-brand-green)]">
                   {c.count} {c.count === 1 ? 'vacature' : 'vacatures'}
                 </span>
               </Link>
@@ -104,7 +104,7 @@ export default async function CandidateHomePage() {
 
       <SectionTitle title="Nieuwste vacatures" href="/vacatures" />
       {vacancies.length === 0 ? (
-        <p className="text-sm text-white/65">Nog geen vacatures. Je kunt je profiel alvast aanvullen.</p>
+        <p className="text-sm text-[#10150f]/65">Nog geen vacatures. Je kunt je profiel alvast aanvullen.</p>
       ) : (
         <ul className="space-y-3">
           {vacancies.slice(0, 3).map((v) => (

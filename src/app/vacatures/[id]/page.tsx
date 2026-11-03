@@ -45,26 +45,26 @@ export default async function VacancyDetailPage({ params }: { params: Promise<{ 
           <span className="mt-1 shrink-0 rounded-md bg-[var(--color-brand-lime)] px-2.5 py-1 text-xs font-bold text-[#0b100c]">Nieuw</span>
         )}
       </div>
-      <p className="mt-1 text-lg font-semibold text-[var(--color-brand-lime)]">{vacancy.place}</p>
-      <p className="mt-0.5 flex items-center gap-1 text-sm text-white/75">
+      <p className="mt-1 text-lg font-semibold text-[var(--color-brand-green)]">{vacancy.place}</p>
+      <p className="mt-0.5 flex items-center gap-1 text-sm text-[#10150f]/75">
         <MapPin className="size-3.5" />
         Suriname
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
-        <span className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5">
+        <span className="flex items-center gap-1.5 rounded-lg bg-black/5 px-3 py-1.5">
           <Tag className="size-3.5" />
           {vacancy.branche}
         </span>
-        <span className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5">
+        <span className="flex items-center gap-1.5 rounded-lg bg-black/5 px-3 py-1.5">
           <Clock className="size-3.5" />
           {daysAgoLabel(vacancy.createdAt)}
         </span>
-        {vacancy.quantity > 1 && <span className="rounded-lg bg-white/10 px-3 py-1.5">{vacancy.quantity} plekken</span>}
+        {vacancy.quantity > 1 && <span className="rounded-lg bg-black/5 px-3 py-1.5">{vacancy.quantity} plekken</span>}
       </div>
 
       <h2 className="mt-7 font-sans text-xl font-bold">Functieomschrijving</h2>
-      <p className="mt-2 leading-relaxed text-white/85">
+      <p className="mt-2 leading-relaxed text-[#10150f]/85">
         Als {vacancy.title.toLowerCase()} werk je in de sector {vacancy.branche.toLowerCase()} bij een van de clients van CCC H. Pansa &amp; Sons N.V.
         Pansa begeleidt je van registratie tot inductie en de eerste werkdagen on site. De exacte taken en het rooster bespreken we tijdens je
         sollicitatiegesprek.
@@ -72,7 +72,7 @@ export default async function VacancyDetailPage({ params }: { params: Promise<{ 
 
       <h2 className="mt-7 font-sans text-xl font-bold">Vereisten</h2>
       {vacancy.requirements.length === 0 ? (
-        <p className="mt-2 text-white/75">De client heeft nog geen specifieke eisen opgegeven. Geldig bewijs van goed gedrag en ID zijn altijd vereist.</p>
+        <p className="mt-2 text-[#10150f]/75">De client heeft nog geen specifieke eisen opgegeven. Geldig bewijs van goed gedrag en ID zijn altijd vereist.</p>
       ) : (
         <ul className="mt-3 space-y-2.5">
           {vacancy.requirements.map((requirement, i) => (
@@ -81,8 +81,8 @@ export default async function VacancyDetailPage({ params }: { params: Promise<{ 
                 <Check className="size-3.5" strokeWidth={3} />
               </span>
               <span>
-                <span className="text-sm text-white/60">{requirement.category}</span>
-                <span className="block text-white/90">{requirement.requirement}</span>
+                <span className="text-sm text-[#10150f]/60">{requirement.category}</span>
+                <span className="block text-[#10150f]/90">{requirement.requirement}</span>
               </span>
             </li>
           ))}
@@ -92,7 +92,7 @@ export default async function VacancyDetailPage({ params }: { params: Promise<{ 
       <div className="fixed inset-x-0 bottom-0 z-40 bg-gradient-to-t from-[#0b100c] via-[#0b100c]/95 to-transparent px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] md:static md:mt-8 md:bg-none md:p-0">
         <Link
           href="/apply"
-          className="mx-auto flex max-w-3xl items-center justify-center gap-2 rounded-2xl bg-[var(--color-brand-lime)] px-6 py-4 text-lg font-bold text-[#0b100c] focus-visible:ring-4 focus-visible:ring-white/60 focus-visible:outline-none"
+          className="mx-auto flex max-w-3xl items-center justify-center gap-2 rounded-2xl bg-[var(--color-brand-lime)] px-6 py-4 text-lg font-bold text-[#0b100c] focus-visible:ring-4 focus-visible:ring-black/20 focus-visible:outline-none"
         >
           <Send className="size-5" />
           Solliciteer nu

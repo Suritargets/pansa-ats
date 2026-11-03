@@ -49,10 +49,10 @@ export default async function ClientApplicationDetailPage({ params }: { params: 
       </WhiteCard>
 
       <Tabs defaultValue="overzicht" className="mt-4">
-        <TabsList className="h-10 w-full bg-white/10">
-          <TabsTrigger value="overzicht" className="text-white/80">Overzicht</TabsTrigger>
-          <TabsTrigger value="cv" className="text-white/80">CV</TabsTrigger>
-          <TabsTrigger value="feedback" className="text-white/80">Feedback</TabsTrigger>
+        <TabsList className="h-10 w-full bg-black/5">
+          <TabsTrigger value="overzicht" className="text-[#10150f]/80">Overzicht</TabsTrigger>
+          <TabsTrigger value="cv" className="text-[#10150f]/80">CV</TabsTrigger>
+          <TabsTrigger value="feedback" className="text-[#10150f]/80">Feedback</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overzicht" className="space-y-4 pt-4">

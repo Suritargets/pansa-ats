@@ -102,7 +102,7 @@ export default async function ClientMorePage() {
       </WhiteCard>
 
       <form action={logoutAction.bind(null, '/client')} className="mt-8">
-        <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-4 py-3 text-sm font-semibold text-white/80 hover:bg-white/10">
+        <button type="submit" className="flex w-full items-center justify-center gap-2 rounded-xl border border-black/15 px-4 py-3 text-sm font-semibold text-[#10150f]/80 hover:bg-black/5">
           <LogOut className="size-4" />
           Uitloggen
         </button>

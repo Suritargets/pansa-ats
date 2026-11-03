@@ -30,7 +30,7 @@ export default async function TalentenpoolPage() {
             <Panel className="p-0">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/10 text-left text-xs tracking-wider text-white/60 uppercase">
+                  <tr className="border-b border-black/10 text-left text-xs tracking-wider text-[#10150f]/60 uppercase">
                     <th className="px-5 py-3 font-medium">Functie</th>
                     <th className="px-5 py-3 font-medium">Branche</th>
                     <th className="px-5 py-3 text-right font-medium">Beschikbaar</th>
@@ -38,7 +38,7 @@ export default async function TalentenpoolPage() {
                 </thead>
                 <tbody>
                   {rows.map((r) => (
-                    <tr key={r.category} className="border-b border-white/5 last:border-0">
+                    <tr key={r.category} className="border-b border-black/5 last:border-0">
                       <td className="px-5 py-3 font-semibold">{r.category}</td>
                       <td className="px-5 py-3">
                         <Tag>{r.branche}</Tag>
@@ -56,7 +56,7 @@ export default async function TalentenpoolPage() {
           <Panel className="flex flex-col gap-3">
             <Lock className="size-6 text-[var(--mode)]" />
             <PanelTitle>Profielen bekijken</PanelTitle>
-            <p className="text-sm text-white/80">
+            <p className="text-sm text-[#10150f]/80">
               Kandidaatprofielen en CV&apos;s delen we alleen via het klantportaal, na een aanvraag. Zo blijven
               persoonsgegevens beschermd en krijgt u alleen kandidaten die bij uw job scope passen.
             </p>

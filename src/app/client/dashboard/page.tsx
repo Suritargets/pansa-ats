@@ -38,11 +38,11 @@ export default async function ClientDashboardPage() {
       hero={
         <header
           className="px-4 pt-4 pb-5"
-          style={{ backgroundImage: 'linear-gradient(180deg,rgba(11,16,12,.25),#0b100c),url(/landing/hero.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
+          style={{ backgroundImage: 'linear-gradient(180deg,rgba(255,255,255,.72),#f4f6f2),url(/landing/hero.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
         >
-          <p className="text-sm text-white/70">{client?.name ?? 'Klantportaal'}</p>
+          <p className="text-sm text-[#10150f]/70">{client?.name ?? 'Klantportaal'}</p>
           <h1 className="font-sans text-3xl font-black">Bedrijvendashboard</h1>
-          <p className="mt-1 text-sm text-white/80">Beheer vacatures, kandidaten en plaatsingen.</p>
+          <p className="mt-1 text-sm text-[#10150f]/80">Beheer vacatures, kandidaten en plaatsingen.</p>
         </header>
       }
     >

@@ -45,7 +45,7 @@ export default async function ClientRequestsPage({ searchParams }: { searchParam
     <PortalShell variant="client" session={session} wide title="Vacatures" back="/client/dashboard">
       <div className="grid gap-6 lg:grid-cols-2">
         <div>
-          <details className="group rounded-2xl bg-white/10 open:bg-transparent" open={saved === '1' ? false : undefined}>
+          <details className="group rounded-2xl bg-black/5 open:bg-transparent" open={saved === '1' ? false : undefined}>
             <summary className="flex cursor-pointer list-none items-center justify-center gap-2 rounded-2xl bg-[var(--color-brand-yellow)] px-5 py-4 text-base font-bold text-[#0b100c] marker:content-none">
               <Plus className="size-5" />
               Nieuwe aanvraag
@@ -55,7 +55,7 @@ export default async function ClientRequestsPage({ searchParams }: { searchParam
             </div>
           </details>
           {saved === '1' && (
-            <p className="mt-3 rounded-xl bg-[var(--color-brand-green)]/25 px-4 py-3 text-sm font-semibold text-[var(--color-brand-lime)]">
+            <p className="mt-3 rounded-xl bg-[var(--color-brand-green)]/25 px-4 py-3 text-sm font-semibold text-[var(--color-brand-green)]">
               Aanvraag verstuurd — Pansa HR neemt hem in behandeling.
             </p>
           )}

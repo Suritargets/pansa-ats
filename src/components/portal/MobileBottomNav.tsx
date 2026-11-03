@@ -38,7 +38,7 @@ export function MobileBottomNav({ items }: { items: BottomNavItem[] }) {
   return (
     <nav
       aria-label="Hoofdmenu"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#0d130e]/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
       <ul className="mx-auto grid max-w-lg grid-cols-4">
         {items.map((item) => {
@@ -51,7 +51,7 @@ export function MobileBottomNav({ items }: { items: BottomNavItem[] }) {
                 aria-current={active ? 'page' : undefined}
                 className={cn(
                   'flex flex-col items-center gap-1 px-2 py-2.5 text-[11px] font-medium transition-colors',
-                  active ? 'text-[var(--color-brand-lime)]' : 'text-white/60 hover:text-white'
+                  active ? 'text-[var(--color-brand-green)]' : 'text-[#10150f]/60 hover:text-[#10150f]'
                 )}
               >
                 <span

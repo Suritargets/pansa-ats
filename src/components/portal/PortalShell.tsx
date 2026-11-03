@@ -61,24 +61,24 @@ export function PortalShell({
 
   return (
     <div
-      className="min-h-dvh bg-[#0b100c] text-white"
-      style={{ ['--mode' as string]: variant === 'candidate' ? 'var(--color-brand-lime)' : 'var(--color-brand-yellow)' }}
+      className="min-h-dvh bg-[#f4f6f2] text-[#10150f]"
+      style={{ ['--mode' as string]: variant === 'candidate' ? 'var(--color-brand-green)' : 'var(--color-brand-dark-green)' }}
     >
       {/* Desktop-topbalk */}
-      <header className="hidden border-b border-white/10 bg-[#0d130e] md:block">
+      <header className="hidden border-b border-black/10 bg-white md:block">
         <div className={cn('mx-auto flex items-center gap-6 px-6 py-3', wide ? 'max-w-5xl' : 'max-w-3xl')}>
           <Link href="/" className="flex items-center gap-3">
             <LogoMark src={logo} size={36} />
             {!logo && (
               <span className="font-heading text-lg leading-none font-semibold tracking-wide">
                 PANSA GROUP
-                <span className="block text-xs font-normal tracking-wider text-white/70">{roleLabel.toUpperCase()}</span>
+                <span className="block text-xs font-normal tracking-wider text-[#10150f]/70">{roleLabel.toUpperCase()}</span>
               </span>
             )}
           </Link>
           <nav className="flex flex-1 gap-1 text-sm font-medium">
             {items.map((item) => (
-              <Link key={item.match} href={item.href} className="rounded-lg px-3 py-2 text-white/75 hover:bg-white/10 hover:text-white">
+              <Link key={item.match} href={item.href} className="rounded-lg px-3 py-2 text-[#10150f]/75 hover:bg-black/5 hover:text-[#10150f]">
                 {item.label}
               </Link>
             ))}
@@ -86,15 +86,15 @@ export function PortalShell({
           {session ? (
             <div className="flex items-center gap-3 text-sm">
               <Avatar name={session.fullName} size="sm" />
-              <span className="text-white/80">{session.fullName}</span>
+              <span className="text-[#10150f]/80">{session.fullName}</span>
               <form action={logoutAction.bind(null, loginPath)}>
-                <button type="submit" className="flex size-9 items-center justify-center rounded-lg text-white/70 hover:bg-white/10 hover:text-white" aria-label="Uitloggen" title="Uitloggen">
+                <button type="submit" className="flex size-9 items-center justify-center rounded-lg text-[#10150f]/70 hover:bg-black/5 hover:text-[#10150f]" aria-label="Uitloggen" title="Uitloggen">
                   <LogOut className="size-4" />
                 </button>
               </form>
             </div>
           ) : (
-            <Link href={loginPath} className="flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-sm font-semibold hover:bg-white/10">
+            <Link href={loginPath} className="flex items-center gap-2 rounded-lg border border-black/15 px-3 py-2 text-sm font-semibold hover:bg-black/5">
               <LogIn className="size-4" />
               Inloggen
             </Link>
@@ -105,9 +105,9 @@ export function PortalShell({
       {/* Mobiele kop */}
       <div className="md:hidden">
         {hero ?? (
-          <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-white/10 bg-[#0b100c]/95 px-3 py-3 backdrop-blur">
+          <header className="sticky top-0 z-30 flex items-center gap-2 border-b border-black/10 bg-white/95 px-3 py-3 backdrop-blur">
             {back ? (
-              <Link href={back} aria-label="Terug" className="flex size-10 items-center justify-center rounded-full hover:bg-white/10">
+              <Link href={back} aria-label="Terug" className="flex size-10 items-center justify-center rounded-full hover:bg-black/5">
                 <ChevronLeft className="size-6" />
               </Link>
             ) : (
@@ -140,7 +140,7 @@ export function SectionTitle({ title, href, linkLabel = 'Bekijk alle' }: { title
     <div className="mt-6 mb-3 flex items-baseline justify-between">
       <h2 className="font-sans text-lg font-bold">{title}</h2>
       {href && (
-        <Link href={href} className="text-sm font-semibold text-[var(--color-brand-lime)] hover:underline">
+        <Link href={href} className="text-sm font-semibold text-[var(--color-brand-green)] hover:underline">
           {linkLabel}
         </Link>
       )}
@@ -159,7 +159,7 @@ export function ChipBar({ chips }: { chips: { label: string; href: string; activ
           aria-current={chip.active ? 'true' : undefined}
           className={cn(
             'shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors',
-            chip.active ? 'bg-[var(--color-brand-lime)] text-[#0b100c]' : 'bg-white/10 text-white/85 hover:bg-white/15'
+            chip.active ? 'bg-[var(--color-brand-lime)] text-[#0b100c]' : 'bg-black/5 text-[#10150f]/85 hover:bg-black/10'
           )}
         >
           {chip.label}

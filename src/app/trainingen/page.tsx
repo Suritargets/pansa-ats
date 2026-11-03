@@ -36,7 +36,7 @@ export default async function TrainingenPage() {
                   <Panel className="flex h-full flex-col gap-2">
                     <GraduationCap className="size-6 text-[var(--mode)]" />
                     <h3 className="font-heading text-xl leading-none font-semibold tracking-wide uppercase">{t.title}</h3>
-                    {t.description && <p className="text-sm text-white/80">{t.description}</p>}
+                    {t.description && <p className="text-sm text-[#10150f]/80">{t.description}</p>}
                     <div className="mt-auto flex flex-wrap gap-1.5 pt-2">
                       {t.standard && <Tag>{t.standard}</Tag>}
                       {t.durationHours && <Tag>{t.durationHours} uur</Tag>}
@@ -51,7 +51,7 @@ export default async function TrainingenPage() {
         <div className="space-y-4">
           <PanelTitle>Inductie voor nieuwe medewerkers</PanelTitle>
           <Panel>
-            <p className="text-sm text-white/70">
+            <p className="text-sm text-[#10150f]/70">
               Interne inductiedagen: maandag, woensdag en vrijdag op het hoofdkantoor in Para.
             </p>
             <ol className="mt-4 space-y-3">
@@ -60,7 +60,7 @@ export default async function TrainingenPage() {
                   <span className="font-heading text-lg leading-none text-[var(--mode)]">{String(i + 1).padStart(2, '0')}</span>
                   <div>
                     <p className="font-semibold">{title}</p>
-                    <p className="text-sm text-white/70">{text}</p>
+                    <p className="text-sm text-[#10150f]/70">{text}</p>
                   </div>
                 </li>
               ))}
