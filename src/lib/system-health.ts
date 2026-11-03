@@ -11,6 +11,7 @@ import { is } from 'drizzle-orm'
 import { getTableConfig, PgTable } from 'drizzle-orm/pg-core'
 import { db } from './db'
 import { isMailConfigured } from './mail'
+import { agreementState } from './service-agreements'
 import * as schema from '../../drizzle/schema'
 
 export type HealthStatus = 'ok' | 'warn' | 'error'
@@ -86,6 +87,15 @@ export async function runHealthChecks(now = new Date()): Promise<HealthCheck[]> 
         .from(schema.employmentContracts)
         .where(and(eq(schema.employmentContracts.status, 'active'), lt(schema.employmentContracts.endDate, today)))
       return n === 0 ? { status: 'ok', detail: 'Geen' } : { status: 'error', detail: `${n} contract(en) staan nog actief na de einddatum`, href: '/admin/contracts' }
+    }),
+    safe('agreements', 'Data', 'Klantovereenkomsten in opzegperiode of verlopen', async () => {
+      const rows = await db.select().from(schema.serviceAgreements).where(eq(schema.serviceAgreements.status, 'active'))
+      const states = rows.map((a) => agreementState(a, now))
+      const expired = states.filter((s) => s === 'expired').length
+      const notice = states.filter((s) => s === 'notice').length
+      if (expired > 0) return { status: 'error', detail: `${expired} verlopen, ${notice} in opzegperiode`, href: '/admin/agreements?state=expired' }
+      if (notice > 0) return { status: 'warn', detail: `${notice} in opzegperiode`, href: '/admin/agreements?state=notice' }
+      return { status: 'ok', detail: 'Geen actie nodig' }
     }),
     safe('stale-new', 'Data', 'Sollicitaties langer dan 14 dagen op "nieuw"', async () => {
       const [{ n }] = await db

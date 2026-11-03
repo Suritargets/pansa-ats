@@ -614,6 +614,45 @@ export const employmentContracts = pgTable(
 // Client portal, onboarding, training, payroll export
 // =====================================================================
 
+// --- Dienstverlening: overeenkomsten met klanten (raamovereenkomst, detachering, SLA...) met looptijd en opzegtermijn ---
+
+export const agreementKindEnum = pgEnum('agreement_kind', [
+  'framework',
+  'secondment',
+  'recruitment',
+  'payroll',
+  'sla',
+  'nda',
+  'other',
+])
+
+export const agreementStatusEnum = pgEnum('agreement_status', ['draft', 'active', 'cancelled'])
+
+export const serviceAgreements = pgTable(
+  'service_agreements',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    clientId: uuid('client_id')
+      .notNull()
+      .references(() => clients.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    kind: agreementKindEnum('kind').notNull().default('framework'),
+    status: agreementStatusEnum('status').notNull().default('draft'),
+    startDate: text('start_date'), // ISO date string
+    endDate: text('end_date'), // leeg = doorlopend; bij automatisch verlengen schuift dit per periode op
+    termMonths: integer('term_months').notNull().default(12), // lengte van één periode
+    autoRenew: boolean('auto_renew').notNull().default(false),
+    noticeDays: integer('notice_days').notNull().default(30), // zoveel dagen voor einde herinneren/opzeggen
+    value: numeric('value'),
+    currency: text('currency').notNull().default('USD'),
+    notes: text('notes'),
+    createdBy: uuid('created_by').references(() => profiles.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('idx_service_agreements_client').on(table.clientId), index('idx_service_agreements_end').on(table.endDate)]
+)
+
 export const clientCandidateShares = pgTable(
   'client_candidate_shares',
   {
@@ -925,6 +964,9 @@ export type Company = typeof companies.$inferSelect
 export type NewCompany = typeof companies.$inferInsert
 
 export type Client = typeof clients.$inferSelect
+export type ServiceAgreement = typeof serviceAgreements.$inferSelect
+export type AgreementKind = (typeof agreementKindEnum.enumValues)[number]
+export type AgreementStatus = (typeof agreementStatusEnum.enumValues)[number]
 export type NewClient = typeof clients.$inferInsert
 
 export type Supplier = typeof suppliers.$inferSelect

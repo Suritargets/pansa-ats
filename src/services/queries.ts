@@ -37,6 +37,7 @@ import {
   payrollExportItems,
   profiles,
   referenceChecks,
+  serviceAgreements,
   suppliers,
   trainings,
   webhookEndpoints,
@@ -56,6 +57,7 @@ import {
   type MailStatus,
   type Profile,
   type ReferenceCheck,
+  type ServiceAgreement,
   type Supplier,
   type VacancyRequestStatus,
   type WebhookEndpoint,
@@ -1240,5 +1242,32 @@ export async function countAttentionItems(): Promise<number> {
       ({ contract }) =>
         needsAttention(contract.endDate) || needsAttention(contract.badgeExpiryDate) || probationAttention(contract).length > 0
     ).length
+  })
+}
+
+// --- Dienstverlening: overeenkomsten met klanten ---
+
+export type AgreementWithClient = ServiceAgreement & { clientName: string }
+
+export async function listServiceAgreements(clientId?: string) {
+  return guarded<AgreementWithClient[]>([], async () => {
+    const rows = await db
+      .select({ agreement: serviceAgreements, clientName: clients.name })
+      .from(serviceAgreements)
+      .innerJoin(clients, eq(clients.id, serviceAgreements.clientId))
+      .where(clientId ? eq(serviceAgreements.clientId, clientId) : undefined)
+      .orderBy(desc(serviceAgreements.createdAt))
+    return rows.map((r) => ({ ...r.agreement, clientName: r.clientName }))
+  })
+}
+
+export async function getServiceAgreement(id: string) {
+  return guarded<AgreementWithClient | null>(null, async () => {
+    const [row] = await db
+      .select({ agreement: serviceAgreements, clientName: clients.name })
+      .from(serviceAgreements)
+      .innerJoin(clients, eq(clients.id, serviceAgreements.clientId))
+      .where(eq(serviceAgreements.id, id))
+    return row ? { ...row.agreement, clientName: row.clientName } : null
   })
 }

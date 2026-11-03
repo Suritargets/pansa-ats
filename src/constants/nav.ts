@@ -6,6 +6,8 @@
 import type { LucideIcon } from 'lucide-react'
 import {
   Banknote,
+  CalendarClock,
+  ScrollText,
   BarChart3,
   BookOpen,
   Briefcase,
@@ -68,6 +70,8 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: 'Kandidaten', href: '/admin/candidates', icon: Users },
       { label: 'Clienten', href: '/admin/clients', icon: Building2 },
       { label: 'Leverancier/Relatie', href: '/admin/suppliers', icon: Truck },
+      { label: 'Overeenkomsten', href: '/admin/agreements', icon: ScrollText },
+      { label: 'Geldigheid', href: '/admin/validity', icon: CalendarClock },
     ],
   },
   {
