@@ -58,7 +58,7 @@ export function Sidebar({
     <aside
       className={cn(
         'flex shrink-0 flex-col bg-sidebar text-sidebar-foreground',
-        embedded ? 'h-full w-full' : cn('border-r border-sidebar-border transition-[width] duration-150', collapsed ? 'w-16' : 'w-64')
+        embedded ? 'h-full w-full' : cn('border-r border-sidebar-border transition-[width] duration-150', collapsed ? 'w-16' : 'w-72')
       )}
     >
       <div className="flex items-center justify-between px-3 py-4">
@@ -91,7 +91,7 @@ export function Sidebar({
                     groupHasActiveItem ? 'text-sidebar-foreground' : 'text-sidebar-foreground/75'
                   )}
                 >
-                  <span className="flex items-center gap-2.5">
+                  <span className="flex min-w-0 items-center gap-2.5 whitespace-nowrap">
                     {group.icon && <group.icon className="size-[18px] shrink-0" />}
                     {group.label}
                     {groupHasActiveItem && !isOpen && (
@@ -119,7 +119,7 @@ export function Sidebar({
                           aria-current={active ? 'page' : undefined}
                         >
                           <item.icon className="size-[18px] shrink-0" />
-                          {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
+                          {!collapsed && <span className="flex-1 truncate whitespace-nowrap">{item.label}</span>}
                           {!collapsed && active && <ChevronRight className="size-4 shrink-0 opacity-80" />}
                         </Link>
                       </li>

@@ -27,7 +27,7 @@ export function MobileAdminNav({ role, openGroups }: { role: UserRole; openGroup
         <Menu className="size-5" />
       </Button>
       <Sheet open={open} onOpenChange={(next) => setOpenedAt(next ? pathname : null)}>
-        <SheetContent side="left" className="w-72 max-w-[85vw] border-r-0 bg-sidebar p-0 text-sidebar-foreground sm:max-w-xs">
+        <SheetContent side="left" className="w-80 max-w-[85vw] border-r-0 bg-sidebar p-0 text-sidebar-foreground sm:max-w-xs">
           <SheetHeader className="sr-only">
             <SheetTitle>Menu</SheetTitle>
             <SheetDescription>Navigatie van Pansa ATS</SheetDescription>
