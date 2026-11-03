@@ -19,6 +19,7 @@ import { InterviewsList } from '@/components/admin/InterviewsList'
 import { ContractForm } from '@/components/admin/ContractForm'
 import { ContractsList } from '@/components/admin/ContractsList'
 import { OnboardingChecklist } from '@/components/admin/OnboardingChecklist'
+import { CandidateTrainings } from '@/components/admin/CandidateTrainings'
 import { ShareWithClient } from '@/components/admin/ShareWithClient'
 import { ReferenceCheckForm, ReferenceChecksList } from '@/components/admin/ReferenceCheckForm'
 import { DossierTab } from '@/components/admin/DossierTab'
@@ -44,7 +45,9 @@ import {
   type InterviewType,
   type OnboardingProgressRow,
   type OnboardingStepTemplate,
+  type CandidateTrainingProgressRow,
   type ReferenceCheck,
+  type Training,
 } from '@/types/database'
 
 const MARITAL_STATUS_LABELS: Record<string, string> = {
@@ -89,6 +92,8 @@ export function ProfileSketch({
   emergencyContacts,
   onboardingSteps,
   onboardingProgress,
+  trainingCatalog,
+  trainingProgress,
   shareableClients,
   shares,
   statusHistory,
@@ -104,6 +109,8 @@ export function ProfileSketch({
   emergencyContacts: EmergencyContact[]
   onboardingSteps: OnboardingStepTemplate[]
   onboardingProgress: OnboardingProgressRow[]
+  trainingCatalog: Training[]
+  trainingProgress: (CandidateTrainingProgressRow & { training: Training })[]
   shareableClients: Client[]
   shares: (ClientCandidateShareRow & { client: Client })[]
   statusHistory: ApplicationStatusHistoryRow[]
@@ -167,6 +174,7 @@ export function ProfileSketch({
             <TabsTrigger value="interviews">Interviews ({interviews.length})</TabsTrigger>
             <TabsTrigger value="antecedenten">Antecedenten ({referenceChecks.length})</TabsTrigger>
             <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
+            <TabsTrigger value="trainingen">Trainingen ({trainingProgress.length})</TabsTrigger>
             <TabsTrigger value="contract">Contract</TabsTrigger>
             <TabsTrigger value="dossier">Dossier</TabsTrigger>
             <TabsTrigger value="documenten">Documenten ({documents.length})</TabsTrigger>
@@ -461,6 +469,14 @@ export function ProfileSketch({
               <p className="text-sm text-muted-foreground">Geen onboarding-stappen ingesteld.</p>
             ) : (
               <OnboardingChecklist applicationId={application.id} steps={onboardingSteps} progress={onboardingProgress} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="trainingen" className="pt-4">
+            {trainingCatalog.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nog geen trainingen in de catalogus. Voeg trainingen toe via Trainingen in het menu.</p>
+            ) : (
+              <CandidateTrainings applicationId={application.id} catalog={trainingCatalog} progress={trainingProgress} />
             )}
           </TabsContent>
 
