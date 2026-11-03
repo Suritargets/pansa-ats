@@ -6,6 +6,7 @@
  */
 
 import { revalidatePath } from 'next/cache'
+import { and, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
@@ -30,7 +31,8 @@ export async function setCandidateTrainingProgress(
   applicationId: string,
   trainingId: string,
   status: TrainingProgressStatus,
-  score?: number
+  // undefined = leave the existing score untouched (e.g. a status-only cycle); null = clear it explicitly.
+  score?: number | null
 ): Promise<void> {
   await requireSession([...STAFF_ROLES])
 
@@ -40,7 +42,7 @@ export async function setCandidateTrainingProgress(
       applicationId,
       trainingId,
       status,
-      score: score?.toString() ?? null,
+      score: score == null ? null : score.toString(),
       startedAt: status === 'in_progress' ? new Date() : null,
       completedAt: status === 'completed' ? new Date() : null,
     })
@@ -48,10 +50,23 @@ export async function setCandidateTrainingProgress(
       target: [candidateTrainingProgress.applicationId, candidateTrainingProgress.trainingId],
       set: {
         status,
-        score: score?.toString() ?? null,
         completedAt: status === 'completed' ? new Date() : null,
+        ...(score !== undefined ? { score: score === null ? null : score.toString() } : {}),
       },
     })
+
+  revalidatePath(`/admin/applications/${applicationId}`)
+  revalidatePath('/admin/trainings')
+}
+
+export async function removeCandidateTraining(applicationId: string, trainingId: string): Promise<void> {
+  await requireSession([...STAFF_ROLES])
+
+  await db
+    .delete(candidateTrainingProgress)
+    .where(
+      and(eq(candidateTrainingProgress.applicationId, applicationId), eq(candidateTrainingProgress.trainingId, trainingId))
+    )
 
   revalidatePath(`/admin/applications/${applicationId}`)
   revalidatePath('/admin/trainings')
