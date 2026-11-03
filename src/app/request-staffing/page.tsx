@@ -5,6 +5,7 @@
  */
 
 import { listInterviewQuestions, listJobCategories } from '@/services/queries'
+import { PublicShell } from '@/components/landing/PublicShell'
 import { PublicVacancyRequestForm } from '@/components/client/PublicVacancyRequestForm'
 
 export default async function RequestStaffingPage({
@@ -20,12 +21,13 @@ export default async function RequestStaffingPage({
   const scopeCategories = [...new Set(workExperienceQuestions.map((q) => q.category ?? q.text))]
 
   return (
-    <main className="mx-auto max-w-2xl px-6 py-12">
-      <h1 className="text-2xl font-bold text-foreground">Personeel aanvragen</h1>
-      <p className="mt-2 text-muted-foreground">
-        Vraag hier gekwalificeerd personeel aan bij Pansa Group of Companies — we nemen na ontvangst contact met je op.
-      </p>
-      <div className="mt-8">
+    <PublicShell
+      mode="bedrijven"
+      eyebrow="Voor bedrijven"
+      title="Personeel aanvragen"
+      intro="Vraag hier gekwalificeerd personeel aan bij Pansa Group of Companies — we nemen na ontvangst contact met je op."
+    >
+      <div className="max-w-3xl rounded-2xl bg-white p-6 text-[#10150f] shadow-xl sm:p-8">
         <PublicVacancyRequestForm
           jobCategories={jobCategories}
           scopeCategories={scopeCategories}
@@ -34,6 +36,6 @@ export default async function RequestStaffingPage({
           redirectTo="/request-staffing"
         />
       </div>
-    </main>
+    </PublicShell>
   )
 }

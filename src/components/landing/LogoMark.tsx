@@ -7,7 +7,7 @@
 export function LogoMark({ src, size }: { src: string | null; size: number }) {
   if (src) {
     // eslint-disable-next-line @next/next/no-img-element -- statisch bestand uit /public, geen optimalisatie nodig
-    return <img src={src} alt="" width={size} height={size} className="shrink-0 object-contain" />
+    return <img src={src} alt="Pansa Group of Companies N.V." style={{ width: size * 1.2, height: size }} className="shrink-0 object-contain" />
   }
   return (
     <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true" className="shrink-0">

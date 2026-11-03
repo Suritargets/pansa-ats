@@ -69,10 +69,12 @@ export function PortalShell({
         <div className={cn('mx-auto flex items-center gap-6 px-6 py-3', wide ? 'max-w-5xl' : 'max-w-3xl')}>
           <Link href="/" className="flex items-center gap-3">
             <LogoMark src={logo} size={36} />
-            <span className="font-heading text-lg leading-none font-semibold tracking-wide">
-              PANSA GROUP
-              <span className="block text-xs font-normal tracking-wider text-white/70">{roleLabel.toUpperCase()}</span>
-            </span>
+            {!logo && (
+              <span className="font-heading text-lg leading-none font-semibold tracking-wide">
+                PANSA GROUP
+                <span className="block text-xs font-normal tracking-wider text-white/70">{roleLabel.toUpperCase()}</span>
+              </span>
+            )}
           </Link>
           <nav className="flex flex-1 gap-1 text-sm font-medium">
             {items.map((item) => (

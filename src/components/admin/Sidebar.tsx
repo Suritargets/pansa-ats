@@ -62,7 +62,8 @@ export function Sidebar({
       )}
     >
       <div className="flex items-center justify-between px-3 py-4">
-        {!collapsed && <span className="font-heading text-lg font-semibold">Pansa ATS</span>}
+        {/* eslint-disable-next-line @next/next/no-img-element -- statisch bestand uit /public */}
+        {!collapsed && <img src="/landing/logo.png" alt="Pansa Group" className="h-10 w-auto" />}
         {!embedded && (
           <Button variant="ghost" size="icon" onClick={toggle} aria-label={collapsed ? 'Uitklappen' : 'Inklappen'}>
             {collapsed ? <ChevronRight className="size-4" /> : <ChevronLeft className="size-4" />}

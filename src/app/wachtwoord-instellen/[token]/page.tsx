@@ -8,6 +8,7 @@
 import Link from 'next/link'
 import { findUsableToken } from '@/lib/auth-links'
 import { SetPasswordForm } from '@/components/shared/AccountForms'
+import { AuthShell } from '@/components/shared/AuthShell'
 
 export const metadata = { title: 'Wachtwoord instellen — Pansa ATS', robots: { index: false } }
 
@@ -17,25 +18,23 @@ export default async function SetPasswordPage({ params }: { params: Promise<{ to
 
   if (!row) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-        <h1 className="mb-1 text-xl font-bold text-foreground">Link niet meer geldig</h1>
-        <p className="mb-6 text-sm text-muted-foreground">
-          Deze link is verlopen of al gebruikt. Vraag een nieuwe aan; dat kan zelf, of via HR.
-        </p>
+      <AuthShell
+        title="Link niet meer geldig"
+        subtitle="Deze link is verlopen of al gebruikt. Vraag een nieuwe aan; dat kan zelf, of via HR."
+      >
         <Link href="/wachtwoord-vergeten" className="text-sm font-medium text-primary underline-offset-4 hover:underline">
           Nieuwe link aanvragen
         </Link>
-      </main>
+      </AuthShell>
     )
   }
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
-      <h1 className="mb-1 text-xl font-bold text-foreground">{row.purpose === 'invite' ? 'Welkom bij Pansa ATS' : 'Nieuw wachtwoord'}</h1>
-      <p className="mb-6 text-sm text-muted-foreground">
-        Kies een wachtwoord voor <span className="font-medium text-foreground">{row.email}</span>.
-      </p>
+    <AuthShell
+      title={row.purpose === 'invite' ? 'Welkom bij Pansa ATS' : 'Nieuw wachtwoord'}
+      subtitle={`Kies een wachtwoord voor ${row.email}.`}
+    >
       <SetPasswordForm token={token} />
-    </main>
+    </AuthShell>
   )
 }

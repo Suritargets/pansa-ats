@@ -111,7 +111,7 @@ export function LandingPage({
               }}
             />
           ))}
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,16,12,.3)_0%,rgba(11,16,12,.12)_45%,#0b100c_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(11,16,12,.55)_0%,rgba(11,16,12,.15)_22%,rgba(11,16,12,0)_50%,#0b100c_100%)]" />
         </div>
         <div
           aria-hidden="true"
@@ -125,12 +125,14 @@ export function LandingPage({
           <header className="flex flex-wrap items-center gap-x-6 gap-y-4">
             <Link href="/" className="flex items-center gap-3">
               <LogoMark src={logoSrc} size={56} />
-              <span className="font-heading text-2xl leading-none font-semibold tracking-wide">
-                PANSA GROUP
-                <span className="block text-base font-normal tracking-wider text-white/85">OF COMPANIES N.V.</span>
-              </span>
+              {!logoSrc && (
+                <span className="font-heading text-2xl leading-none font-semibold tracking-wide">
+                  PANSA GROUP
+                  <span className="block text-base font-normal tracking-wider text-white/85">OF COMPANIES N.V.</span>
+                </span>
+              )}
             </Link>
-            <p className="hidden border-l border-white/20 pl-6 text-[11px] leading-tight font-bold tracking-wider text-[var(--color-brand-yellow)] uppercase md:block">
+            <p className="hidden border-l border-white/20 pl-6 text-[11px] leading-tight font-bold tracking-wider text-white uppercase drop-shadow-[0_1px_3px_rgba(0,0,0,.7)] md:block">
               The moving force
               <br />
               of the industries
@@ -316,7 +318,7 @@ function TileCard({ tile, index, highlighted }: { tile: Tile; index: number; hig
         aria-hidden="true"
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `linear-gradient(180deg, rgba(11,16,12,0) 30%, rgba(11,16,12,.86) 82%), url(/landing/${tile.image}.jpg), linear-gradient(160deg, #2a3324 0%, #15201a 55%, #0f1510 100%)`,
+          backgroundImage: `linear-gradient(180deg, rgba(11,16,12,0) 45%, rgba(11,16,12,.6) 90%), url(/landing/${tile.image}.jpg), linear-gradient(160deg, #2a3324 0%, #15201a 55%, #0f1510 100%)`,
         }}
       />
       <div className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-3">

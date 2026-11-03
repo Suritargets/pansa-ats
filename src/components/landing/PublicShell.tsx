@@ -58,10 +58,12 @@ export function PublicShell({
       <header className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-4 pt-5 sm:px-8">
         <Link href={`/?mode=${mode}`} className="flex items-center gap-3">
           <LogoMark src={logo} size={44} />
-          <span className="font-heading text-xl leading-none font-semibold tracking-wide">
-            PANSA GROUP
-            <span className="block text-sm font-normal tracking-wider text-white/80">OF COMPANIES N.V.</span>
-          </span>
+          {!logo && (
+            <span className="font-heading text-xl leading-none font-semibold tracking-wide">
+              PANSA GROUP
+              <span className="block text-sm font-normal tracking-wider text-white/80">OF COMPANIES N.V.</span>
+            </span>
+          )}
         </Link>
         <nav className="flex flex-wrap gap-1 text-sm font-medium md:mx-auto">
           {NAV[mode].map((item) => (
