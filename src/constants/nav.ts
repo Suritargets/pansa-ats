@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Code2,
   Download,
+  Upload,
   FileOutput,
   FileSignature,
   GraduationCap,
@@ -95,11 +96,12 @@ export const ADMIN_NAV: NavGroup[] = [
     ],
   },
   {
-    label: 'Export',
+    label: 'Export & import',
     icon: FileOutput,
     items: [
       { label: 'Payroll export', href: '/admin/export/payroll', icon: Banknote },
       { label: 'Algemene export', href: '/admin/export', icon: Download },
+      { label: 'Import data', href: '/admin/import', icon: Upload },
     ],
   },
   {

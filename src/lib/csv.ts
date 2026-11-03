@@ -19,7 +19,17 @@ export function toCsv(headers: string[], rows: unknown[][]): string {
   return lines.join('\r\n')
 }
 
-export function parseCsv(text: string): string[][] {
+const BOM = '﻿'
+
+/** Kiest ; of , als scheidingsteken op basis van de eerste regel (Nederlands Excel exporteert met ;). */
+export function detectDelimiter(text: string): string {
+  const withoutBom = text.startsWith(BOM) ? text.slice(1) : text
+  const first = withoutBom.split(/\r?\n/, 1)[0] ?? ''
+  return (first.match(/;/g)?.length ?? 0) > (first.match(/,/g)?.length ?? 0) ? ';' : ','
+}
+
+export function parseCsv(text: string, delimiter = ','): string[][] {
+  if (text.startsWith(BOM)) text = text.slice(1)
   const rows: string[][] = []
   let row: string[] = []
   let field = ''
@@ -42,7 +52,7 @@ export function parseCsv(text: string): string[][] {
 
     if (char === '"') {
       inQuotes = true
-    } else if (char === ',') {
+    } else if (char === delimiter) {
       row.push(field)
       field = ''
     } else if (char === '\n' || char === '\r') {
@@ -65,7 +75,7 @@ export function parseCsv(text: string): string[][] {
 }
 
 export function csvToObjects(text: string): Record<string, string>[] {
-  const rows = parseCsv(text)
+  const rows = parseCsv(text, detectDelimiter(text))
   if (rows.length === 0) return []
   const headers = rows[0].map((h) => h.trim())
   return rows.slice(1).map((row) => {
