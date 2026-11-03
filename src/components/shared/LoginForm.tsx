@@ -21,13 +21,28 @@ export function LoginForm() {
         <Label htmlFor="password">Wachtwoord</Label>
         <Input id="password" name="password" type="password" required autoComplete="current-password" />
       </div>
+      {state.needsCode && (
+        <div className="space-y-1.5">
+          <Label htmlFor="code">Code uit je authenticator-app</Label>
+          <Input
+            id="code"
+            name="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            autoFocus
+            required
+            placeholder="123456 of herstelcode"
+          />
+          <p className="text-xs text-muted-foreground">Geen toegang tot je app? Gebruik een van je herstelcodes (xxxx-xxxx).</p>
+        </div>
+      )}
       {state.error && (
         <Alert variant="destructive">
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       )}
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? 'Bezig...' : 'Inloggen'}
+        {pending ? 'Bezig...' : state.needsCode ? 'Bevestigen' : 'Inloggen'}
       </Button>
       <p className="text-center text-sm">
         <Link href="/wachtwoord-vergeten" className="text-muted-foreground underline-offset-4 hover:underline">

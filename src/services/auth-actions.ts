@@ -13,9 +13,9 @@ import { logAuditEvent } from '@/lib/audit'
 import { ROLE_HOME } from '@/lib/roles'
 
 export async function loginAction(
-  _prevState: { error: string | null },
+  _prevState: { error: string | null; needsCode?: boolean },
   formData: FormData
-): Promise<{ error: string | null }> {
+): Promise<{ error: string | null; needsCode?: boolean }> {
   const email = String(formData.get('email') ?? '')
   const password = String(formData.get('password') ?? '')
 
@@ -23,8 +23,12 @@ export async function loginAction(
     return { error: 'Vul e-mail en wachtwoord in.' }
   }
 
-  const result = await login(email, password)
+  const code = String(formData.get('code') ?? '')
+
+  const result = await login(email, password, code)
   if (!result.ok) {
+    if (result.reason === 'code_required') return { error: null, needsCode: true }
+    if (result.reason === 'invalid_code') return { error: 'Deze code klopt niet of is al gebruikt.', needsCode: true }
     return {
       error:
         result.reason === 'locked'

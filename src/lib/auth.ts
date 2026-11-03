@@ -18,6 +18,7 @@ import { and, count, eq, gte, lt } from 'drizzle-orm'
 import { db, DB_MODE } from './db'
 import { logAuditEvent } from './audit'
 import { ATTEMPT_RETENTION_DAYS, clientIpFromForwardedFor, isLockedOut, lockoutWindowStart } from './login-throttle'
+import { hasTwoFactor, verifySecondFactor } from './two-factor'
 import { loginAttempts, profiles, type UserRole } from '../../drizzle/schema'
 
 const COOKIE_NAME = 'pansa_session'
@@ -170,7 +171,7 @@ export function verifyUploadToken(applicationId: string, token: string | undefin
   }
 }
 
-export type LoginResult = { ok: true; session: SessionData } | { ok: false; reason: 'invalid' | 'locked' }
+export type LoginResult = { ok: true; session: SessionData } | { ok: false; reason: 'invalid' | 'locked' | 'code_required' | 'invalid_code' }
 
 // Bcrypt-hash van een willekeurige string: onbekende e-mailadressen kosten evenveel tijd als bekende,
 // zodat de responstijd niet verraadt welke accounts bestaan.
@@ -186,7 +187,7 @@ function getDummyHash(): Promise<string> {
  * binnen 15 minuten wordt er geblokkeerd — óók voor e-mailadressen zonder account. Mislukte
  * pogingen komen in de audit-log.
  */
-export async function login(email: string, password: string): Promise<LoginResult> {
+export async function login(email: string, password: string, code?: string): Promise<LoginResult> {
   const normalized = email.toLowerCase().trim()
   const ip = clientIpFromForwardedFor((await headers()).get('x-forwarded-for'))
   const windowStart = lockoutWindowStart()
@@ -213,6 +214,16 @@ export async function login(email: string, password: string): Promise<LoginResul
     const cutoff = new Date(Date.now() - ATTEMPT_RETENTION_DAYS * 24 * 60 * 60 * 1000)
     await db.delete(loginAttempts).where(lt(loginAttempts.createdAt, cutoff))
     return { ok: false, reason: 'invalid' }
+  }
+
+  // Tweede factor: zonder code vragen we er om (geen poging geteld); een foute code telt als mislukte poging voor de lockout.
+  if (hasTwoFactor(profile)) {
+    if (!code?.trim()) return { ok: false, reason: 'code_required' }
+    if (!(await verifySecondFactor(profile, code))) {
+      await db.insert(loginAttempts).values({ email: normalized, ip, success: false })
+      await logAuditEvent({ userId: profile.id, email: normalized }, 'login_2fa_failed', { metadata: { ip } })
+      return { ok: false, reason: 'invalid_code' }
+    }
   }
 
   await db.insert(loginAttempts).values({ email: normalized, ip, success: true })

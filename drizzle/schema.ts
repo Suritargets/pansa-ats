@@ -12,6 +12,7 @@
 
 import { relations } from 'drizzle-orm'
 import {
+  bigint,
   boolean,
   index,
   integer,
@@ -270,8 +271,28 @@ export const profiles = pgTable('profiles', {
   sessionVersion: integer('session_version').notNull().default(1),
   lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
   passwordChangedAt: timestamp('password_changed_at', { withTimezone: true }),
+  // Tweestapsverificatie (TOTP): geheim versleuteld (lib/totp-crypto.ts); totpEnabledAt = null betekent uit (of setup niet bevestigd).
+  totpSecretEnc: text('totp_secret_enc'),
+  totpEnabledAt: timestamp('totp_enabled_at', { withTimezone: true }),
+  totpLastStep: bigint('totp_last_step', { mode: 'number' }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
+
+// --- Herstelcodes voor tweestapsverificatie: alleen de HMAC-hash, elke code werkt één keer ---
+
+export const recoveryCodes = pgTable(
+  'recovery_codes',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    codeHash: text('code_hash').notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('idx_recovery_codes_profile').on(table.profileId)]
+)
 
 // --- Uitnodigings- en reset-tokens: alleen de sha256-hash wordt bewaard, het token zelf nooit ---
 
