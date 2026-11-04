@@ -149,6 +149,47 @@ export async function extractRegistrationForm(file: File): Promise<ServiceResult
   }
 }
 
+/**
+ * Leest een response-body in terwijl het binnenkomt en breekt direct af zodra de limiet
+ * wordt overschreden — i.p.v. `response.arrayBuffer()`, dat de hele body eerst volledig in
+ * het geheugen zou bufferen voordat de grootte gecontroleerd kan worden (een toegestane host
+ * die een enorme respons teruggeeft zou anders ongelimiteerd geheugen kunnen laten opslaan).
+ */
+async function readBodyWithLimit(response: Response, maxBytes: number): Promise<Uint8Array> {
+  const contentLength = response.headers.get('content-length')
+  if (contentLength && Number(contentLength) > maxBytes) {
+    throw new Error('TOO_LARGE')
+  }
+
+  const reader = response.body?.getReader()
+  if (!reader) {
+    const buffer = await response.arrayBuffer()
+    if (buffer.byteLength > maxBytes) throw new Error('TOO_LARGE')
+    return new Uint8Array(buffer)
+  }
+
+  const chunks: Uint8Array[] = []
+  let total = 0
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    total += value.byteLength
+    if (total > maxBytes) {
+      await reader.cancel()
+      throw new Error('TOO_LARGE')
+    }
+    chunks.push(value)
+  }
+
+  const result = new Uint8Array(total)
+  let offset = 0
+  for (const chunk of chunks) {
+    result.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return result
+}
+
 const MAX_REDIRECTS = 3
 
 /**
@@ -204,12 +245,13 @@ export async function extractRegistrationFormFromUrl(url: string): Promise<Servi
       return { success: false, error: 'Kon het bestand niet ophalen. Controleer of de link publiek deelbaar is.' }
     }
 
-    const arrayBuffer = await response.arrayBuffer()
-    if (arrayBuffer.byteLength > MAX_SIZE_BYTES) {
+    let bytes: Uint8Array
+    try {
+      bytes = await readBodyWithLimit(response, MAX_SIZE_BYTES)
+    } catch {
       return { success: false, error: 'Bestand is te groot (max 10MB).' }
     }
     // Het content-type van een externe server zegt niets zeker: bepaal het type uit de inhoud.
-    const bytes = new Uint8Array(arrayBuffer)
     const sniffed = sniffFileType(bytes)
     if (!sniffed) {
       return { success: false, error: 'De link wijst niet naar een JPG, PNG, WEBP of PDF.' }
