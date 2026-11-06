@@ -6,6 +6,7 @@
  */
 
 import { revalidatePath } from 'next/cache'
+import { and, eq, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
@@ -34,6 +35,9 @@ export async function setCandidateTrainingProgress(
 ): Promise<void> {
   await requireSession([...STAFF_ROLES])
 
+  // startedAt/completedAt zijn hier bewust "sticky": een latere score-correctie op een al
+  // voltooide training mag de oorspronkelijke voltooiingsdatum niet verschuiven, en een
+  // training die al bezig is mag bij een score-update niet opnieuw als "net gestart" tellen.
   await db
     .insert(candidateTrainingProgress)
     .values({
@@ -41,7 +45,7 @@ export async function setCandidateTrainingProgress(
       trainingId,
       status,
       score: score?.toString() ?? null,
-      startedAt: status === 'in_progress' ? new Date() : null,
+      startedAt: status === 'not_started' ? null : new Date(),
       completedAt: status === 'completed' ? new Date() : null,
     })
     .onConflictDoUpdate({
@@ -49,9 +53,28 @@ export async function setCandidateTrainingProgress(
       set: {
         status,
         score: score?.toString() ?? null,
-        completedAt: status === 'completed' ? new Date() : null,
+        startedAt:
+          status === 'not_started' ? null : sql`coalesce(${candidateTrainingProgress.startedAt}, now())`,
+        completedAt:
+          status === 'completed' ? sql`coalesce(${candidateTrainingProgress.completedAt}, now())` : null,
       },
     })
+
+  revalidatePath(`/admin/applications/${applicationId}`)
+  revalidatePath('/admin/trainings')
+}
+
+export async function removeCandidateTraining(applicationId: string, trainingId: string): Promise<void> {
+  await requireSession([...STAFF_ROLES])
+
+  await db
+    .delete(candidateTrainingProgress)
+    .where(
+      and(
+        eq(candidateTrainingProgress.applicationId, applicationId),
+        eq(candidateTrainingProgress.trainingId, trainingId)
+      )
+    )
 
   revalidatePath(`/admin/applications/${applicationId}`)
   revalidatePath('/admin/trainings')
