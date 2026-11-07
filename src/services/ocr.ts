@@ -149,6 +149,44 @@ export async function extractRegistrationForm(file: File): Promise<ServiceResult
   }
 }
 
+/**
+ * Leest de body met een harde bovengrens terwijl hij binnenkomt, i.p.v. eerst alles te bufferen
+ * en pas daarna de grootte te controleren — anders kan een kwaadwillige/foutief grote respons
+ * eerst volledig in het geheugen belanden voordat de limiet ingrijpt.
+ */
+async function readBodyWithLimit(response: Response, maxBytes: number): Promise<Uint8Array | null> {
+  if (!response.body) {
+    const buffer = new Uint8Array(await response.arrayBuffer())
+    return buffer.byteLength > maxBytes ? null : buffer
+  }
+
+  const reader = response.body.getReader()
+  const chunks: Uint8Array[] = []
+  let total = 0
+  try {
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      total += value.byteLength
+      if (total > maxBytes) {
+        await reader.cancel()
+        return null
+      }
+      chunks.push(value)
+    }
+  } finally {
+    reader.releaseLock()
+  }
+
+  const merged = new Uint8Array(total)
+  let offset = 0
+  for (const chunk of chunks) {
+    merged.set(chunk, offset)
+    offset += chunk.byteLength
+  }
+  return merged
+}
+
 const MAX_REDIRECTS = 3
 
 /**
@@ -204,12 +242,11 @@ export async function extractRegistrationFormFromUrl(url: string): Promise<Servi
       return { success: false, error: 'Kon het bestand niet ophalen. Controleer of de link publiek deelbaar is.' }
     }
 
-    const arrayBuffer = await response.arrayBuffer()
-    if (arrayBuffer.byteLength > MAX_SIZE_BYTES) {
+    const bytes = await readBodyWithLimit(response, MAX_SIZE_BYTES)
+    if (!bytes) {
       return { success: false, error: 'Bestand is te groot (max 10MB).' }
     }
     // Het content-type van een externe server zegt niets zeker: bepaal het type uit de inhoud.
-    const bytes = new Uint8Array(arrayBuffer)
     const sniffed = sniffFileType(bytes)
     if (!sniffed) {
       return { success: false, error: 'De link wijst niet naar een JPG, PNG, WEBP of PDF.' }
