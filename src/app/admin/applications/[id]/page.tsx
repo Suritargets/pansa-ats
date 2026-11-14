@@ -14,11 +14,13 @@ import {
   listEmergencyContacts,
   listInterviewQuestions,
   listInterviews,
+  listCandidateTrainingProgress,
   listOnboardingProgress,
   listOnboardingStepTemplates,
   listReferenceChecks,
   listShareableClientsForApplication,
   listStatusHistory,
+  listTrainings,
 } from '@/services/queries'
 import { buildDossierIndex, buildPreEmploymentChecklist } from '@/lib/dossier'
 import { AdminShell } from '@/components/admin/AdminShell'
@@ -40,6 +42,8 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
     emergencyContacts,
     onboardingSteps,
     onboardingProgress,
+    trainings,
+    trainingProgress,
     shareableClients,
     shares,
     statusHistory,
@@ -52,6 +56,8 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
     listEmergencyContacts(application.candidateId),
     listOnboardingStepTemplates(application.companyId),
     listOnboardingProgress(id),
+    listTrainings(),
+    listCandidateTrainingProgress(id),
     listShareableClientsForApplication(id),
     listApplicationShares(id),
     listStatusHistory(id),
@@ -81,6 +87,8 @@ export default async function ApplicationDetailPage({ params }: { params: Promis
         emergencyContacts={emergencyContacts}
         onboardingSteps={onboardingSteps}
         onboardingProgress={onboardingProgress}
+        trainings={trainings}
+        trainingProgress={trainingProgress}
         shareableClients={shareableClients}
         shares={shares}
         statusHistory={statusHistory}
