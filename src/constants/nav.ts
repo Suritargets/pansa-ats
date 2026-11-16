@@ -62,7 +62,6 @@ export const ADMIN_NAV: NavGroup[] = [
     items: [
       { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
       { label: 'Rapportages', href: '/admin/reports', icon: BarChart3 },
-      { label: 'Werkwijze', href: '/admin/werkwijze', icon: Workflow },
     ],
   },
   {
@@ -121,6 +120,7 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: 'Audit-log', href: '/admin/settings/audit-log', icon: History },
       { label: 'Systeemstatus', href: '/admin/settings/system', icon: Activity },
       { label: 'Handleiding', href: '/admin/settings/handleiding', icon: BookOpen },
+      { label: 'Werkwijze', href: '/admin/werkwijze', icon: Workflow },
     ],
   },
   {
