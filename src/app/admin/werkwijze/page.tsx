@@ -13,17 +13,18 @@ import { PageHeader } from '@/components/admin/PageHeader'
 import { ACCESS_SVG, FLOW_SVG, STATUS_SVG } from './diagrams'
 
 const SVG_CSS = `
-.wf svg{display:block;width:100%;height:auto;min-width:760px;color:var(--foreground)}
+.wf svg{display:block;width:100%;height:auto;min-width:960px;color:var(--foreground)}
 .wf svg text{font-family:inherit}
 .wf .box{fill:var(--card);stroke:var(--border);stroke-width:1.2}
 .wf .box.staff{fill:color-mix(in srgb,var(--color-brand-green) 13%,var(--card));stroke:var(--color-brand-green)}
 .wf .box.sys{fill:var(--muted);stroke-dasharray:3 3}
 .wf .box.login{fill:var(--muted)}
 .wf .box.gap{fill:#fdf0dc;stroke:#a14a07;stroke-dasharray:5 3}
-.wf .t1{font-size:11.5px;font-weight:600;fill:var(--foreground)}
-.wf .t2,.wf .lbl{font-size:10.5px;fill:var(--muted-foreground)}
-.wf .hdr{font-size:10.5px;font-weight:700;letter-spacing:.08em;fill:var(--muted-foreground)}
-.wf .lane{font-size:12px;font-weight:700;fill:var(--color-brand-deep)}
+.wf .t1{font-size:12.5px;font-weight:600;fill:var(--foreground)}
+.wf .t2{font-size:11.5px;fill:var(--muted-foreground)}
+.wf .lbl{font-size:11px;fill:var(--muted-foreground)}
+.wf .hdr{font-size:11px;font-weight:700;letter-spacing:.08em;fill:var(--muted-foreground)}
+.wf .lane{font-size:11.5px;font-weight:700;fill:var(--color-brand-deep)}
 .wf .band{fill:var(--muted)}
 .wf .grp{stroke:var(--border);stroke-width:1.5}
 .wf .arr{stroke:currentColor;stroke-width:1.4}
