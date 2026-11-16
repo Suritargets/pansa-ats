@@ -118,7 +118,7 @@ export async function submitApplication(
   requireStaff = false
 ): Promise<ServiceResult<{ applicationId: string; candidateId: string; uploadToken: string }>> {
   try {
-    if (requireStaff) await requireSession([...STAFF_ROLES])
+    const session = requireStaff ? await requireSession([...STAFF_ROLES]) : null
 
     const [candidate] = await db
       .insert(candidates)
@@ -179,6 +179,15 @@ export async function submitApplication(
         coverNote: input.coverNote ?? null,
       })
       .returning({ id: applications.id })
+
+    // Zonder deze regel start de rapportage-funnel (getReportingStats) altijd op 0 voor "Nieuw",
+    // want die telt alleen overgangen náár een status — en niets gaat ooit terug náár "new".
+    await db.insert(applicationStatusHistory).values({
+      applicationId: application.id,
+      fromStatus: null,
+      toStatus: 'new',
+      changedBy: session?.userId ?? null,
+    })
 
     if (requireStaff) revalidatePath('/admin/applications')
 
