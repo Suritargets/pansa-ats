@@ -730,12 +730,13 @@ export function ApplicationForm({ mode, companies, jobCategories, ocrData, initi
           <span />
         )}
 
+        {/* key op beide knoppen: zonder key hergebruikt React één element en wordt type="button" tijdens de klik type="submit" (stap 6 → 7 verstuurde dan meteen het formulier) */}
         {isLastStep ? (
-          <Button type="submit" disabled={status === 'submitting'}>
+          <Button key="submit" type="submit" disabled={status === 'submitting'}>
             {status === 'submitting' ? 'Bezig met opslaan...' : mode === 'digitize' ? 'Digitaliseren' : 'Solliciteer nu'}
           </Button>
         ) : (
-          <Button type="button" onClick={goNext}>
+          <Button key="next" type="button" onClick={goNext}>
             Volgende
           </Button>
         )}
