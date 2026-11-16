@@ -15,7 +15,7 @@ import { logAuditEvent } from '@/lib/audit'
 import { STAFF_ROLES } from '@/lib/roles'
 import type { ServiceResult } from '@/lib/service-result'
 import { duplicateKey, validateRow, type ImportEntity } from '@/lib/import-fields'
-import { applications, candidates, clients, suppliers } from '../../drizzle/schema'
+import { applications, applicationStatusHistory, candidates, clients, suppliers } from '../../drizzle/schema'
 
 export interface ImportCandidateRow {
   firstName: string
@@ -50,12 +50,22 @@ export async function bulkImportCandidates(
         })
         .returning({ id: candidates.id })
 
-      await db.insert(applications).values({
-        candidateId: candidate.id,
-        companyId,
-        jobCategoryId: jobCategoryId || null,
-        positionApplied: row.positionApplied.trim(),
-        source: 'digitized_paper',
+      const [application] = await db
+        .insert(applications)
+        .values({
+          candidateId: candidate.id,
+          companyId,
+          jobCategoryId: jobCategoryId || null,
+          positionApplied: row.positionApplied.trim(),
+          source: 'digitized_paper',
+        })
+        .returning({ id: applications.id })
+
+      await db.insert(applicationStatusHistory).values({
+        applicationId: application.id,
+        fromStatus: null,
+        toStatus: 'new',
+        changedBy: session.userId,
       })
 
       count++
