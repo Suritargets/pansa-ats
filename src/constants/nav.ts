@@ -39,6 +39,7 @@ import {
   UserSearch,
   Users,
   Webhook,
+  Workflow,
 } from 'lucide-react'
 
 export interface NavItem {
@@ -61,6 +62,7 @@ export const ADMIN_NAV: NavGroup[] = [
     items: [
       { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
       { label: 'Rapportages', href: '/admin/reports', icon: BarChart3 },
+      { label: 'Werkwijze', href: '/admin/werkwijze', icon: Workflow },
     ],
   },
   {

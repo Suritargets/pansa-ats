@@ -306,7 +306,7 @@ export function CommandPalette({ role }: { role: UserRole }) {
                       ))}
                     </div>
                   ) : (
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                    <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                       {section.entries.map(({ item, index }) => (
                         <ActionCard key={item.id} item={item} active={index === activeIndex} onHover={() => setActiveIndex(index)} onPick={() => go(item.href)} />
                       ))}
@@ -348,23 +348,23 @@ function ActionCard({ item, active, onHover, onPick }: { item: PaletteItem; acti
       onClick={onPick}
       onMouseEnter={onHover}
       className={cn(
-        'relative flex flex-col items-start gap-2 rounded-xl border p-3 text-left transition-colors',
+        'relative flex flex-col items-start gap-1.5 rounded-lg border p-2.5 text-left transition-colors',
         active ? 'border-[var(--color-brand-green)] bg-accent' : 'border-border bg-card hover:bg-muted'
       )}
     >
       {item.hotkey && (
-        <kbd className="absolute top-2 right-2 rounded border border-border bg-muted px-1.5 py-0.5 text-[0.65rem] text-muted-foreground">
+        <kbd className="absolute top-1.5 right-1.5 rounded border border-border bg-muted px-1 py-px text-[0.6rem] text-muted-foreground">
           {item.hotkey}
         </kbd>
       )}
       {Icon && (
-        <span className="flex size-9 items-center justify-center rounded-lg bg-[var(--color-brand-deep)]/10 text-[var(--color-brand-deep)]">
-          <Icon className="size-4" />
+        <span className="flex size-7 items-center justify-center rounded-md bg-[var(--color-brand-deep)]/10 text-[var(--color-brand-deep)]">
+          <Icon className="size-3.5" />
         </span>
       )}
       <span>
-        <span className="block text-sm font-semibold">{item.title}</span>
-        <span className="block text-xs text-muted-foreground">{item.subtitle}</span>
+        <span className="block text-[13px] leading-tight font-semibold">{item.title}</span>
+        <span className="block text-[11px] leading-tight text-muted-foreground">{item.subtitle}</span>
       </span>
     </button>
   )
