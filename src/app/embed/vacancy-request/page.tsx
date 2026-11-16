@@ -2,10 +2,12 @@
  * embed/vacancy-request/page.tsx
  * WAT:    Kale versie van de publieke vacature-aanvraag, bedoeld om via een iframe op een
  *         andere website te plaatsen (zie public/embed.js). Geen header/nav-chrome.
+ *         Padding en breedte: zie EmbedFrame.
  */
 
 import { listInterviewQuestions, listJobCategories } from '@/services/queries'
 import { PublicVacancyRequestForm } from '@/components/client/PublicVacancyRequestForm'
+import { EmbedFrame } from '@/components/candidate/EmbedFrame'
 import { EmbedResizeReporter } from '@/components/candidate/EmbedResizeReporter'
 
 export default async function EmbedVacancyRequestPage({
@@ -21,7 +23,7 @@ export default async function EmbedVacancyRequestPage({
   const scopeCategories = [...new Set(workExperienceQuestions.map((q) => q.category ?? q.text))]
 
   return (
-    <main className="px-4 py-6">
+    <EmbedFrame>
       <EmbedResizeReporter />
       <PublicVacancyRequestForm
         jobCategories={jobCategories}
@@ -30,6 +32,6 @@ export default async function EmbedVacancyRequestPage({
         error={error === '1'}
         redirectTo="/embed/vacancy-request"
       />
-    </main>
+    </EmbedFrame>
   )
 }
