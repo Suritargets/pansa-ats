@@ -7,9 +7,8 @@
 import { count, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { saveAiLimits } from '@/services/ai-training'
-import { DEFAULT_MODEL, MODEL_OPTIONS, getGlobalAiSettings, monthSpendUsd, type Assistant } from '@/lib/ai-assistant'
+import { DEFAULT_MODEL, getGlobalAiSettings, listModelChoices, monthSpendUsd, type Assistant } from '@/lib/ai-assistant'
 import { aiAssistantSettings, aiUsage, type AiAssistantSetting } from '../../../../../drizzle/schema'
-import { SELECT_CLASS } from '@/components/admin/ChatKbForm'
 import { AiConnectionTest } from '@/components/admin/AiConnectionTest'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,20 +37,12 @@ function gatewayAuth(): { ok: boolean; how: string } {
   return { ok: false, how: '' }
 }
 
-function ModelSelect({ id, name, value }: { id: string; name: string; value: string }) {
-  return (
-    <select id={id} name={name} defaultValue={value} className={SELECT_CLASS}>
-      {MODEL_OPTIONS.map((m) => (
-        <option key={m.id} value={m.id}>
-          {m.label}
-        </option>
-      ))}
-    </select>
-  )
+function ModelInput({ id, name, value }: { id: string; name: string; value: string }) {
+  return <Input id={id} name={name} list="ai-model-choices" defaultValue={value} placeholder="leverancier/modelnaam" autoComplete="off" spellCheck={false} />
 }
 
 export async function UsageTab() {
-  const [settings, global, spent, usage] = await Promise.all([
+  const [settings, global, spent, usage, choices] = await Promise.all([
     safe<AiAssistantSetting[]>(() => db.select().from(aiAssistantSettings), []),
     getGlobalAiSettings(),
     safe(() => monthSpendUsd(), 0),
@@ -72,6 +63,7 @@ export async function UsageTab() {
           .groupBy(aiUsage.feature, aiUsage.model),
       [],
     ),
+    listModelChoices(),
   ])
   const auth = gatewayAuth()
   const modelOf = (a: Assistant) => settings.find((s) => s.assistant === a)?.model ?? DEFAULT_MODEL
@@ -94,21 +86,32 @@ export async function UsageTab() {
       <form action={saveAiLimits} className="space-y-4 rounded-xl border border-border bg-card p-4">
         <div>
           <h2 className="text-sm font-semibold text-foreground">Modellen en limieten</h2>
-          <p className="text-sm text-muted-foreground">Model-ID&apos;s hebben de vorm leverancier/modelnaam, zoals bij het AI Gateway.</p>
+          <p className="text-sm text-muted-foreground">
+            Kies een model uit de lijst (begin te typen om te zoeken) of typ zelf een model-ID in de vorm leverancier/modelnaam. Alle
+            taalmodellen van het AI Gateway zijn toegestaan{choices.live ? ` (${choices.models.length} beschikbaar)` : '; de actuele lijst kon nu niet worden opgehaald, dit zijn de vaste voorstellen'}.
+            Controleer een nieuw model met &ldquo;Verbinding testen&rdquo;.
+          </p>
+          <datalist id="ai-model-choices">
+            {choices.models.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.label}
+              </option>
+            ))}
+          </datalist>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           <div className="space-y-1.5">
             <Label htmlFor="model-hr">Model HR-assistent</Label>
-            <ModelSelect id="model-hr" name="model-hr" value={modelOf('hr')} />
+            <ModelInput id="model-hr" name="model-hr" value={modelOf('hr')} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="model-public">Model website-chat</Label>
-            <ModelSelect id="model-public" name="model-public" value={modelOf('public')} />
+            <ModelInput id="model-public" name="model-public" value={modelOf('public')} />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="ocrModel">Model OCR (formulieren scannen)</Label>
-            <ModelSelect id="ocrModel" name="ocrModel" value={global.ocrModel} />
-            <p className="text-xs text-muted-foreground">Moet bestanden of afbeeldingen kunnen lezen.</p>
+            <ModelInput id="ocrModel" name="ocrModel" value={global.ocrModel} />
+            <p className="text-xs text-muted-foreground">Moet afbeeldingen of PDF&apos;s kunnen lezen (een model met vision).</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="monthlyBudgetUsd">Maandbudget (USD)</Label>

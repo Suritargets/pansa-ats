@@ -19,12 +19,16 @@ export function AiConnectionTest() {
           })
         }
       >
-        {isPending ? 'Bezig met testen…' : 'Verbinding testen'}
+        {isPending ? 'Bezig met testen…' : 'Ingestelde modellen testen'}
       </Button>
       {result?.ok && (
-        <p className="text-sm text-emerald-700 dark:text-emerald-400">
-          Verbinding werkt: {result.model} antwoordde in {result.ms} ms.
-        </p>
+        <ul className="space-y-1 text-sm">
+          {result.results.map((r) => (
+            <li key={r.model} className={r.ok ? 'text-emerald-700 dark:text-emerald-400' : 'text-destructive'}>
+              {r.ok ? '✓' : '✕'} {r.model} ({r.used}){r.ok ? `: antwoordde in ${r.ms} ms` : `: ${r.error}`}
+            </li>
+          ))}
+        </ul>
       )}
       {result && !result.ok && <p className="text-sm text-destructive">Verbinding mislukt: {result.error}</p>}
     </div>

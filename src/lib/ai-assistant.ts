@@ -34,8 +34,36 @@ export function isAssistant(value: unknown): value is Assistant {
   return value === 'public' || value === 'hr'
 }
 
+/** Elk model-ID van het AI Gateway is toegestaan (vorm leverancier/modelnaam), niet alleen de voorgestelde. */
 export function isAllowedModel(value: string): boolean {
-  return MODEL_OPTIONS.some((m) => m.id === value)
+  return value.length <= 100 && /^[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._:-]*$/i.test(value)
+}
+
+export interface ModelChoice {
+  id: string
+  label: string
+}
+
+/**
+ * Modellen om uit te kiezen: de actuele lijst uit het AI Gateway (taalmodellen), met de vaste
+ * voorstellen als terugval als het Gateway niet bereikbaar is.
+ */
+export async function listModelChoices(): Promise<{ models: ModelChoice[]; live: boolean }> {
+  try {
+    const { gateway } = await import('ai')
+    const metadata = await Promise.race([
+      gateway.getAvailableModels(),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), 4000)),
+    ])
+    const models = metadata.models
+      .filter((m) => !m.modelType || m.modelType === 'language')
+      .map((m) => ({ id: m.id, label: m.name ? `${m.name} (${m.id})` : m.id }))
+      .sort((a, b) => a.id.localeCompare(b.id))
+    if (models.length > 0) return { models, live: true }
+  } catch {
+    // terugvallen op de vaste lijst
+  }
+  return { models: MODEL_OPTIONS, live: false }
 }
 
 const LANGUAGE_RULE = `Herken automatisch de taal waarin de gebruiker schrijft — Nederlands, Engels, Sranantongo, Spaans,

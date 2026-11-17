@@ -13,7 +13,7 @@ import { db } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
 import { logAuditEvent } from '@/lib/audit'
 import { SUPER_ADMIN_ROLES } from '@/lib/roles'
-import { DEFAULT_MODEL, isAllowedModel, isAssistant, recordAiUsage } from '@/lib/ai-assistant'
+import { getGlobalAiSettings, isAllowedModel, isAssistant, loadAssistantConfig, recordAiUsage } from '@/lib/ai-assistant'
 import { aiAssistantSettings, aiChatLog, aiExamples, aiGlobalSettings } from '../../drizzle/schema'
 
 const PATH = '/admin/settings/chat-kb'
@@ -68,19 +68,45 @@ function parseDecimal(value: FormDataEntryValue | null, min: number, max: number
   return String(n)
 }
 
-export type ConnectionTestResult = { ok: true; model: string; ms: number } | { ok: false; error: string }
+export interface ModelTestResult {
+  model: string
+  used: string
+  ok: boolean
+  ms: number
+  error?: string
+}
 
-/** Doet één minimale aanroep naar het AI Gateway om te zien of de verbinding werkt. */
+export type ConnectionTestResult = { ok: true; results: ModelTestResult[] } | { ok: false; error: string }
+
+/** Test elk ingesteld model (HR, website, OCR) met één minimale aanroep, zodat een verkeerd model-ID meteen opvalt. */
 export async function testAiConnection(): Promise<ConnectionTestResult> {
   await requireSession([...SUPER_ADMIN_ROLES])
-  const started = Date.now()
   try {
-    const result = await generateText({ model: DEFAULT_MODEL, prompt: 'Antwoord met één woord: ok', maxOutputTokens: 8 })
-    await recordAiUsage('test', DEFAULT_MODEL, result.usage, result.providerMetadata)
-    return { ok: true, model: DEFAULT_MODEL, ms: Date.now() - started }
+    const [hr, pub, global] = await Promise.all([loadAssistantConfig('hr'), loadAssistantConfig('public'), getGlobalAiSettings()])
+    const targets = new Map<string, string[]>()
+    for (const [model, label] of [
+      [hr.model, 'HR-assistent'],
+      [pub.model, 'Website-chat'],
+      [global.ocrModel, 'OCR'],
+    ] as const) {
+      targets.set(model, [...(targets.get(model) ?? []), label])
+    }
+    const results = await Promise.all(
+      [...targets.entries()].map(async ([model, labels]): Promise<ModelTestResult> => {
+        const started = Date.now()
+        try {
+          const result = await generateText({ model, prompt: 'Antwoord met één woord: ok', maxOutputTokens: 16 })
+          await recordAiUsage('test', model, result.usage, result.providerMetadata)
+          return { model, used: labels.join(', '), ok: true, ms: Date.now() - started }
+        } catch (e) {
+          const message = e instanceof Error ? e.message : 'Onbekende fout'
+          return { model, used: labels.join(', '), ok: false, ms: Date.now() - started, error: message.replace(/\u001b\[[0-9;]*m/g, '').slice(0, 300) }
+        }
+      }),
+    )
+    return { ok: true, results }
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'Onbekende fout'
-    return { ok: false, error: message.replace(/\u001b\[[0-9;]*m/g, '').slice(0, 300) }
+    return { ok: false, error: e instanceof Error ? e.message.slice(0, 300) : 'Onbekende fout' }
   }
 }
 
