@@ -16,7 +16,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { Sidebar } from '@/components/admin/Sidebar'
 import type { UserRole } from '../../../drizzle/schema'
 
-export function MobileAdminNav({ role, openGroups }: { role: UserRole; openGroups: string[] }) {
+export function MobileAdminNav({ role, openGroups, autoCollapse }: { role: UserRole; openGroups: string[]; autoCollapse: boolean }) {
   const pathname = usePathname()
   const [openedAt, setOpenedAt] = useState<string | null>(null)
   const open = openedAt === pathname
@@ -32,7 +32,7 @@ export function MobileAdminNav({ role, openGroups }: { role: UserRole; openGroup
             <SheetTitle>Menu</SheetTitle>
             <SheetDescription>Navigatie van Pansa ATS</SheetDescription>
           </SheetHeader>
-          <Sidebar role={role} initialCollapsed={false} initialOpenGroups={openGroups} embedded />
+          <Sidebar role={role} initialCollapsed={false} initialOpenGroups={openGroups} initialAutoCollapse={autoCollapse} embedded />
         </SheetContent>
       </Sheet>
     </>

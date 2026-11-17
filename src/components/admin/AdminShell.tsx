@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Sidebar } from '@/components/admin/Sidebar'
 import { MobileAdminNav } from '@/components/admin/MobileAdminNav'
 import { CommandPalette } from '@/components/admin/CommandPalette'
-import { getSidebarCollapsed, getSidebarOpenGroups } from '@/lib/sidebar'
+import { getSidebarAutoCollapse, getSidebarCollapsed, getSidebarOpenGroups } from '@/lib/sidebar'
 import { logoutAction } from '@/services/auth-actions'
 import type { SessionData } from '@/lib/auth'
 
@@ -31,9 +31,10 @@ function initials(fullName: string): string {
 }
 
 export async function AdminShell({ session, children }: { session: SessionData; children: React.ReactNode }) {
-  const [collapsed, openGroups, notifications] = await Promise.all([
+  const [collapsed, openGroups, autoCollapse, notifications] = await Promise.all([
     getSidebarCollapsed(),
     getSidebarOpenGroups(),
+    getSidebarAutoCollapse(),
     listAdminNotifications(session.role),
   ])
   const logo = logoSrc()
@@ -41,11 +42,11 @@ export async function AdminShell({ session, children }: { session: SessionData; 
   return (
     <div className="flex min-h-screen bg-canvas">
       <div className="hidden lg:flex">
-        <Sidebar role={session.role} initialCollapsed={collapsed} initialOpenGroups={openGroups} />
+        <Sidebar role={session.role} initialCollapsed={collapsed} initialOpenGroups={openGroups} initialAutoCollapse={autoCollapse} />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-2 border-b border-border bg-card px-3 py-3 sm:gap-4 sm:px-6">
-          <MobileAdminNav role={session.role} openGroups={openGroups} />
+          <MobileAdminNav role={session.role} openGroups={openGroups} autoCollapse={autoCollapse} />
           <Link href="/admin/dashboard" className="hidden shrink-0 items-center gap-3 lg:flex">
             <LogoMark src={logo} size={44} />
             <span className="font-heading text-xl leading-none font-semibold tracking-wide text-foreground">

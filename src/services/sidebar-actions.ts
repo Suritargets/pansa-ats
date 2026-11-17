@@ -2,11 +2,11 @@
 
 /**
  * sidebar-actions.ts
- * WAT:    Zet de sidebar-cookies: in/uitgeklapt en de open menugroepen.
+ * WAT:    Zet de sidebar-cookies: in/uitgeklapt, de open menugroepen en automatisch inklappen.
  */
 
 import { cookies } from 'next/headers'
-import { SIDEBAR_COOKIE_NAME, SIDEBAR_GROUPS_COOKIE_NAME } from '@/lib/sidebar'
+import { SIDEBAR_AUTO_COOKIE_NAME, SIDEBAR_COOKIE_NAME, SIDEBAR_GROUPS_COOKIE_NAME } from '@/lib/sidebar'
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -24,4 +24,9 @@ export async function setSidebarOpenGroupsAction(groups: string[]): Promise<void
   const cookieStore = await cookies()
   const safe = groups.filter((g) => typeof g === 'string' && g.length <= 40).slice(0, 20)
   cookieStore.set(SIDEBAR_GROUPS_COOKIE_NAME, JSON.stringify(safe), COOKIE_OPTIONS)
+}
+
+export async function setSidebarAutoCollapseAction(auto: boolean): Promise<void> {
+  const cookieStore = await cookies()
+  cookieStore.set(SIDEBAR_AUTO_COOKIE_NAME, auto ? '1' : '0', COOKIE_OPTIONS)
 }

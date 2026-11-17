@@ -11,6 +11,7 @@ import { cookies } from 'next/headers'
 
 export const SIDEBAR_COOKIE_NAME = 'pansa_sidebar_collapsed'
 export const SIDEBAR_GROUPS_COOKIE_NAME = 'pansa_sidebar_groups'
+export const SIDEBAR_AUTO_COOKIE_NAME = 'pansa_sidebar_auto'
 
 export async function getSidebarCollapsed(): Promise<boolean> {
   const cookieStore = await cookies()
@@ -28,4 +29,10 @@ export async function getSidebarOpenGroups(): Promise<string[]> {
   } catch {
     return []
   }
+}
+
+/** Automatisch inklappen: bij het openen van een menugroep gaan de andere dicht (standaard: uit). */
+export async function getSidebarAutoCollapse(): Promise<boolean> {
+  const cookieStore = await cookies()
+  return cookieStore.get(SIDEBAR_AUTO_COOKIE_NAME)?.value === '1'
 }

@@ -14,7 +14,7 @@ import { usePathname } from 'next/navigation'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { setSidebarCollapsedAction, setSidebarOpenGroupsAction } from '@/services/sidebar-actions'
+import { setSidebarAutoCollapseAction, setSidebarCollapsedAction, setSidebarOpenGroupsAction } from '@/services/sidebar-actions'
 import { ADMIN_NAV } from '@/constants/nav'
 import type { UserRole } from '../../../drizzle/schema'
 
@@ -22,19 +22,29 @@ export function Sidebar({
   role,
   initialCollapsed,
   initialOpenGroups,
+  initialAutoCollapse = false,
   embedded = false,
 }: {
   role: UserRole
   initialCollapsed: boolean
   initialOpenGroups: string[]
+  /** Automatisch inklappen: een groep openen sluit de andere; de groep met de huidige pagina blijft open. */
+  initialAutoCollapse?: boolean
   /** In het mobiele menu (Sheet): altijd uitgeklapt, zonder inklapknop en zonder eigen breedte. */
   embedded?: boolean
 }) {
   const [collapsedState, setCollapsed] = useState(initialCollapsed)
   const collapsed = embedded ? false : collapsedState
   const [openGroups, setOpenGroups] = useState<string[]>(initialOpenGroups)
+  const [autoCollapse, setAutoCollapse] = useState(initialAutoCollapse)
   const [, startTransition] = useTransition()
   const pathname = usePathname()
+  // Bij een paginawissel in automatische modus: handmatig geopende groepen sluiten (de groep van de nieuwe pagina opent vanzelf).
+  const [prevPathname, setPrevPathname] = useState(pathname)
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname)
+    if (autoCollapse) setOpenGroups([])
+  }
 
   function toggle() {
     const next = !collapsed
@@ -44,8 +54,20 @@ export function Sidebar({
     })
   }
 
+  function toggleAutoCollapse() {
+    const next = !autoCollapse
+    setAutoCollapse(next)
+    if (next) setOpenGroups([])
+    startTransition(() => {
+      void setSidebarAutoCollapseAction(next)
+      if (next) void setSidebarOpenGroupsAction([])
+    })
+  }
+
   function toggleGroup(label: string) {
-    const next = openGroups.includes(label) ? openGroups.filter((g) => g !== label) : [...openGroups, label]
+    const opening = !openGroups.includes(label)
+    // Automatisch: alleen deze groep handmatig open (de groep van de huidige pagina blijft vanzelf open).
+    const next = autoCollapse ? (opening ? [label] : []) : opening ? [...openGroups, label] : openGroups.filter((g) => g !== label)
     setOpenGroups(next)
     startTransition(() => {
       void setSidebarOpenGroupsAction(next)
@@ -77,7 +99,7 @@ export function Sidebar({
           const groupHasActiveItem = group.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
           // Groepen zonder label (Dashboard/Rapportages) staan altijd open; de rest alleen als de gebruiker ze opende.
           // Een ingeklapte sidebar toont alle iconen, daar is er niets om open/dicht te klappen.
-          const isOpen = !group.label || collapsed || openGroups.includes(groupKey)
+          const isOpen = !group.label || collapsed || openGroups.includes(groupKey) || (autoCollapse && groupHasActiveItem)
 
           return (
             <div
@@ -136,6 +158,34 @@ export function Sidebar({
           )
         })}
       </nav>
+
+      {!collapsed && (
+        <div className="border-t border-sidebar-border px-3 py-3">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={autoCollapse}
+            onClick={toggleAutoCollapse}
+            className="flex w-full items-center justify-between gap-3 rounded-lg px-1 py-1 text-left text-xs text-sidebar-foreground/80 hover:text-sidebar-foreground"
+          >
+            <span>
+              Menu automatisch inklappen
+              <span className="block text-[11px] text-sidebar-foreground/60">Opent één groep, de rest gaat dicht</span>
+            </span>
+            <span
+              aria-hidden="true"
+              className={cn('relative h-5 w-9 shrink-0 rounded-full transition-colors', autoCollapse ? 'bg-[var(--color-brand-yellow)]' : 'bg-sidebar-foreground/25')}
+            >
+              <span
+                className={cn(
+                  'absolute top-0.5 left-0.5 size-4 rounded-full bg-white shadow transition-transform',
+                  autoCollapse && 'translate-x-4'
+                )}
+              />
+            </span>
+          </button>
+        </div>
+      )}
     </aside>
   )
 }
