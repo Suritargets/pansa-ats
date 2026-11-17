@@ -8,7 +8,7 @@
  */
 
 import { streamText } from 'ai'
-import { loadAssistantConfig } from '@/lib/ai-assistant'
+import { isBudgetExhausted, loadAssistantConfig, recordAiUsage } from '@/lib/ai-assistant'
 
 const MAX_MESSAGES = 20
 
@@ -21,12 +21,16 @@ export async function POST(request: Request) {
   }
 
   // Prompt, model, kennisbank en voorbeelden komen uit "AI-training" (admin/settings/chat-kb).
+  if (await isBudgetExhausted()) return new Response('De chat is tijdelijk niet beschikbaar.', { status: 503 })
   const config = await loadAssistantConfig('public')
 
   const result = streamText({
     model: config.model,
     system: config.system,
+    temperature: config.temperature,
     messages,
+    // Alleen aantallen en kosten worden bewaard, nooit de vragen of antwoorden van bezoekers.
+    onFinish: ({ usage, providerMetadata }) => recordAiUsage('public', config.model, usage, providerMetadata),
   })
 
   return result.toTextStreamResponse()

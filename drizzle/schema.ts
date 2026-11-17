@@ -866,6 +866,30 @@ export const aiChatLog = pgTable('ai_chat_log', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
+/** Globale AI-instellingen (één rij, id 'global'): OCR-model, temperatuur en maandbudget. */
+export const aiGlobalSettings = pgTable('ai_global_settings', {
+  id: text('id').primaryKey().default('global'),
+  ocrModel: text('ocr_model'), // null = standaardmodel
+  temperature: numeric('temperature'), // null = standaard van het model
+  monthlyBudgetUsd: numeric('monthly_budget_usd'), // null = geen limiet
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+/** Verbruik per AI-aanroep. Alleen aantallen en kosten — nooit de vragen of antwoorden zelf. */
+export const aiUsage = pgTable(
+  'ai_usage',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    feature: text('feature').notNull(), // 'public' | 'hr' | 'ocr' | 'test'
+    model: text('model').notNull(),
+    inputTokens: integer('input_tokens').notNull().default(0),
+    outputTokens: integer('output_tokens').notNull().default(0),
+    costUsd: numeric('cost_usd'), // null = onbekend (gateway gaf geen kosten terug)
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('ai_usage_created_at_idx').on(t.createdAt)],
+)
+
 // --- Relations (voor db.query.* joins) ---
 
 export const companiesRelations = relations(companies, ({ many }) => ({
@@ -1072,6 +1096,7 @@ export type NewChatKbEntry = typeof chatKbEntries.$inferInsert
 export type AiAssistantSetting = typeof aiAssistantSettings.$inferSelect
 export type AiExample = typeof aiExamples.$inferSelect
 export type AiChatLogRow = typeof aiChatLog.$inferSelect
+export type AiGlobalSettings = typeof aiGlobalSettings.$inferSelect
 
 export type AuthToken = typeof authTokens.$inferSelect
 export type AuthTokenPurpose = (typeof authTokenPurposeEnum.enumValues)[number]

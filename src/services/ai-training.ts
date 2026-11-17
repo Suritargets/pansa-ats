@@ -7,32 +7,81 @@
  */
 
 import { revalidatePath } from 'next/cache'
+import { generateText } from 'ai'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
 import { logAuditEvent } from '@/lib/audit'
 import { SUPER_ADMIN_ROLES } from '@/lib/roles'
-import { isAllowedModel, isAssistant } from '@/lib/ai-assistant'
-import { aiAssistantSettings, aiChatLog, aiExamples } from '../../drizzle/schema'
+import { DEFAULT_MODEL, isAllowedModel, isAssistant, recordAiUsage } from '@/lib/ai-assistant'
+import { aiAssistantSettings, aiChatLog, aiExamples, aiGlobalSettings } from '../../drizzle/schema'
 
 const PATH = '/admin/settings/chat-kb'
 const MAX_INSTRUCTIONS = 6000
 
-export async function saveAssistantSettings(formData: FormData): Promise<void> {
+export async function saveAssistantInstructions(formData: FormData): Promise<void> {
   const session = await requireSession([...SUPER_ADMIN_ROLES])
   const assistant = String(formData.get('assistant') ?? '')
   if (!isAssistant(assistant)) return
 
   const instructions = String(formData.get('instructions') ?? '').trim().slice(0, MAX_INSTRUCTIONS)
-  const modelRaw = String(formData.get('model') ?? '')
-  const model = isAllowedModel(modelRaw) ? modelRaw : null
-
   await db
     .insert(aiAssistantSettings)
-    .values({ assistant, instructions, model })
-    .onConflictDoUpdate({ target: aiAssistantSettings.assistant, set: { instructions, model, updatedAt: new Date() } })
-  await logAuditEvent(session, 'ai_settings_saved', { entityType: 'ai_assistant', metadata: { assistant, model } })
+    .values({ assistant, instructions })
+    .onConflictDoUpdate({ target: aiAssistantSettings.assistant, set: { instructions, updatedAt: new Date() } })
+  await logAuditEvent(session, 'ai_instructions_saved', { entityType: 'ai_assistant', metadata: { assistant } })
   revalidatePath(PATH)
+}
+
+/** Modellen per assistent, OCR-model, temperatuur en maandbudget in één keer. */
+export async function saveAiLimits(formData: FormData): Promise<void> {
+  const session = await requireSession([...SUPER_ADMIN_ROLES])
+
+  for (const assistant of ['public', 'hr'] as const) {
+    const raw = String(formData.get(`model-${assistant}`) ?? '')
+    const model = isAllowedModel(raw) ? raw : null
+    await db
+      .insert(aiAssistantSettings)
+      .values({ assistant, model })
+      .onConflictDoUpdate({ target: aiAssistantSettings.assistant, set: { model, updatedAt: new Date() } })
+  }
+
+  const ocrRaw = String(formData.get('ocrModel') ?? '')
+  const ocrModel = isAllowedModel(ocrRaw) ? ocrRaw : null
+  const temperature = parseDecimal(formData.get('temperature'), 0, 2)
+  const monthlyBudgetUsd = parseDecimal(formData.get('monthlyBudgetUsd'), 0, 100000)
+
+  await db
+    .insert(aiGlobalSettings)
+    .values({ id: 'global', ocrModel, temperature, monthlyBudgetUsd })
+    .onConflictDoUpdate({ target: aiGlobalSettings.id, set: { ocrModel, temperature, monthlyBudgetUsd, updatedAt: new Date() } })
+  await logAuditEvent(session, 'ai_limits_saved', { entityType: 'ai_assistant', metadata: { ocrModel, temperature, monthlyBudgetUsd } })
+  revalidatePath(PATH)
+}
+
+/** Lege invoer of een ongeldig getal = null (standaard / geen limiet). */
+function parseDecimal(value: FormDataEntryValue | null, min: number, max: number): string | null {
+  const text = String(value ?? '').trim().replace(',', '.')
+  if (!text) return null
+  const n = Number(text)
+  if (!Number.isFinite(n) || n < min || n > max) return null
+  return String(n)
+}
+
+export type ConnectionTestResult = { ok: true; model: string; ms: number } | { ok: false; error: string }
+
+/** Doet één minimale aanroep naar het AI Gateway om te zien of de verbinding werkt. */
+export async function testAiConnection(): Promise<ConnectionTestResult> {
+  await requireSession([...SUPER_ADMIN_ROLES])
+  const started = Date.now()
+  try {
+    const result = await generateText({ model: DEFAULT_MODEL, prompt: 'Antwoord met één woord: ok', maxOutputTokens: 8 })
+    await recordAiUsage('test', DEFAULT_MODEL, result.usage, result.providerMetadata)
+    return { ok: true, model: DEFAULT_MODEL, ms: Date.now() - started }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'Onbekende fout'
+    return { ok: false, error: message.replace(/\u001b\[[0-9;]*m/g, '').slice(0, 300) }
+  }
 }
 
 export async function createAiExample(formData: FormData): Promise<void> {

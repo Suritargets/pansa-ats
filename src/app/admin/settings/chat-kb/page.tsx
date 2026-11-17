@@ -8,20 +8,21 @@
  */
 
 import Link from 'next/link'
-import { count, desc, eq, sql } from 'drizzle-orm'
+import { desc, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
 import { SUPER_ADMIN_ROLES } from '@/lib/roles'
 import { listChatKbEntries } from '@/services/queries'
 import { importHrStarterKnowledge } from '@/services/chat-kb'
-import { createAiExample, saveAssistantSettings } from '@/services/ai-training'
-import { ASSISTANT_LABELS, DEFAULT_MODEL, MODEL_OPTIONS, type Assistant } from '@/lib/ai-assistant'
+import { createAiExample, saveAssistantInstructions } from '@/services/ai-training'
+import { ASSISTANT_LABELS, type Assistant } from '@/lib/ai-assistant'
 import { aiAssistantSettings, aiChatLog, aiExamples, type AiAssistantSetting, type AiChatLogRow, type AiExample } from '../../../../../drizzle/schema'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { ChatKbForm, SELECT_CLASS } from '@/components/admin/ChatKbForm'
 import { ChatKbRowActions } from '@/components/admin/ChatKbRowActions'
 import { AiExampleActions, PromoteLogButton } from '@/components/admin/AiExampleActions'
 import { AiTestChat } from '@/components/admin/AiTestChat'
+import { UsageTab } from './UsageTab'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -168,7 +169,7 @@ async function InstructionsTab() {
       {ASSISTANTS.map((assistant) => {
         const row = rows.find((r) => r.assistant === assistant)
         return (
-          <form key={assistant} action={saveAssistantSettings} className="max-w-3xl space-y-3 rounded-xl border border-border bg-card p-4">
+          <form key={assistant} action={saveAssistantInstructions} className="max-w-3xl space-y-3 rounded-xl border border-border bg-card p-4">
             <input type="hidden" name="assistant" value={assistant} />
             <h2 className="text-sm font-semibold text-foreground">{ASSISTANT_LABELS[assistant]}</h2>
             <div className="space-y-1.5">
@@ -181,16 +182,6 @@ async function InstructionsTab() {
                 defaultValue={row?.instructions ?? ''}
                 placeholder="bv. Antwoord in maximaal vijf zinnen. Noem bij elke procedure de bijbehorende status in het systeem."
               />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor={`model-${assistant}`}>Model</Label>
-              <select id={`model-${assistant}`} name="model" defaultValue={row?.model ?? DEFAULT_MODEL} className={`${SELECT_CLASS} max-w-sm`}>
-                {MODEL_OPTIONS.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
             </div>
             <Button type="submit">Opslaan</Button>
           </form>
@@ -316,102 +307,6 @@ async function FeedbackTab() {
           </TableBody>
         </Table>
       </div>
-    </div>
-  )
-}
-
-async function UsageTab() {
-  const [settings, stats, kbEntries, examples] = await Promise.all([
-    safe<AiAssistantSetting[]>(() => db.select().from(aiAssistantSettings), []),
-    safe(
-      () =>
-        db
-          .select({
-            assistant: aiChatLog.assistant,
-            model: aiChatLog.model,
-            total: count(),
-            good: sql<number>`count(*) filter (where ${aiChatLog.rating} = 1)`.mapWith(Number),
-            bad: sql<number>`count(*) filter (where ${aiChatLog.rating} = -1)`.mapWith(Number),
-          })
-          .from(aiChatLog)
-          .where(sql`${aiChatLog.createdAt} >= now() - interval '30 days'`)
-          .groupBy(aiChatLog.assistant, aiChatLog.model),
-      [],
-    ),
-    listChatKbEntries(),
-    safe<AiExample[]>(() => db.select().from(aiExamples).where(eq(aiExamples.active, true)), []),
-  ])
-
-  return (
-    <div className="space-y-8">
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Ingesteld model per assistent</h2>
-        <div className="overflow-x-auto rounded-xl border border-border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Assistent</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>Actieve kennisitems</TableHead>
-                <TableHead>Actieve voorbeelden</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {ASSISTANTS.map((assistant) => {
-                const audiences = assistant === 'hr' ? ['hr', 'both'] : ['public', 'both']
-                const model = settings.find((s) => s.assistant === assistant)?.model ?? DEFAULT_MODEL
-                return (
-                  <TableRow key={assistant}>
-                    <TableCell className="font-medium text-foreground">{ASSISTANT_LABELS[assistant]}</TableCell>
-                    <TableCell>{MODEL_OPTIONS.find((m) => m.id === model)?.label ?? model}</TableCell>
-                    <TableCell>{kbEntries.filter((e) => e.active && audiences.includes(e.audience)).length}</TableCell>
-                    <TableCell>{examples.filter((e) => e.assistant === assistant).length}</TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </div>
-        <p className="text-xs text-muted-foreground">Het model wijzig je in de tab Instructies.</p>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Gebruik laatste 30 dagen (testchat)</h2>
-        <div className="overflow-x-auto rounded-xl border border-border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Assistent</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead>Vragen</TableHead>
-                <TableHead>Goed</TableHead>
-                <TableHead>Fout</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {stats.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
-                    Nog geen gebruik.
-                  </TableCell>
-                </TableRow>
-              )}
-              {stats.map((s) => (
-                <TableRow key={`${s.assistant}-${s.model}`}>
-                  <TableCell>{s.assistant === 'hr' ? 'HR-assistent' : 'Website-chat'}</TableCell>
-                  <TableCell>{s.model}</TableCell>
-                  <TableCell>{s.total}</TableCell>
-                  <TableCell>{s.good}</TableCell>
-                  <TableCell>{s.bad}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Alleen gesprekken uit de testchat worden vastgelegd. Gesprekken van websitebezoekers worden bewust niet opgeslagen.
-        </p>
-      </section>
     </div>
   )
 }

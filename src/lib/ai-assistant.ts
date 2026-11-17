@@ -11,9 +11,9 @@ import 'server-only'
  *         oude kennisbank-query en standaardinstellingen).
  */
 
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { aiAssistantSettings, aiExamples, chatKbEntries } from '../../drizzle/schema'
+import { aiAssistantSettings, aiExamples, aiGlobalSettings, aiUsage, chatKbEntries } from '../../drizzle/schema'
 
 export type Assistant = 'public' | 'hr'
 
@@ -69,6 +69,8 @@ export interface AssistantConfig {
   model: string
   instructions: string
   system: string
+  /** undefined = standaard van het model. */
+  temperature: number | undefined
   kbCount: number
   exampleCount: number
 }
@@ -78,11 +80,12 @@ export async function loadAssistantConfig(assistant: Assistant): Promise<Assista
 
   let instructions = ''
   let model = DEFAULT_MODEL
+  let temperature: number | undefined
   let kb: { topic: string; content: string }[] = []
   let examples: { question: string; answer: string }[] = []
 
   try {
-    const [[settings], kbRows, exampleRows] = await Promise.all([
+    const [[settings], kbRows, exampleRows, global] = await Promise.all([
       db.select().from(aiAssistantSettings).where(eq(aiAssistantSettings.assistant, assistant)),
       db
         .select({ topic: chatKbEntries.topic, content: chatKbEntries.content })
@@ -92,7 +95,9 @@ export async function loadAssistantConfig(assistant: Assistant): Promise<Assista
         .select({ question: aiExamples.question, answer: aiExamples.answer })
         .from(aiExamples)
         .where(and(eq(aiExamples.assistant, assistant), eq(aiExamples.active, true))),
+      getGlobalAiSettings(),
     ])
+    temperature = global.temperature
     if (settings) {
       instructions = settings.instructions
       if (settings.model && isAllowedModel(settings.model)) model = settings.model
@@ -123,5 +128,75 @@ export async function loadAssistantConfig(assistant: Assistant): Promise<Assista
     )
   }
 
-  return { assistant, model, instructions, system: parts.join('\n\n'), kbCount: kb.length, exampleCount: examples.length }
+  return { assistant, model, instructions, system: parts.join('\n\n'), temperature, kbCount: kb.length, exampleCount: examples.length }
+}
+
+// --- Globale instellingen, verbruik en maandbudget ---
+
+export interface GlobalAiSettings {
+  ocrModel: string
+  temperature: number | undefined
+  monthlyBudgetUsd: number | undefined
+}
+
+/** Valt terug op standaardwaarden als de tabel nog niet bestaat (migratie 0016 niet toegepast). */
+export async function getGlobalAiSettings(): Promise<GlobalAiSettings> {
+  try {
+    const [row] = await db.select().from(aiGlobalSettings).where(eq(aiGlobalSettings.id, 'global'))
+    return {
+      ocrModel: row?.ocrModel && isAllowedModel(row.ocrModel) ? row.ocrModel : DEFAULT_MODEL,
+      temperature: row?.temperature != null ? Number(row.temperature) : undefined,
+      monthlyBudgetUsd: row?.monthlyBudgetUsd != null ? Number(row.monthlyBudgetUsd) : undefined,
+    }
+  } catch {
+    return { ocrModel: DEFAULT_MODEL, temperature: undefined, monthlyBudgetUsd: undefined }
+  }
+}
+
+/** Kosten die het AI Gateway in providerMetadata meestuurt; null als onbekend. */
+function gatewayCost(providerMetadata: unknown): number | null {
+  const raw = (providerMetadata as { gateway?: { cost?: unknown } } | undefined)?.gateway?.cost
+  const n = typeof raw === 'string' || typeof raw === 'number' ? Number(raw) : NaN
+  return Number.isFinite(n) ? n : null
+}
+
+/** Legt verbruik vast (alleen aantallen en kosten). Mag nooit een gesprek laten falen. */
+export async function recordAiUsage(
+  feature: 'public' | 'hr' | 'ocr' | 'test',
+  model: string,
+  usage: { inputTokens?: number | undefined; outputTokens?: number | undefined } | undefined,
+  providerMetadata?: unknown,
+): Promise<void> {
+  try {
+    const cost = gatewayCost(providerMetadata)
+    await db.insert(aiUsage).values({
+      feature,
+      model,
+      inputTokens: usage?.inputTokens ?? 0,
+      outputTokens: usage?.outputTokens ?? 0,
+      costUsd: cost === null ? null : String(cost),
+    })
+  } catch {
+    // verbruik bijhouden is bijzaak
+  }
+}
+
+/** Uitgegeven bedrag (USD) sinds het begin van de huidige maand; alleen aanroepen met bekende kosten tellen mee. */
+export async function monthSpendUsd(): Promise<number> {
+  const [row] = await db
+    .select({ total: sql<string>`coalesce(sum(${aiUsage.costUsd}), 0)` })
+    .from(aiUsage)
+    .where(sql`${aiUsage.createdAt} >= date_trunc('month', now())`)
+  return Number(row?.total ?? 0)
+}
+
+/** true als er een maandbudget is ingesteld en dat op is. Faalt open (geen blokkade) bij een databasefout. */
+export async function isBudgetExhausted(): Promise<boolean> {
+  try {
+    const { monthlyBudgetUsd } = await getGlobalAiSettings()
+    if (monthlyBudgetUsd === undefined) return false
+    return (await monthSpendUsd()) >= monthlyBudgetUsd
+  } catch {
+    return false
+  }
 }

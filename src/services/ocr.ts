@@ -12,6 +12,7 @@
  */
 
 import { generateObject } from 'ai'
+import { getGlobalAiSettings, isBudgetExhausted, recordAiUsage } from '@/lib/ai-assistant'
 import { z } from 'zod'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
@@ -108,8 +109,11 @@ Regels:
   ingevulde rij als apart item terug, sla lege rijen over.`
 
 async function extractFromBytes(bytes: Uint8Array, mediaType: string): Promise<OcrExtractionResult> {
-  const { object } = await generateObject({
-    model: 'anthropic/claude-sonnet-5',
+  if (await isBudgetExhausted()) throw new Error('Het maandbudget voor AI is op.')
+  const { ocrModel, temperature } = await getGlobalAiSettings()
+  const { object, usage, providerMetadata } = await generateObject({
+    model: ocrModel,
+    temperature,
     schema: ocrSchema,
     messages: [
       {
@@ -121,6 +125,7 @@ async function extractFromBytes(bytes: Uint8Array, mediaType: string): Promise<O
       },
     ],
   })
+  await recordAiUsage('ocr', ocrModel, usage, providerMetadata)
   return object
 }
 

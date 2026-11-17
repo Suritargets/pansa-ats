@@ -10,7 +10,7 @@ import { streamText } from 'ai'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { getSession } from '@/lib/auth'
-import { isAssistant, loadAssistantConfig } from '@/lib/ai-assistant'
+import { isAssistant, isBudgetExhausted, loadAssistantConfig, recordAiUsage } from '@/lib/ai-assistant'
 import { aiChatLog } from '../../../../../../drizzle/schema'
 
 const MAX_MESSAGES = 20
@@ -28,6 +28,7 @@ export async function POST(request: Request) {
   const question = typeof last?.content === 'string' ? last.content.slice(0, 4000) : ''
   if (!question) return new Response('Ongeldig verzoek.', { status: 400 })
 
+  if (await isBudgetExhausted()) return new Response('Het maandbudget voor AI is op.', { status: 429 })
   const config = await loadAssistantConfig(assistant)
 
   const [log] = await db
@@ -39,8 +40,10 @@ export async function POST(request: Request) {
   const result = streamText({
     model: config.model,
     system: config.system,
+    temperature: config.temperature,
     messages,
-    onFinish: async ({ text }) => {
+    onFinish: async ({ text, usage, providerMetadata }) => {
+      await recordAiUsage('test', config.model, usage, providerMetadata)
       if (log) await db.update(aiChatLog).set({ answer: text }).where(eq(aiChatLog.id, log.id)).catch(() => undefined)
     },
   })
