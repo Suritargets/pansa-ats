@@ -80,14 +80,19 @@ export function Sidebar({
           const isOpen = !group.label || collapsed || openGroups.includes(groupKey)
 
           return (
-            <div key={groupKey} className={cn(group.label && 'pt-1')}>
+            <div
+              key={groupKey}
+              // Open hoofdmenu: lichtere groen-tint over de hele groep (kop + subitems), zodat duidelijk is wat bij elkaar hoort.
+              className={cn(group.label && !collapsed && 'rounded-xl transition-colors', group.label && !collapsed && isOpen && 'bg-sidebar-foreground/[0.08]')}
+            >
               {group.label && !collapsed && (
                 <button
                   type="button"
                   onClick={() => toggleGroup(groupKey)}
                   aria-expanded={isOpen}
                   className={cn(
-                    'flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-xs font-bold tracking-wider uppercase transition-colors hover:bg-sidebar-accent',
+                    'flex w-full items-center justify-between px-2.5 py-2 text-xs font-bold tracking-wider uppercase transition-colors hover:bg-sidebar-accent',
+                    isOpen ? 'rounded-t-xl rounded-b-none bg-sidebar-foreground/[0.06]' : 'rounded-xl',
                     groupHasActiveItem ? 'text-sidebar-foreground' : 'text-sidebar-foreground/75'
                   )}
                 >
@@ -102,7 +107,7 @@ export function Sidebar({
                 </button>
               )}
               {isOpen && (
-                <ul className={cn('space-y-1', group.label && !collapsed && 'pb-1')}>
+                <ul className={cn('space-y-1', group.label && !collapsed && 'px-1.5 pt-1 pb-1.5')}>
                   {group.items.map((item) => {
                     const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
                     return (
