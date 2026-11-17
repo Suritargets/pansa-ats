@@ -8,25 +8,9 @@
  */
 
 import { streamText } from 'ai'
-import { listActiveChatKbEntries } from '@/services/queries'
+import { loadAssistantConfig } from '@/lib/ai-assistant'
 
 const MAX_MESSAGES = 20
-
-function buildSystemPrompt(kbContext: string): string {
-  return `Je bent de chat-assistent van Pansa Group of Companies (CCC H. Pansa & Sons N.V.), een
-manpower/outsourcing-bedrijf in Suriname dat via de Pansa ATS solliciteert en personeel plaatst.
-
-Beantwoord vragen van bezoekers (kandidaten en potentiële clienten) kort, vriendelijk en accuraat,
-uitsluitend op basis van de onderstaande kennisbank. Als het antwoord niet in de kennisbank staat,
-zeg dat eerlijk en verwijs door naar het sollicitatieformulier (/apply) of het aanvraagformulier
-voor personeel (/request-staffing) — verzin nooit informatie.
-
-Herken automatisch de taal waarin de bezoeker schrijft — Nederlands, Engels, Sranantongo, Spaans,
-Portugees, of vereenvoudigd Chinees — en antwoord altijd in diezelfde taal. Bij twijfel: Nederlands.
-
-Kennisbank:
-${kbContext || '(nog leeg — verwijs bezoekers naar HR voor vragen)'}`
-}
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
@@ -36,12 +20,12 @@ export async function POST(request: Request) {
     return new Response('Ongeldig verzoek.', { status: 400 })
   }
 
-  const kbEntries = await listActiveChatKbEntries()
-  const kbContext = kbEntries.map((e) => `### ${e.topic}\n${e.content}`).join('\n\n')
+  // Prompt, model, kennisbank en voorbeelden komen uit "AI-training" (admin/settings/chat-kb).
+  const config = await loadAssistantConfig('public')
 
   const result = streamText({
-    model: 'anthropic/claude-sonnet-5',
-    system: buildSystemPrompt(kbContext),
+    model: config.model,
+    system: config.system,
     messages,
   })
 

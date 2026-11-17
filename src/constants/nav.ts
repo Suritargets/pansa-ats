@@ -131,7 +131,7 @@ export const ADMIN_NAV: NavGroup[] = [
       { label: 'Formulier embedden', href: '/admin/settings/embed', icon: Code2 },
       { label: 'API-sleutels', href: '/admin/settings/api-keys', icon: KeyRound },
       { label: 'Webhooks', href: '/admin/settings/webhooks', icon: Webhook },
-      { label: 'Chat-kennisbank', href: '/admin/settings/chat-kb', icon: MessagesSquare },
+      { label: 'AI-training', href: '/admin/settings/chat-kb', icon: MessagesSquare },
       { label: 'E-mail', href: '/admin/settings/mail', icon: Mail },
     ],
   },

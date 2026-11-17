@@ -134,7 +134,7 @@ export default async function WerkwijzePage() {
           rows={[
             ['Chat-support', 'Eenvoudig', 'Publieke chat-widget die vragen beantwoordt uit de kennisbank, in de taal van de bezoeker. Geen inlog, geen opgeslagen gesprekken, geen doorverwijzing naar een mens.'],
             ['RAG', 'Basis', 'Alle actieve kennisbank-items gaan mee in elke vraag. Geen vector-database en geen zoekstap.'],
-            ['AI trainen', 'Handmatig', 'Alleen tekstitems toevoegen bij Instellingen, Chat-kennisbank (super_admin). Geen upload van documenten en geen fine-tuning.'],
+            ['AI trainen', 'Handmatig', 'Bij Instellingen, AI-training (super_admin): kennis, instructies, voorbeeldantwoorden, feedback en modelkeuze, voor de website-chat en de HR-assistent. Geen upload van documenten en geen fine-tuning.'],
             ['AI-OCR', 'Bestaat', 'Bij Digitaliseren leest een model een gescand formulier uit. Staff controleert altijd voor het opslaan.'],
             ['AI-agent met handelingen', 'Ontbreekt', 'Het model kan niets in het systeem doen. Er zijn geen tools of acties.'],
             ['E-mail', 'Code klaar', 'SMTP staat alleen in omgevingsvariabelen. Bij Instellingen, E-mail staan de outbox, opnieuw proberen en een testmail.'],

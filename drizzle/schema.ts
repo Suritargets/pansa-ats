@@ -828,6 +828,40 @@ export const chatKbEntries = pgTable('chat_kb_entries', {
   topic: text('topic').notNull(), // bv. "Sollicitatieprocedure", "Openingstijden"
   content: text('content').notNull(), // het antwoord/de context die de AI mag gebruiken
   active: boolean('active').notNull().default(true),
+  /** Voor welke assistent: 'public' (website-chat), 'hr' (HR-assistent voor staff) of 'both'. */
+  audience: text('audience').notNull().default('public'),
+  createdBy: uuid('created_by').references(() => profiles.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// --- AI-training: instructies/model per assistent, voorbeeldantwoorden, gespreks-log met feedback ---
+
+export const aiAssistantSettings = pgTable('ai_assistant_settings', {
+  assistant: text('assistant').primaryKey(), // 'public' | 'hr'
+  instructions: text('instructions').notNull().default(''), // extra instructies bovenop de standaardprompt
+  model: text('model'), // null = standaardmodel
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const aiExamples = pgTable('ai_examples', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  assistant: text('assistant').notNull(), // 'public' | 'hr'
+  question: text('question').notNull(),
+  answer: text('answer').notNull(), // het modelantwoord waar de AI zich op moet baseren
+  active: boolean('active').notNull().default(true),
+  createdBy: uuid('created_by').references(() => profiles.id),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const aiChatLog = pgTable('ai_chat_log', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  assistant: text('assistant').notNull(), // 'public' | 'hr'
+  model: text('model').notNull(),
+  question: text('question').notNull(),
+  answer: text('answer'), // wordt gevuld zodra de stream klaar is
+  rating: integer('rating'), // 1 = goed, -1 = fout
+  note: text('note'), // toelichting / gewenst antwoord bij feedback
+  source: text('source').notNull().default('test'), // 'test' | 'live'
   createdBy: uuid('created_by').references(() => profiles.id),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })
@@ -1035,6 +1069,9 @@ export type WebhookEvent = (typeof webhookEventEnum.enumValues)[number]
 
 export type ChatKbEntry = typeof chatKbEntries.$inferSelect
 export type NewChatKbEntry = typeof chatKbEntries.$inferInsert
+export type AiAssistantSetting = typeof aiAssistantSettings.$inferSelect
+export type AiExample = typeof aiExamples.$inferSelect
+export type AiChatLogRow = typeof aiChatLog.$inferSelect
 
 export type AuthToken = typeof authTokens.$inferSelect
 export type AuthTokenPurpose = (typeof authTokenPurposeEnum.enumValues)[number]
