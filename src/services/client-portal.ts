@@ -40,7 +40,9 @@ export async function shareApplicationWithClient(applicationId: string, clientId
 
 export async function unshareApplication(shareId: string, applicationId: string): Promise<void> {
   const session = await requireSession([...STAFF_ROLES])
-  await db.delete(clientCandidateShares).where(eq(clientCandidateShares.id, shareId))
+  await db
+    .delete(clientCandidateShares)
+    .where(and(eq(clientCandidateShares.id, shareId), eq(clientCandidateShares.applicationId, applicationId)))
   await logAuditEvent(session, 'application_unshared', { entityType: 'application', entityId: applicationId })
   revalidatePath(`/admin/applications/${applicationId}`)
   revalidatePath('/admin/client-shares')
