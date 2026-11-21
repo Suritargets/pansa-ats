@@ -8,7 +8,7 @@
  */
 
 import { revalidatePath } from 'next/cache'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { requireSession } from '@/lib/auth'
 import { STAFF_ROLES } from '@/lib/roles'
@@ -84,7 +84,9 @@ export async function addReferenceCheck(
 
 export async function deleteReferenceCheck(id: string, applicationId: string): Promise<void> {
   const session = await requireSession([...STAFF_ROLES])
-  await db.delete(referenceChecks).where(eq(referenceChecks.id, id))
+  // id komt uit een formulier en is dus door de aanroeper te vervalsen — scope de delete ook op
+  // applicationId zodat een gemanipuleerd verzoek niet de referentiecheck van een andere sollicitatie raakt.
+  await db.delete(referenceChecks).where(and(eq(referenceChecks.id, id), eq(referenceChecks.applicationId, applicationId)))
   await logAuditEvent(session, 'reference_check_deleted', { entityType: 'application', entityId: applicationId })
   revalidatePath(`/admin/applications/${applicationId}`)
 }
