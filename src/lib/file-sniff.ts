@@ -43,7 +43,6 @@ export async function sniffFile(file: File): Promise<SniffedType | null> {
 export function sanitizeFileName(name: string): string {
   const base = name.split(/[\\/]/).pop() ?? ''
   const cleaned = base
-    // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001f\u007f]/g, '')
     .replace(/[^\p{L}\p{N}._ -]/gu, '_')
     .replace(/\s+/g, ' ')
