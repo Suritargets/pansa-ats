@@ -27,6 +27,7 @@ export default async function PayrollExportPage() {
             <TableRow>
               <TableHead>Aangemaakt</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Aantal</TableHead>
               <TableHead>Formaat</TableHead>
               <TableHead />
             </TableRow>
@@ -34,7 +35,7 @@ export default async function PayrollExportPage() {
           <TableBody>
             {batches.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="py-6 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="py-6 text-center text-muted-foreground">
                   Nog geen exportbatches.
                 </TableCell>
               </TableRow>
@@ -45,6 +46,7 @@ export default async function PayrollExportPage() {
                 <TableCell>
                   <Badge variant="outline">{batch.status}</Badge>
                 </TableCell>
+                <TableCell className="text-muted-foreground">{batch.itemCount}</TableCell>
                 <TableCell className="text-muted-foreground uppercase">{batch.fileFormat}</TableCell>
                 <TableCell>
                   <Button variant="secondary" render={<a href={`/api/export/${batch.id}`} />}>

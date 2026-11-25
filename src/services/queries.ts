@@ -725,9 +725,16 @@ export async function listAllTrainingProgress() {
 }
 
 export async function listPayrollBatches() {
-  return guarded<typeof payrollExportBatches.$inferSelect[]>([], () =>
-    db.select().from(payrollExportBatches).orderBy(desc(payrollExportBatches.createdAt))
-  )
+  return guarded<(typeof payrollExportBatches.$inferSelect & { itemCount: number })[]>([], async () => {
+    const rows = await db
+      .select({ batch: payrollExportBatches, itemCount: count(payrollExportItems.id) })
+      .from(payrollExportBatches)
+      .leftJoin(payrollExportItems, eq(payrollExportItems.batchId, payrollExportBatches.id))
+      .groupBy(payrollExportBatches.id)
+      .orderBy(desc(payrollExportBatches.createdAt))
+
+    return rows.map(({ batch, itemCount }) => ({ ...batch, itemCount }))
+  })
 }
 
 export async function getPayrollBatchById(id: string) {
@@ -738,7 +745,9 @@ export async function getPayrollBatchById(id: string) {
 }
 
 export async function listPayrollBatchItems(batchId: string) {
-  return guarded<(ApplicationWithCandidate & { externalEmployeeId: string | null })[]>([], async () => {
+  return guarded<
+    (ApplicationWithCandidate & { externalEmployeeId: string | null; contract: EmploymentContract | null })[]
+  >([], async () => {
     const rows = await db
       .select({ item: payrollExportItems, application: applications, candidate: candidates, company: companies })
       .from(payrollExportItems)
@@ -747,11 +756,29 @@ export async function listPayrollBatchItems(batchId: string) {
       .innerJoin(companies, eq(applications.companyId, companies.id))
       .where(eq(payrollExportItems.batchId, batchId))
 
+    const applicationIds = rows.map((row) => row.application.id)
+    const contracts = applicationIds.length
+      ? await db
+          .select()
+          .from(employmentContracts)
+          .where(inArray(employmentContracts.applicationId, applicationIds))
+          .orderBy(desc(employmentContracts.createdAt))
+      : []
+
+    // Nieuwste contract per sollicitatie — basisgegevens (badge, loon, bank, afdeling) voor de payroll-export.
+    const latestContractByApplication = new Map<string, EmploymentContract>()
+    for (const contract of contracts) {
+      if (!latestContractByApplication.has(contract.applicationId)) {
+        latestContractByApplication.set(contract.applicationId, contract)
+      }
+    }
+
     return rows.map(({ item, application, candidate, company }) => ({
       ...application,
       candidate,
       company,
       externalEmployeeId: item.externalEmployeeId,
+      contract: latestContractByApplication.get(application.id) ?? null,
     }))
   })
 }
